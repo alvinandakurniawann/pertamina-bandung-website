@@ -60,12 +60,6 @@ export default function RootLayout({
                 >
                   Peta SA
                 </Link>
-                <Link
-                  href="/kontak"
-                  className="text-gray-700 hover:text-blue-600 font-medium transition duration-300"
-                >
-                  Kontak
-                </Link>
               </div>
 
               {/* Mobile Menu Button */}
@@ -139,11 +133,6 @@ export default function RootLayout({
                   <li>
                     <Link href="/peta-sa" className="text-gray-400 hover:text-white transition duration-300">
                       Peta SA
-                    </Link>
-                  </li>
-                  <li>
-                    <Link href="/kontak" className="text-gray-400 hover:text-white transition duration-300">
-                      Kontak
                     </Link>
                   </li>
                 </ul>
