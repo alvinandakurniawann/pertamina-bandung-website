@@ -204,6 +204,11 @@ Setiap lokasi mencakup:
 ### Environment Variables
 ```env
 NEXT_PUBLIC_SITE_URL=https://your-domain.com
+NEXT_PUBLIC_FIREBASE_API_KEY=your_api_key
+NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=your_auth_domain
+NEXT_PUBLIC_FIREBASE_PROJECT_ID=your_project_id
+NEXT_PUBLIC_FIREBASE_APP_ID=your_app_id
+NEXT_PUBLIC_CRUD_SECRET=your_shared_secret
 ```
 
 ### Tailwind CSS

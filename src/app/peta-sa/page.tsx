@@ -1,11 +1,13 @@
 'use client'
 
-import { useState } from 'react'
-import Image from 'next/image'
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
+import { Region, Location } from '@/types/sa'
+import { db } from '@/lib/firebase'
+import { collection, getDocs, onSnapshot } from 'firebase/firestore'
 
-// Data wilayah SA Bandung berdasarkan peta
-const saRegions = [
+// Data default (akan digantikan oleh fetch API)
+const defaultRegions: Region[] = [
   {
     id: 'bojonagara',
     name: 'Bojonagara',
@@ -333,17 +335,34 @@ const saRegions = [
 ]
 
 export default function PetaSAPage() {
-  const [selectedRegion, setSelectedRegion] = useState<any>(null)
-  const [selectedLocation, setSelectedLocation] = useState<any>(null)
+  const [regions, setRegions] = useState<Region[]>(defaultRegions)
+  const [selectedRegion, setSelectedRegion] = useState<Region | null>(null)
+  const [selectedLocation, setSelectedLocation] = useState<Location | null>(null)
   const [showRegionModal, setShowRegionModal] = useState(false)
   const [showLocationModal, setShowLocationModal] = useState(false)
 
-  const handleRegionClick = (region: any) => {
+  useEffect(() => {
+    const unsub = onSnapshot(collection(db, 'regions'), async (snap) => {
+      const next: Region[] = []
+      for (const d of snap.docs) {
+        const base = d.data() as Region
+        const locSnap = await getDocs(collection(db, 'regions', d.id, 'locations'))
+        const locations: Location[] = locSnap.docs.map(l => l.data() as Location)
+        const spbuCount = locations.filter(l => l.type === 'SPBU').length
+        const spbeCount = locations.filter(l => l.type === 'SPBE').length
+        next.push({ ...base, id: d.id, locations, spbuCount, spbeCount })
+      }
+      if (next.length) setRegions(next)
+    })
+    return () => unsub()
+  }, [])
+
+  const handleRegionClick = (region: Region) => {
     setSelectedRegion(region)
     setShowRegionModal(true)
   }
 
-  const handleLocationClick = (location: any) => {
+  const handleLocationClick = (location: Location) => {
     setSelectedLocation(location)
     setShowLocationModal(true)
   }
@@ -412,7 +431,7 @@ export default function PetaSAPage() {
                   stroke="#ffffff"
                   strokeWidth="2"
                   className="hover:opacity-80 transition-opacity duration-300 cursor-pointer"
-                  onClick={() => handleRegionClick(saRegions[0])}
+                  onClick={() => handleRegionClick(regions[0])}
                 />
                 <text x="100" y="90" textAnchor="middle" className="text-sm font-semibold fill-gray-800 pointer-events-none">
                   Bojonagara
@@ -425,7 +444,7 @@ export default function PetaSAPage() {
                   stroke="#ffffff"
                   strokeWidth="2"
                   className="hover:opacity-80 transition-opacity duration-300 cursor-pointer"
-                  onClick={() => handleRegionClick(saRegions[1])}
+                  onClick={() => handleRegionClick(regions[1])}
                 />
                 <text x="275" y="70" textAnchor="middle" className="text-sm font-semibold fill-gray-800 pointer-events-none">
                   Cibeunying
@@ -438,7 +457,7 @@ export default function PetaSAPage() {
                   stroke="#ffffff"
                   strokeWidth="2"
                   className="hover:opacity-80 transition-opacity duration-300 cursor-pointer"
-                  onClick={() => handleRegionClick(saRegions[2])}
+                  onClick={() => handleRegionClick(regions[2])}
                 />
                 <text x="85" y="180" textAnchor="middle" className="text-sm font-semibold fill-gray-800 pointer-events-none">
                   Tegallega
@@ -451,7 +470,7 @@ export default function PetaSAPage() {
                   stroke="#ffffff"
                   strokeWidth="2"
                   className="hover:opacity-80 transition-opacity duration-300 cursor-pointer"
-                  onClick={() => handleRegionClick(saRegions[3])}
+                  onClick={() => handleRegionClick(regions[3])}
                 />
                 <text x="250" y="200" textAnchor="middle" className="text-sm font-semibold fill-gray-800 pointer-events-none">
                   Karees
@@ -464,7 +483,7 @@ export default function PetaSAPage() {
                   stroke="#ffffff"
                   strokeWidth="2"
                   className="hover:opacity-80 transition-opacity duration-300 cursor-pointer"
-                  onClick={() => handleRegionClick(saRegions[4])}
+                  onClick={() => handleRegionClick(regions[4])}
                 />
                 <text x="450" y="60" textAnchor="middle" className="text-sm font-semibold fill-gray-800 pointer-events-none">
                   Ujung Berung
@@ -477,7 +496,7 @@ export default function PetaSAPage() {
                   stroke="#ffffff"
                   strokeWidth="2"
                   className="hover:opacity-80 transition-opacity duration-300 cursor-pointer"
-                  onClick={() => handleRegionClick(saRegions[5])}
+                  onClick={() => handleRegionClick(regions[5])}
                 />
                 <text x="450" y="200" textAnchor="middle" className="text-sm font-semibold fill-gray-800 pointer-events-none">
                   Gede Bage
@@ -492,7 +511,7 @@ export default function PetaSAPage() {
 
             {/* Legend */}
             <div className="mt-6 grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
-              {saRegions.map((region) => (
+              {regions.map((region) => (
                 <div key={region.id} className="flex items-center space-x-2">
                   <div 
                     className="w-4 h-4 rounded"
@@ -512,7 +531,7 @@ export default function PetaSAPage() {
         <div className="container mx-auto px-4">
           <h2 className="text-3xl font-bold text-center mb-12">Daftar Wilayah SA</h2>
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {saRegions.map((region) => (
+            {regions.map((region) => (
               <div
                 key={region.id}
                 className="bg-gray-50 rounded-lg p-6 hover:shadow-lg transition-shadow duration-300 cursor-pointer"
@@ -598,7 +617,7 @@ export default function PetaSAPage() {
                 <div>
                   <h4 className="font-bold text-lg text-gray-800 mb-4">Daftar Lokasi</h4>
                   <div className="space-y-3 max-h-64 overflow-y-auto">
-                    {selectedRegion.locations.map((location: any) => (
+                    {selectedRegion.locations.map((location: Location) => (
                       <div
                         key={location.id}
                         className="p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors duration-200"
