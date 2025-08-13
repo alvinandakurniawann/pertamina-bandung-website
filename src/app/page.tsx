@@ -1,4 +1,3 @@
-import Image from 'next/image'
 import Link from 'next/link'
 
 export default function Home() {
@@ -12,17 +11,17 @@ export default function Home() {
             PERTAMINA
           </h1>
           <h2 className="text-2xl md:text-3xl font-light mb-8">
-            Cabang Bandung
+            Sales Area Bandung
           </h2>
           <p className="text-xl md:text-2xl mb-12 max-w-3xl mx-auto">
             Melayani kebutuhan energi masyarakat Bandung dan sekitarnya dengan komitmen kualitas dan pelayanan terbaik
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link
-              href="/layanan"
+              href="/peta-sa"
               className="bg-yellow-500 hover:bg-yellow-600 text-black font-semibold py-3 px-8 rounded-lg transition duration-300"
             >
-              Lihat Layanan
+              Lihat Peta SA
             </Link>
             <Link
               href="/kontak"
@@ -92,10 +91,10 @@ export default function Home() {
                 Dengan pengalaman puluhan tahun, kami terus berinovasi untuk memberikan layanan yang lebih baik dan mendukung pertumbuhan ekonomi daerah.
               </p>
               <Link
-                href="/tentang"
+                href="/peta-sa"
                 className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-8 rounded-lg transition duration-300"
               >
-                Pelajari Lebih Lanjut
+                Lihat Peta SA
               </Link>
             </div>
             <div className="bg-gradient-to-br from-blue-600 to-blue-800 rounded-lg p-8 text-white">
@@ -161,14 +160,7 @@ export default function Home() {
               <p className="text-gray-600 text-sm">Layanan pembayaran digital yang praktis</p>
             </div>
           </div>
-          <div className="text-center mt-8">
-            <Link
-              href="/layanan"
-              className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-8 rounded-lg transition duration-300"
-            >
-              Lihat Semua Layanan
-            </Link>
-          </div>
+          
         </div>
       </section>
 
@@ -180,12 +172,7 @@ export default function Home() {
             Hubungi kami untuk informasi lebih lanjut tentang layanan dan produk Pertamina
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link
-              href="/kontak"
-              className="bg-yellow-500 hover:bg-yellow-600 text-black font-semibold py-3 px-8 rounded-lg transition duration-300"
-            >
-              Hubungi Kami
-            </Link>
+            
             <Link
               href="/peta-sa"
               className="border-2 border-white hover:bg-white hover:text-blue-900 text-white font-semibold py-3 px-8 rounded-lg transition duration-300"

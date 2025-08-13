@@ -42,18 +42,7 @@ export default function RootLayout({
                 >
                   Beranda
                 </Link>
-                <Link
-                  href="/tentang"
-                  className="text-gray-700 hover:text-blue-600 font-medium transition duration-300"
-                >
-                  Tentang Kami
-                </Link>
-                <Link
-                  href="/layanan"
-                  className="text-gray-700 hover:text-blue-600 font-medium transition duration-300"
-                >
-                  Layanan
-                </Link>
+                
                 <Link
                   href="/peta-sa"
                   className="text-gray-700 hover:text-blue-600 font-medium transition duration-300"
@@ -120,16 +109,7 @@ export default function RootLayout({
                       Beranda
                     </Link>
                   </li>
-                  <li>
-                    <Link href="/tentang" className="text-gray-400 hover:text-white transition duration-300">
-                      Tentang Kami
-                    </Link>
-                  </li>
-                  <li>
-                    <Link href="/layanan" className="text-gray-400 hover:text-white transition duration-300">
-                      Layanan
-                    </Link>
-                  </li>
+                  
                   <li>
                     <Link href="/peta-sa" className="text-gray-400 hover:text-white transition duration-300">
                       Peta SA

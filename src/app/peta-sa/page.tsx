@@ -6,336 +6,10 @@ import { Region, Location } from '@/types/sa'
 import { db } from '@/lib/firebase'
 import { collection, getDocs, onSnapshot } from 'firebase/firestore'
 
-// Data default (akan digantikan oleh fetch API)
-const defaultRegions: Region[] = [
-  {
-    id: 'bojonagara',
-    name: 'Bojonagara',
-    color: '#90EE90', // light green
-    spbuCount: 3,
-    spbeCount: 1,
-    locations: [
-      {
-        id: 'spbu-bojonagara-1',
-        name: 'SPBU Bojonagara 1',
-        type: 'SPBU',
-        address: 'Jl. Bojonagara No. 45, Bandung',
-        services: ['Pertalite', 'Pertamax', 'Pertamax Turbo'],
-        hours: '24 Jam',
-        phone: '022-1234567'
-      },
-      {
-        id: 'spbu-bojonagara-2',
-        name: 'SPBU Bojonagara 2',
-        type: 'SPBU',
-        address: 'Jl. Raya Bojonagara No. 78, Bandung',
-        services: ['Pertalite', 'Pertamax', 'Dexlite'],
-        hours: '06:00 - 22:00',
-        phone: '022-1234568'
-      },
-      {
-        id: 'spbu-bojonagara-3',
-        name: 'SPBU Bojonagara 3',
-        type: 'SPBU',
-        address: 'Jl. Bojonagara Utara No. 123, Bandung',
-        services: ['Pertalite', 'Pertamax'],
-        hours: '06:00 - 22:00',
-        phone: '022-1234569'
-      },
-      {
-        id: 'spbe-bojonagara-1',
-        name: 'SPBE Bojonagara',
-        type: 'SPBE',
-        address: 'Jl. Bojonagara Selatan No. 56, Bandung',
-        services: ['LPG 3kg', 'LPG 12kg'],
-        hours: '08:00 - 20:00',
-        phone: '022-1234570'
-      }
-    ]
-  },
-  {
-    id: 'cibeunying',
-    name: 'Cibeunying',
-    color: '#32CD32', // lime green
-    spbuCount: 4,
-    spbeCount: 2,
-    locations: [
-      {
-        id: 'spbu-cibeunying-1',
-        name: 'SPBU Cibeunying 1',
-        type: 'SPBU',
-        address: 'Jl. Cibeunying No. 89, Bandung',
-        services: ['Pertalite', 'Pertamax', 'Pertamax Turbo', 'Dexlite'],
-        hours: '24 Jam',
-        phone: '022-1234571'
-      },
-      {
-        id: 'spbu-cibeunying-2',
-        name: 'SPBU Cibeunying 2',
-        type: 'SPBU',
-        address: 'Jl. Raya Cibeunying No. 234, Bandung',
-        services: ['Pertalite', 'Pertamax'],
-        hours: '06:00 - 22:00',
-        phone: '022-1234572'
-      },
-      {
-        id: 'spbu-cibeunying-3',
-        name: 'SPBU Cibeunying 3',
-        type: 'SPBU',
-        address: 'Jl. Cibeunying Kaler No. 67, Bandung',
-        services: ['Pertalite', 'Pertamax', 'Dexlite'],
-        hours: '06:00 - 22:00',
-        phone: '022-1234573'
-      },
-      {
-        id: 'spbu-cibeunying-4',
-        name: 'SPBU Cibeunying 4',
-        type: 'SPBU',
-        address: 'Jl. Cibeunying Kidul No. 145, Bandung',
-        services: ['Pertalite', 'Pertamax', 'Pertamax Turbo'],
-        hours: '06:00 - 22:00',
-        phone: '022-1234574'
-      },
-      {
-        id: 'spbe-cibeunying-1',
-        name: 'SPBE Cibeunying 1',
-        type: 'SPBE',
-        address: 'Jl. Cibeunying Tengah No. 78, Bandung',
-        services: ['LPG 3kg', 'LPG 12kg'],
-        hours: '08:00 - 20:00',
-        phone: '022-1234575'
-      },
-      {
-        id: 'spbe-cibeunying-2',
-        name: 'SPBE Cibeunying 2',
-        type: 'SPBE',
-        address: 'Jl. Cibeunying Barat No. 156, Bandung',
-        services: ['LPG 3kg', 'LPG 12kg'],
-        hours: '08:00 - 20:00',
-        phone: '022-1234576'
-      }
-    ]
-  },
-  {
-    id: 'tegallega',
-    name: 'Tegallega',
-    color: '#FFB6C1', // light orange/peach
-    spbuCount: 2,
-    spbeCount: 1,
-    locations: [
-      {
-        id: 'spbu-tegallega-1',
-        name: 'SPBU Tegallega 1',
-        type: 'SPBU',
-        address: 'Jl. Tegallega No. 23, Bandung',
-        services: ['Pertalite', 'Pertamax', 'Pertamax Turbo'],
-        hours: '24 Jam',
-        phone: '022-1234577'
-      },
-      {
-        id: 'spbu-tegallega-2',
-        name: 'SPBU Tegallega 2',
-        type: 'SPBU',
-        address: 'Jl. Raya Tegallega No. 89, Bandung',
-        services: ['Pertalite', 'Pertamax'],
-        hours: '06:00 - 22:00',
-        phone: '022-1234578'
-      },
-      {
-        id: 'spbe-tegallega-1',
-        name: 'SPBE Tegallega',
-        type: 'SPBE',
-        address: 'Jl. Tegallega Selatan No. 45, Bandung',
-        services: ['LPG 3kg', 'LPG 12kg'],
-        hours: '08:00 - 20:00',
-        phone: '022-1234579'
-      }
-    ]
-  },
-  {
-    id: 'karees',
-    name: 'Karees',
-    color: '#87CEEB', // light blue
-    spbuCount: 3,
-    spbeCount: 1,
-    locations: [
-      {
-        id: 'spbu-karees-1',
-        name: 'SPBU Karees 1',
-        type: 'SPBU',
-        address: 'Jl. Karees No. 67, Bandung',
-        services: ['Pertalite', 'Pertamax', 'Dexlite'],
-        hours: '24 Jam',
-        phone: '022-1234580'
-      },
-      {
-        id: 'spbu-karees-2',
-        name: 'SPBU Karees 2',
-        type: 'SPBU',
-        address: 'Jl. Raya Karees No. 134, Bandung',
-        services: ['Pertalite', 'Pertamax', 'Pertamax Turbo'],
-        hours: '06:00 - 22:00',
-        phone: '022-1234581'
-      },
-      {
-        id: 'spbu-karees-3',
-        name: 'SPBU Karees 3',
-        type: 'SPBU',
-        address: 'Jl. Karees Utara No. 89, Bandung',
-        services: ['Pertalite', 'Pertamax'],
-        hours: '06:00 - 22:00',
-        phone: '022-1234582'
-      },
-      {
-        id: 'spbe-karees-1',
-        name: 'SPBE Karees',
-        type: 'SPBE',
-        address: 'Jl. Karees Selatan No. 56, Bandung',
-        services: ['LPG 3kg', 'LPG 12kg'],
-        hours: '08:00 - 20:00',
-        phone: '022-1234583'
-      }
-    ]
-  },
-  {
-    id: 'ujung-berung',
-    name: 'Ujung Berung',
-    color: '#DDA0DD', // light purple
-    spbuCount: 5,
-    spbeCount: 2,
-    locations: [
-      {
-        id: 'spbu-ujung-berung-1',
-        name: 'SPBU Ujung Berung 1',
-        type: 'SPBU',
-        address: 'Jl. Ujung Berung No. 123, Bandung',
-        services: ['Pertalite', 'Pertamax', 'Pertamax Turbo', 'Dexlite'],
-        hours: '24 Jam',
-        phone: '022-1234584'
-      },
-      {
-        id: 'spbu-ujung-berung-2',
-        name: 'SPBU Ujung Berung 2',
-        type: 'SPBU',
-        address: 'Jl. Raya Ujung Berung No. 234, Bandung',
-        services: ['Pertalite', 'Pertamax'],
-        hours: '06:00 - 22:00',
-        phone: '022-1234585'
-      },
-      {
-        id: 'spbu-ujung-berung-3',
-        name: 'SPBU Ujung Berung 3',
-        type: 'SPBU',
-        address: 'Jl. Ujung Berung Timur No. 67, Bandung',
-        services: ['Pertalite', 'Pertamax', 'Dexlite'],
-        hours: '06:00 - 22:00',
-        phone: '022-1234586'
-      },
-      {
-        id: 'spbu-ujung-berung-4',
-        name: 'SPBU Ujung Berung 4',
-        type: 'SPBU',
-        address: 'Jl. Ujung Berung Barat No. 145, Bandung',
-        services: ['Pertalite', 'Pertamax', 'Pertamax Turbo'],
-        hours: '06:00 - 22:00',
-        phone: '022-1234587'
-      },
-      {
-        id: 'spbu-ujung-berung-5',
-        name: 'SPBU Ujung Berung 5',
-        type: 'SPBU',
-        address: 'Jl. Ujung Berung Utara No. 89, Bandung',
-        services: ['Pertalite', 'Pertamax'],
-        hours: '06:00 - 22:00',
-        phone: '022-1234588'
-      },
-      {
-        id: 'spbe-ujung-berung-1',
-        name: 'SPBE Ujung Berung 1',
-        type: 'SPBE',
-        address: 'Jl. Ujung Berung Tengah No. 78, Bandung',
-        services: ['LPG 3kg', 'LPG 12kg'],
-        hours: '08:00 - 20:00',
-        phone: '022-1234589'
-      },
-      {
-        id: 'spbe-ujung-berung-2',
-        name: 'SPBE Ujung Berung 2',
-        type: 'SPBE',
-        address: 'Jl. Ujung Berung Selatan No. 156, Bandung',
-        services: ['LPG 3kg', 'LPG 12kg'],
-        hours: '08:00 - 20:00',
-        phone: '022-1234590'
-      }
-    ]
-  },
-  {
-    id: 'gede-bage',
-    name: 'Gede Bage',
-    color: '#FFA500', // orange
-    spbuCount: 4,
-    spbeCount: 2,
-    locations: [
-      {
-        id: 'spbu-gede-bage-1',
-        name: 'SPBU Gede Bage 1',
-        type: 'SPBU',
-        address: 'Jl. Gede Bage No. 234, Bandung',
-        services: ['Pertalite', 'Pertamax', 'Pertamax Turbo', 'Dexlite'],
-        hours: '24 Jam',
-        phone: '022-1234591'
-      },
-      {
-        id: 'spbu-gede-bage-2',
-        name: 'SPBU Gede Bage 2',
-        type: 'SPBU',
-        address: 'Jl. Raya Gede Bage No. 456, Bandung',
-        services: ['Pertalite', 'Pertamax'],
-        hours: '06:00 - 22:00',
-        phone: '022-1234592'
-      },
-      {
-        id: 'spbu-gede-bage-3',
-        name: 'SPBU Gede Bage 3',
-        type: 'SPBU',
-        address: 'Jl. Gede Bage Timur No. 123, Bandung',
-        services: ['Pertalite', 'Pertamax', 'Dexlite'],
-        hours: '06:00 - 22:00',
-        phone: '022-1234593'
-      },
-      {
-        id: 'spbu-gede-bage-4',
-        name: 'SPBU Gede Bage 4',
-        type: 'SPBU',
-        address: 'Jl. Gede Bage Barat No. 345, Bandung',
-        services: ['Pertalite', 'Pertamax', 'Pertamax Turbo'],
-        hours: '06:00 - 22:00',
-        phone: '022-1234594'
-      },
-      {
-        id: 'spbe-gede-bage-1',
-        name: 'SPBE Gede Bage 1',
-        type: 'SPBE',
-        address: 'Jl. Gede Bage Tengah No. 178, Bandung',
-        services: ['LPG 3kg', 'LPG 12kg'],
-        hours: '08:00 - 20:00',
-        phone: '022-1234595'
-      },
-      {
-        id: 'spbe-gede-bage-2',
-        name: 'SPBE Gede Bage 2',
-        type: 'SPBE',
-        address: 'Jl. Gede Bage Selatan No. 267, Bandung',
-        services: ['LPG 3kg', 'LPG 12kg'],
-        hours: '08:00 - 20:00',
-        phone: '022-1234596'
-      }
-    ]
-  }
-]
+// Mengambil data hanya dari Firestore; tidak ada default seed besar
 
 export default function PetaSAPage() {
-  const [regions, setRegions] = useState<Region[]>(defaultRegions)
+  const [regions, setRegions] = useState<Region[]>([])
   const [selectedRegion, setSelectedRegion] = useState<Region | null>(null)
   const [selectedLocation, setSelectedLocation] = useState<Location | null>(null)
   const [showRegionModal, setShowRegionModal] = useState(false)
@@ -356,6 +30,26 @@ export default function PetaSAPage() {
     })
     return () => unsub()
   }, [])
+
+  const slugify = (s: string | undefined | null): string => {
+    if (!s) return ''
+    return s
+      .toString()
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '')
+  }
+
+  const getRegionBySlug = (slug: string): Region | null => {
+    const target = slugify(slug)
+    return (
+      regions.find(r => r.id === slug) ||
+      regions.find(r => slugify(r.id) === target) ||
+      regions.find(r => slugify(r.name) === target) ||
+      null
+    )
+  }
 
   const handleRegionClick = (region: Region) => {
     setSelectedRegion(region)
@@ -431,7 +125,7 @@ export default function PetaSAPage() {
                   stroke="#ffffff"
                   strokeWidth="2"
                   className="hover:opacity-80 transition-opacity duration-300 cursor-pointer"
-                  onClick={() => handleRegionClick(regions[0])}
+                  onClick={() => { const r = getRegionBySlug('bojonagara'); if (r) handleRegionClick(r) }}
                 />
                 <text x="100" y="90" textAnchor="middle" className="text-sm font-semibold fill-gray-800 pointer-events-none">
                   Bojonagara
@@ -444,7 +138,7 @@ export default function PetaSAPage() {
                   stroke="#ffffff"
                   strokeWidth="2"
                   className="hover:opacity-80 transition-opacity duration-300 cursor-pointer"
-                  onClick={() => handleRegionClick(regions[1])}
+                  onClick={() => { const r = getRegionBySlug('cibeunying'); if (r) handleRegionClick(r) }}
                 />
                 <text x="275" y="70" textAnchor="middle" className="text-sm font-semibold fill-gray-800 pointer-events-none">
                   Cibeunying
@@ -457,7 +151,7 @@ export default function PetaSAPage() {
                   stroke="#ffffff"
                   strokeWidth="2"
                   className="hover:opacity-80 transition-opacity duration-300 cursor-pointer"
-                  onClick={() => handleRegionClick(regions[2])}
+                  onClick={() => { const r = getRegionBySlug('tegallega'); if (r) handleRegionClick(r) }}
                 />
                 <text x="85" y="180" textAnchor="middle" className="text-sm font-semibold fill-gray-800 pointer-events-none">
                   Tegallega
@@ -470,7 +164,7 @@ export default function PetaSAPage() {
                   stroke="#ffffff"
                   strokeWidth="2"
                   className="hover:opacity-80 transition-opacity duration-300 cursor-pointer"
-                  onClick={() => handleRegionClick(regions[3])}
+                  onClick={() => { const r = getRegionBySlug('karees'); if (r) handleRegionClick(r) }}
                 />
                 <text x="250" y="200" textAnchor="middle" className="text-sm font-semibold fill-gray-800 pointer-events-none">
                   Karees
@@ -483,7 +177,7 @@ export default function PetaSAPage() {
                   stroke="#ffffff"
                   strokeWidth="2"
                   className="hover:opacity-80 transition-opacity duration-300 cursor-pointer"
-                  onClick={() => handleRegionClick(regions[4])}
+                  onClick={() => { const r = getRegionBySlug('ujung-berung'); if (r) handleRegionClick(r) }}
                 />
                 <text x="450" y="60" textAnchor="middle" className="text-sm font-semibold fill-gray-800 pointer-events-none">
                   Ujung Berung
@@ -496,7 +190,7 @@ export default function PetaSAPage() {
                   stroke="#ffffff"
                   strokeWidth="2"
                   className="hover:opacity-80 transition-opacity duration-300 cursor-pointer"
-                  onClick={() => handleRegionClick(regions[5])}
+                  onClick={() => { const r = getRegionBySlug('gede-bage'); if (r) handleRegionClick(r) }}
                 />
                 <text x="450" y="200" textAnchor="middle" className="text-sm font-semibold fill-gray-800 pointer-events-none">
                   Gede Bage
@@ -733,16 +427,10 @@ export default function PetaSAPage() {
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link
-              href="/kontak"
+              href="/peta-sa"
               className="bg-yellow-500 hover:bg-yellow-600 text-black font-semibold py-3 px-8 rounded-lg transition duration-300"
             >
-              Hubungi Kami
-            </Link>
-            <Link
-              href="/layanan"
-              className="border-2 border-white hover:bg-white hover:text-blue-900 text-white font-semibold py-3 px-8 rounded-lg transition duration-300"
-            >
-              Lihat Layanan
+              Lihat Peta SA
             </Link>
           </div>
         </div>

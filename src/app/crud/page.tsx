@@ -59,10 +59,19 @@ export default function CrudPage() {
   const [saving, setSaving] = useState(false)
   const [filter, setFilter] = useState('')
   const [accessKey, setAccessKey] = useState<string>('')
+  const MAP_REGIONS: Array<{ id: string; name: string; defaultColor: string }> = [
+    { id: 'bojonagara', name: 'Bojonagara', defaultColor: '#90EE90' },
+    { id: 'cibeunying', name: 'Cibeunying', defaultColor: '#32CD32' },
+    { id: 'tegallega', name: 'Tegallega', defaultColor: '#FFB6C1' },
+    { id: 'karees', name: 'Karees', defaultColor: '#87CEEB' },
+    { id: 'ujung-berung', name: 'Ujung Berung', defaultColor: '#DDA0DD' },
+    { id: 'gede-bage', name: 'Gede Bage', defaultColor: '#FFA500' },
+  ]
 
   const hasAccess = useMemo(() => {
-    const expected = (process.env.NEXT_PUBLIC_CRUD_SECRET || '').trim()
-    return expected.length > 0 && accessKey.trim() === expected
+    const expected = (process.env.NEXT_PUBLIC_CRUD_SECRET || 'CRUD-SECRET-LOCAL').trim()
+    const provided = accessKey.trim()
+    return expected.length > 0 && provided.length > 0 && provided === expected
   }, [accessKey])
 
   // Subscribe regions + locations realtime
@@ -88,7 +97,15 @@ export default function CrudPage() {
 
   useEffect(() => {
     const stored = localStorage.getItem('crudKey') || ''
-    setAccessKey(stored)
+    if (stored) {
+      setAccessKey(stored)
+    } else {
+      const expected = (process.env.NEXT_PUBLIC_CRUD_SECRET || 'CRUD-SECRET-LOCAL').trim()
+      if (expected) {
+        setAccessKey(expected)
+        localStorage.setItem('crudKey', expected)
+      }
+    }
   }, [])
 
   const filteredRegions = useMemo(() => {
@@ -156,6 +173,12 @@ export default function CrudPage() {
       ...editingRegion,
       spbuCount: editingRegion.locations.filter(l => l.type === 'SPBU').length,
       spbeCount: editingRegion.locations.filter(l => l.type === 'SPBE').length,
+    }
+
+    // Cegah duplikasi wilayah saat create
+    if (selectedRegionIndex == null && regions.some(r => r.id === payload.id)) {
+      alert('Wilayah sudah ada. Silakan pilih wilayah lain atau edit yang ada.')
+      return
     }
 
     if (selectedRegionIndex == null) {
@@ -290,8 +313,25 @@ export default function CrudPage() {
             {editingRegion ? (
               <div className="space-y-3">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  <label className="text-sm text-gray-700">ID
-                    <input value={editingRegion.id} onChange={(e) => setEditingRegion({ ...editingRegion, id: e.target.value })} className="mt-1 border rounded px-3 py-2 w-full" />
+                  <label className="text-sm text-gray-700">Wilayah Peta
+                    <select
+                      value={editingRegion.id}
+                      onChange={(e) => {
+                        const sel = MAP_REGIONS.find(m => m.id === e.target.value)
+                        if (!sel) return
+                        const next = { ...editingRegion, id: sel.id, name: sel.name }
+                        if (!editingRegion.color) next.color = sel.defaultColor
+                        setEditingRegion(next)
+                      }}
+                      className="mt-1 border rounded px-3 py-2 w-full"
+                    >
+                      <option value="" disabled>Pilih wilayah…</option>
+                      {MAP_REGIONS
+                        .filter(m => selectedRegionIndex != null ? true : !regions.some(r => r.id === m.id))
+                        .map(m => (
+                          <option key={m.id} value={m.id}>{m.name}</option>
+                        ))}
+                    </select>
                   </label>
                   <label className="text-sm text-gray-700">Nama
                     <input value={editingRegion.name} onChange={(e) => setEditingRegion({ ...editingRegion, name: e.target.value })} className="mt-1 border rounded px-3 py-2 w-full" />
