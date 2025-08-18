@@ -44,10 +44,10 @@ export default function RootLayout({
                 </Link>
                 
                 <Link
-                  href="/peta-sa"
+                  href="/peta-spbu-spbe"
                   className="text-gray-700 hover:text-blue-600 font-medium transition duration-300"
                 >
-                  Peta SA
+                  Peta SPBU & SPBE
                 </Link>
               </div>
 
@@ -111,8 +111,8 @@ export default function RootLayout({
                   </li>
                   
                   <li>
-                    <Link href="/peta-sa" className="text-gray-400 hover:text-white transition duration-300">
-                      Peta SA
+                    <Link href="/peta-spbu-spbe" className="text-gray-400 hover:text-white transition duration-300">
+                      Peta SPBU & SPBE
                     </Link>
                   </li>
                 </ul>

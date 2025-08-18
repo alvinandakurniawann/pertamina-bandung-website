@@ -18,151 +18,117 @@ export default function Home() {
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link
-              href="/peta-sa"
+              href="/peta-spbu-spbe"
               className="bg-yellow-500 hover:bg-yellow-600 text-black font-semibold py-3 px-8 rounded-lg transition duration-300"
             >
-              Lihat Peta SA
+              Lihat Peta SPBU & SPBE
             </Link>
-            <Link
-              href="/kontak"
-              className="border-2 border-white hover:bg-white hover:text-blue-900 text-white font-semibold py-3 px-8 rounded-lg transition duration-300"
-            >
-              Hubungi Kami
-            </Link>
+            
           </div>
         </div>
       </section>
 
-      {/* Why Choose Pertamina Section */}
+      {/* Sejarah SA Retail Bandung */}
       <section className="py-16 bg-white">
         <div className="container mx-auto px-4">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-800 mb-4">
-              Mengapa Memilih Pertamina?
-            </h2>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              Kami berkomitmen memberikan layanan terbaik dengan standar kualitas tinggi
+          <div className="mb-10 text-center">
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-800 mb-4">Sejarah Sales Area Retail Bandung</h2>
+            <p className="text-lg text-gray-600 max-w-4xl mx-auto">
+              Sales Area (SA) Retail Bandung merupakan bagian dari Pertamina Patra Niaga yang bertugas melayani kebutuhan energi untuk wilayah Bandung dan sekitarnya. 
+              Perjalanan SA Bandung ditandai modernisasi jaringan ritel, peningkatan layanan pelanggan, serta penguatan ketahanan pasokan.
             </p>
           </div>
-          <div className="grid md:grid-cols-3 gap-8">
-            <div className="text-center p-6">
-              <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <svg className="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-              </div>
-              <h3 className="text-xl font-bold text-gray-800 mb-2">Kualitas Terjamin</h3>
-              <p className="text-gray-600">Produk berkualitas tinggi dengan standar nasional dan internasional</p>
+
+          {/* Timeline ringkas */}
+          <div className="grid md:grid-cols-5 gap-6">
+            <div className="bg-gray-50 rounded-lg p-5 border">
+              <div className="text-sm text-blue-700 font-semibold">1970–1990-an</div>
+              <div className="mt-1 font-bold text-gray-900">Awal Jaringan SPBU</div>
+              <p className="mt-2 text-sm text-gray-600">Penguatan layanan BBM ritel dan perluasan titik SPBU di Bandung.</p>
             </div>
-            <div className="text-center p-6">
-              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-              </div>
-              <h3 className="text-xl font-bold text-gray-800 mb-2">Layanan 24 Jam</h3>
-              <p className="text-gray-600">SPBU dan SPBE yang buka 24 jam untuk melayani kebutuhan Anda</p>
+            <div className="bg-gray-50 rounded-lg p-5 border">
+              <div className="text-sm text-blue-700 font-semibold">2000–2010</div>
+              <div className="mt-1 font-bold text-gray-900">Standarisasi Layanan</div>
+              <p className="mt-2 text-sm text-gray-600">Peningkatan standar mutu dan keselamatan (HSSE) di ritel BBM/LPG.</p>
             </div>
-            <div className="text-center p-6">
-              <div className="w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <svg className="w-8 h-8 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                </svg>
-              </div>
-              <h3 className="text-xl font-bold text-gray-800 mb-2">Jaringan Luas</h3>
-              <p className="text-gray-600">Jaringan SPBU dan SPBE yang tersebar di seluruh wilayah Bandung</p>
+            <div className="bg-gray-50 rounded-lg p-5 border">
+              <div className="text-sm text-blue-700 font-semibold">2010–2019</div>
+              <div className="mt-1 font-bold text-gray-900">Modernisasi & Ekspansi</div>
+              <p className="mt-2 text-sm text-gray-600">Revitalisasi SPBU, perluasan jaringan LPG, penguatan supply chain.</p>
+            </div>
+            <div className="bg-gray-50 rounded-lg p-5 border">
+              <div className="text-sm text-blue-700 font-semibold">2020–2022</div>
+              <div className="mt-1 font-bold text-gray-900">Digitalisasi Layanan</div>
+              <p className="mt-2 text-sm text-gray-600">Adopsi MyPertamina dan inisiatif Subsidi Tepat untuk LPG/BBM.</p>
+            </div>
+            <div className="bg-gray-50 rounded-lg p-5 border">
+              <div className="text-sm text-blue-700 font-semibold">2023–Kini</div>
+              <div className="mt-1 font-bold text-gray-900">Fokus Ketahanan Energi</div>
+              <p className="mt-2 text-sm text-gray-600">Optimalisasi distribusi, layanan pelanggan, dan keberlanjutan.</p>
             </div>
           </div>
         </div>
       </section>
 
-      {/* About Preview Section */}
+      {/* Operasional SA Bandung */}
       <section className="py-16 bg-gray-50">
         <div className="container mx-auto px-4">
-          <div className="grid md:grid-cols-2 gap-12 items-center">
-            <div>
-              <h2 className="text-3xl md:text-4xl font-bold text-gray-800 mb-6">
-                Tentang Pertamina Bandung
-              </h2>
-              <p className="text-lg text-gray-600 mb-6">
-                Pertamina Cabang Bandung merupakan bagian dari PT Pertamina (Persero) yang berkomitmen melayani kebutuhan energi masyarakat Bandung dan sekitarnya dengan standar kualitas dan pelayanan terbaik.
-              </p>
-              <p className="text-lg text-gray-600 mb-8">
-                Dengan pengalaman puluhan tahun, kami terus berinovasi untuk memberikan layanan yang lebih baik dan mendukung pertumbuhan ekonomi daerah.
-              </p>
-              <Link
-                href="/peta-sa"
-                className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-8 rounded-lg transition duration-300"
-              >
-                Lihat Peta SA
-              </Link>
-            </div>
-            <div className="bg-gradient-to-br from-blue-600 to-blue-800 rounded-lg p-8 text-white">
-              <h3 className="text-2xl font-bold mb-4">Visi Kami</h3>
-              <p className="text-lg mb-6">
-                Menjadi perusahaan energi nasional kelas dunia yang terpercaya, kompetitif, dan terdepan dalam menjalankan misi pelayanan publik.
-              </p>
-              <h3 className="text-2xl font-bold mb-4">Misi Kami</h3>
-              <p className="text-lg">
-                Mengelola dan mengusahakan kegiatan di bidang energi dan petrokimia, melaksanakan tugas-tugas negara untuk menyediakan BBM dan LPG dalam negeri.
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Services Preview Section */}
-      <section className="py-16 bg-white">
-        <div className="container mx-auto px-4">
           <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-800 mb-4">
-              Layanan Kami
-            </h2>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              Berbagai produk dan layanan energi yang kami sediakan untuk memenuhi kebutuhan masyarakat
-            </p>
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-800 mb-4">Apa yang Dilakukan SA Retail Bandung</h2>
+            <p className="text-xl text-gray-600 max-w-4xl mx-auto">Bidang operasi utama dan tanggung jawab layanan di wilayah Bandung dan sekitarnya.</p>
           </div>
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <div className="bg-gray-50 rounded-lg p-6 text-center hover:shadow-lg transition-shadow duration-300">
-              <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <svg className="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                </svg>
+
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="bg-white rounded-lg p-6 border hover:shadow-sm transition">
+              <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center mb-3">
+                <svg className="w-5 h-5 text-red-600" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
               </div>
-              <h3 className="text-lg font-bold text-gray-800 mb-2">BBM</h3>
-              <p className="text-gray-600 text-sm">Pertalite, Pertamax, Pertamax Turbo, Dexlite</p>
+              <h3 className="font-bold text-gray-900 mb-1">Distribusi BBM Ritel</h3>
+              <p className="text-gray-600 text-sm">Pengelolaan dan pengawasan penyaluran BBM ke SPBU, pemantauan stok dan layanan pelanggan.</p>
             </div>
-            <div className="bg-gray-50 rounded-lg p-6 text-center hover:shadow-lg transition-shadow duration-300">
-              <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
-                </svg>
+            <div className="bg-white rounded-lg p-6 border hover:shadow-sm transition">
+              <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center mb-3">
+                <svg className="w-5 h-5 text-green-600" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"/></svg>
               </div>
-              <h3 className="text-lg font-bold text-gray-800 mb-2">LPG</h3>
-              <p className="text-gray-600 text-sm">LPG 3kg dan 12kg untuk kebutuhan rumah tangga</p>
+              <h3 className="font-bold text-gray-900 mb-1">Penyaluran LPG</h3>
+              <p className="text-gray-600 text-sm">Koordinasi SPBE/agen dan monitoring program Subsidi Tepat untuk LPG rumah tangga.</p>
             </div>
-            <div className="bg-gray-50 rounded-lg p-6 text-center hover:shadow-lg transition-shadow duration-300">
-              <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                </svg>
+            <div className="bg-white rounded-lg p-6 border hover:shadow-sm transition">
+              <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center mb-3">
+                <svg className="w-5 h-5 text-blue-600" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
               </div>
-              <h3 className="text-lg font-bold text-gray-800 mb-2">Pertashop</h3>
-              <p className="text-gray-600 text-sm">Toko retail dengan berbagai produk kebutuhan</p>
+              <h3 className="font-bold text-gray-900 mb-1">Jaringan Ritel & Pertashop</h3>
+              <p className="text-gray-600 text-sm">Pengembangan channel ritel termasuk Pertashop untuk menjangkau wilayah kota/kabupaten.</p>
             </div>
-            <div className="bg-gray-50 rounded-lg p-6 text-center hover:shadow-lg transition-shadow duration-300">
-              <div className="w-12 h-12 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <svg className="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
-                </svg>
+            <div className="bg-white rounded-lg p-6 border hover:shadow-sm transition">
+              <div className="w-10 h-10 bg-amber-100 rounded-full flex items-center justify-center mb-3">
+                <svg className="w-5 h-5 text-amber-600" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>
               </div>
-              <h3 className="text-lg font-bold text-gray-800 mb-2">Pertamina Pay</h3>
-              <p className="text-gray-600 text-sm">Layanan pembayaran digital yang praktis</p>
+              <h3 className="font-bold text-gray-900 mb-1">Digital & Subsidi Tepat</h3>
+              <p className="text-gray-600 text-sm">Implementasi MyPertamina, validasi data konsumen, serta tata kelola penyaluran subsidi.</p>
+            </div>
+            <div className="bg-white rounded-lg p-6 border hover:shadow-sm transition">
+              <div className="w-10 h-10 bg-sky-100 rounded-full flex items-center justify-center mb-3">
+                <svg className="w-5 h-5 text-sky-600" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+              </div>
+              <h3 className="font-bold text-gray-900 mb-1">HSSE & Quality</h3>
+              <p className="text-gray-600 text-sm">Pengawasan kualitas produk dan keselamatan operasi di SPBU/SPBE.</p>
+            </div>
+            <div className="bg-white rounded-lg p-6 border hover:shadow-sm transition">
+              <div className="w-10 h-10 bg-violet-100 rounded-full flex items-center justify-center mb-3">
+                <svg className="w-5 h-5 text-violet-600" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 20h10M12 14v6m8-10a8 8 0 11-16 0 8 8 0 0116 0z"/></svg>
+              </div>
+              <h3 className="font-bold text-gray-900 mb-1">Layanan Masyarakat & CSR</h3>
+              <p className="text-gray-600 text-sm">Edukasi keselamatan energi, pelayanan keluhan, dan program tanggung jawab sosial.</p>
             </div>
           </div>
-          
+
+                     <div className="text-center mt-10">
+             <Link href="/peta-spbu-spbe" className="inline-block bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-8 rounded-lg transition">Lihat Peta SPBU & SPBE</Link>
+           </div>
         </div>
       </section>
+      
 
       {/* CTA Section */}
       <section className="py-16 bg-gradient-to-r from-blue-900 to-blue-700 text-white">
@@ -174,10 +140,10 @@ export default function Home() {
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             
             <Link
-              href="/peta-sa"
+              href="/peta-spbu-spbe"
               className="border-2 border-white hover:bg-white hover:text-blue-900 text-white font-semibold py-3 px-8 rounded-lg transition duration-300"
             >
-              Lihat Peta SA
+              Lihat Peta SPBU & SPBE
             </Link>
           </div>
         </div>

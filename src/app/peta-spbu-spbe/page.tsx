@@ -6,14 +6,13 @@ import { Region, Location } from '@/types/sa'
 import { db } from '@/lib/firebase'
 import { collection, getDocs, onSnapshot } from 'firebase/firestore'
 
-// Mengambil data hanya dari Firestore; tidak ada default seed besar
-
-export default function PetaSAPage() {
+export default function PetaSPBUSPBEPage() {
   const [regions, setRegions] = useState<Region[]>([])
   const [selectedRegion, setSelectedRegion] = useState<Region | null>(null)
   const [selectedLocation, setSelectedLocation] = useState<Location | null>(null)
   const [showRegionModal, setShowRegionModal] = useState(false)
   const [showLocationModal, setShowLocationModal] = useState(false)
+  const [mapSvg, setMapSvg] = useState<string>('')
 
   useEffect(() => {
     const unsub = onSnapshot(collection(db, 'regions'), async (snap) => {
@@ -31,22 +30,47 @@ export default function PetaSAPage() {
     return () => unsub()
   }, [])
 
-  const slugify = (s: string | undefined | null): string => {
-    if (!s) return ''
-    return s
-      .toString()
-      .trim()
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, '-')
-      .replace(/^-+|-+$/g, '')
-  }
+  // Load SVG map
+  useEffect(() => {
+    const loadMap = async () => {
+      try {
+        const res = await fetch('/map.svg', { cache: 'no-store' })
+        if (res.ok) {
+          let text = await res.text()
+          if (text.trim().startsWith('<svg')) {
+            // Add data-region to filled shapes and fix text labels
+            text = text.replace(
+              /(<(?:path|polygon|polyline|rect|circle)[^>]*\bfill="[^"]+"[^>]*\bid="([^"]+)"[^>]*)(>)/gi,
+              (match, start, id, end) => {
+                if (/\bdata-region=/.test(start)) return match
+                const slug = id.toString().trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')
+                return `${start} data-region="${slug}" style="cursor:pointer"${end}`
+              }
+            ).replace(
+              /(<path[^>]*id="[^"]+"[^>]*)(>)/gi,
+              (match, start, end) => {
+                if (!/\bfill=/.test(start)) {
+                  return `${start} fill="#111827"${end}`
+                }
+                return match
+              }
+            )
+            setMapSvg(text)
+          }
+        }
+      } catch {
+        // ignore
+      }
+    }
+    loadMap()
+  }, [])
 
   const getRegionBySlug = (slug: string): Region | null => {
-    const target = slugify(slug)
+    const target = slug.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')
     return (
       regions.find(r => r.id === slug) ||
-      regions.find(r => slugify(r.id) === target) ||
-      regions.find(r => slugify(r.name) === target) ||
+      regions.find(r => r.id.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') === target) ||
+      regions.find(r => r.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') === target) ||
       null
     )
   }
@@ -77,10 +101,10 @@ export default function PetaSAPage() {
       <section className="bg-gradient-to-r from-blue-900 to-blue-700 text-white py-16">
         <div className="container mx-auto px-4 text-center">
           <h1 className="text-4xl md:text-5xl font-bold mb-4">
-            Peta Sales Area Bandung
+            Peta SPBU dan SPBE Bandung
           </h1>
           <p className="text-xl md:text-2xl mb-8 max-w-3xl mx-auto">
-            Temukan lokasi SPBU dan SPBE terdekat di wilayah Sales Area Bandung
+            Temukan lokasi SPBU dan SPBE terdekat di wilayah Bandung dan sekitarnya
           </p>
           <div className="flex flex-wrap justify-center gap-4 text-sm">
             <div className="flex items-center space-x-2">
@@ -101,7 +125,7 @@ export default function PetaSAPage() {
           <div className="bg-white rounded-lg shadow-lg p-6">
             <div className="text-center mb-8">
               <h2 className="text-2xl font-bold text-gray-800 mb-4">
-                Peta SA Bandung
+                Peta SPBU dan SPBE Bandung
               </h2>
               <p className="text-gray-600">
                 Klik pada area wilayah untuk melihat detail SPBU dan SPBE
@@ -109,159 +133,92 @@ export default function PetaSAPage() {
             </div>
 
             {/* Interactive SVG Map */}
-            <div className="relative bg-white rounded-lg overflow-hidden border-2 border-gray-200">
-              <svg
-                viewBox="0 0 600 500"
-                className="w-full h-auto cursor-pointer"
-                style={{ minHeight: '500px' }}
-              >
-                {/* Background */}
-                <rect width="600" height="500" fill="#f8fafc" />
-                
-                {/* Region: Bojonagara (top-left) */}
-                <path
-                  d="M50 50 L150 30 L200 80 L180 120 L120 150 L80 120 Z"
-                  fill="#90EE90"
-                  stroke="#ffffff"
-                  strokeWidth="2"
-                  className="hover:opacity-80 transition-opacity duration-300 cursor-pointer"
-                  onClick={() => { const r = getRegionBySlug('bojonagara'); if (r) handleRegionClick(r) }}
+            <div
+              className="relative bg-white rounded-lg overflow-hidden border-2 border-gray-200 mx-auto max-w-[1200px]"
+              onClick={(e) => {
+                const el = e.target as HTMLElement
+                const slug = el.getAttribute('data-region') || el.closest('[data-region]')?.getAttribute('data-region')
+                if (slug) {
+                  const r = getRegionBySlug(slug)
+                  if (r) handleRegionClick(r)
+                }
+              }}
+            >
+              {mapSvg ? (
+                <div
+                  className="w-full"
+                  dangerouslySetInnerHTML={{ __html: mapSvg.replace('<svg ', '<svg style=\"width:100%;height:auto;min-height:650px\" ') }}
                 />
-                <text x="100" y="90" textAnchor="middle" className="text-sm font-semibold fill-gray-800 pointer-events-none">
-                  Bojonagara
-                </text>
-
-                {/* Region: Cibeunying (top-middle) */}
-                <path
-                  d="M150 30 L350 20 L400 60 L380 100 L320 130 L200 80 L150 30"
-                  fill="#32CD32"
-                  stroke="#ffffff"
-                  strokeWidth="2"
-                  className="hover:opacity-80 transition-opacity duration-300 cursor-pointer"
-                  onClick={() => { const r = getRegionBySlug('cibeunying'); if (r) handleRegionClick(r) }}
-                />
-                <text x="275" y="70" textAnchor="middle" className="text-sm font-semibold fill-gray-800 pointer-events-none">
-                  Cibeunying
-                </text>
-
-                {/* Region: Tegallega (middle-left) */}
-                <path
-                  d="M50 50 L80 120 L120 150 L150 200 L100 250 L60 220 L50 50"
-                  fill="#FFB6C1"
-                  stroke="#ffffff"
-                  strokeWidth="2"
-                  className="hover:opacity-80 transition-opacity duration-300 cursor-pointer"
-                  onClick={() => { const r = getRegionBySlug('tegallega'); if (r) handleRegionClick(r) }}
-                />
-                <text x="85" y="180" textAnchor="middle" className="text-sm font-semibold fill-gray-800 pointer-events-none">
-                  Tegallega
-                </text>
-
-                {/* Region: Karees (center) */}
-                <path
-                  d="M180 120 L320 130 L350 180 L330 220 L280 250 L150 200 L180 120"
-                  fill="#87CEEB"
-                  stroke="#ffffff"
-                  strokeWidth="2"
-                  className="hover:opacity-80 transition-opacity duration-300 cursor-pointer"
-                  onClick={() => { const r = getRegionBySlug('karees'); if (r) handleRegionClick(r) }}
-                />
-                <text x="250" y="200" textAnchor="middle" className="text-sm font-semibold fill-gray-800 pointer-events-none">
-                  Karees
-                </text>
-
-                {/* Region: Ujung Berung (top-right) */}
-                <path
-                  d="M350 20 L500 10 L550 50 L530 90 L470 120 L400 60 L350 20"
-                  fill="#DDA0DD"
-                  stroke="#ffffff"
-                  strokeWidth="2"
-                  className="hover:opacity-80 transition-opacity duration-300 cursor-pointer"
-                  onClick={() => { const r = getRegionBySlug('ujung-berung'); if (r) handleRegionClick(r) }}
-                />
-                <text x="450" y="60" textAnchor="middle" className="text-sm font-semibold fill-gray-800 pointer-events-none">
-                  Ujung Berung
-                </text>
-
-                {/* Region: Gede Bage (bottom-right) */}
-                <path
-                  d="M400 60 L470 120 L530 90 L550 150 L520 200 L480 250 L350 180 L320 130 L400 60"
-                  fill="#FFA500"
-                  stroke="#ffffff"
-                  strokeWidth="2"
-                  className="hover:opacity-80 transition-opacity duration-300 cursor-pointer"
-                  onClick={() => { const r = getRegionBySlug('gede-bage'); if (r) handleRegionClick(r) }}
-                />
-                <text x="450" y="200" textAnchor="middle" className="text-sm font-semibold fill-gray-800 pointer-events-none">
-                  Gede Bage
-                </text>
-
-                {/* City Label */}
-                <text x="300" y="480" textAnchor="middle" className="text-2xl font-bold fill-gray-400 opacity-50 pointer-events-none">
-                  BANDUNG
-                </text>
-              </svg>
+              ) : (
+                <div className="w-full h-[650px] flex items-center justify-center text-gray-500">
+                  Peta sedang dimuat...
+                </div>
+              )}
             </div>
 
             {/* Legend */}
-            <div className="mt-6 grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
-              {regions.map((region) => (
-                <div key={region.id} className="flex items-center space-x-2">
-                  <div 
-                    className="w-4 h-4 rounded"
-                    style={{ backgroundColor: region.color }}
-                  ></div>
-                  <span className="font-medium">{region.name}</span>
-                  <span className="text-gray-500">({region.spbuCount} SPBU, {region.spbeCount} SPBE)</span>
-                </div>
-              ))}
-            </div>
+            {regions.length > 0 && (
+              <div className="mt-6 grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
+                {regions.map((region) => (
+                  <div key={region.id} className="flex items-center space-x-2">
+                    <div 
+                      className="w-4 h-4 rounded"
+                      style={{ backgroundColor: region.color }}
+                    ></div>
+                    <span className="font-medium">{region.name}</span>
+                    <span className="text-gray-500">({region.spbuCount} SPBU, {region.spbeCount} SPBE)</span>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       </section>
 
       {/* Region List Section */}
-      <section className="py-12 bg-white">
-        <div className="container mx-auto px-4">
-          <h2 className="text-3xl font-bold text-center mb-12">Daftar Wilayah SA</h2>
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {regions.map((region) => (
-              <div
-                key={region.id}
-                className="bg-gray-50 rounded-lg p-6 hover:shadow-lg transition-shadow duration-300 cursor-pointer"
-                onClick={() => handleRegionClick(region)}
-              >
-                <div className="flex items-start justify-between mb-4">
-                  <div>
-                    <h3 className="font-bold text-lg text-gray-800">{region.name}</h3>
-                    <p className="text-sm text-gray-600">Sales Area</p>
+      {regions.length > 0 && (
+        <section className="py-12 bg-white">
+          <div className="container mx-auto px-4">
+            <h2 className="text-3xl font-bold text-center mb-12">Daftar Wilayah</h2>
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {regions.map((region) => (
+                <div
+                  key={region.id}
+                  className="bg-gray-50 rounded-lg p-6 hover:shadow-lg transition-shadow duration-300 cursor-pointer"
+                  onClick={() => handleRegionClick(region)}
+                >
+                  <div className="flex items-start justify-between mb-4">
+                    <div>
+                      <h3 className="font-bold text-lg text-gray-800">{region.name}</h3>
+                      <p className="text-sm text-gray-600">Wilayah Bandung</p>
+                    </div>
+                    <div 
+                      className="w-6 h-6 rounded"
+                      style={{ backgroundColor: region.color }}
+                    ></div>
                   </div>
-                  <div 
-                    className="w-6 h-6 rounded"
-                    style={{ backgroundColor: region.color }}
-                  ></div>
+                  <div className="space-y-2">
+                    <p className="text-sm">
+                      <span className="font-medium">SPBU:</span> {region.spbuCount} lokasi
+                    </p>
+                    <p className="text-sm">
+                      <span className="font-medium">SPBE:</span> {region.spbeCount} lokasi
+                    </p>
+                    <p className="text-sm">
+                      <span className="font-medium">Total:</span> {region.locations.length} lokasi
+                    </p>
+                  </div>
+                  <div className="mt-4 pt-4 border-t border-gray-200">
+                    <button className="text-blue-600 hover:text-blue-800 text-sm font-medium">
+                      Lihat Detail →
+                    </button>
+                  </div>
                 </div>
-                <div className="space-y-2">
-                  <p className="text-sm">
-                    <span className="font-medium">SPBU:</span> {region.spbuCount} lokasi
-                  </p>
-                  <p className="text-sm">
-                    <span className="font-medium">SPBE:</span> {region.spbeCount} lokasi
-                  </p>
-                  <p className="text-sm">
-                    <span className="font-medium">Total:</span> {region.locations.length} lokasi
-                  </p>
-                </div>
-                <div className="mt-4 pt-4 border-t border-gray-200">
-                  <button className="text-blue-600 hover:text-blue-800 text-sm font-medium">
-                    Lihat Detail →
-                  </button>
-                </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       {/* Region Modal */}
       {showRegionModal && selectedRegion && (
@@ -276,7 +233,7 @@ export default function PetaSAPage() {
                   ></div>
                   <div>
                     <h3 className="text-2xl font-bold text-gray-800">{selectedRegion.name}</h3>
-                    <p className="text-gray-600">Sales Area</p>
+                    <p className="text-gray-600">Wilayah Bandung</p>
                   </div>
                 </div>
                 <button
@@ -427,10 +384,10 @@ export default function PetaSAPage() {
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link
-              href="/peta-sa"
+              href="/peta-spbu-spbe"
               className="bg-yellow-500 hover:bg-yellow-600 text-black font-semibold py-3 px-8 rounded-lg transition duration-300"
             >
-              Lihat Peta SA
+              Lihat Peta SPBU & SPBE
             </Link>
           </div>
         </div>

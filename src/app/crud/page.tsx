@@ -51,6 +51,10 @@ const emptyRegion = (): Region => ({
 })
 
 export default function CrudPage() {
+  // Render-only-on-client to avoid hydration mismatch from browser extensions adding attrs
+  const [mounted, setMounted] = useState(false)
+  useEffect(() => { setMounted(true) }, [])
+
   const [regions, setRegions] = useState<Region[]>([])
   const [selectedRegionIndex, setSelectedRegionIndex] = useState<number | null>(null)
   const [editingRegion, setEditingRegion] = useState<Region | null>(null)
@@ -242,6 +246,17 @@ export default function CrudPage() {
     } finally {
       setSaving(false)
     }
+  }
+
+  if (!mounted) {
+    return (
+      <main className="min-h-screen bg-gray-50 p-6 text-gray-800">
+        <div className="container mx-auto">
+          <h1 className="text-2xl font-bold mb-1 text-gray-900">Manajemen Data Peta (CRUD)</h1>
+          <div className="mt-4 h-40 rounded bg-white border animate-pulse" />
+        </div>
+      </main>
+    )
   }
 
   return (
