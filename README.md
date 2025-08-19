@@ -9,7 +9,7 @@ Website untuk menampilkan peta SPBU dan SPBE wilayah Bandung.
 npm install
 ```
 
-### 2. Setup Supabase (Rekomendasi)
+### 2. Setup Supabase
 1. Buat akun di [supabase.com](https://supabase.com)
 2. Buat project baru
 3. Copy URL dan Anon Key dari Settings > API
@@ -17,6 +17,7 @@ npm install
 ```env
 NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+NEXT_PUBLIC_CRUD_SECRET=your_crud_secret_key
 ```
 
 ### 3. Setup Database Tables
@@ -48,13 +49,28 @@ CREATE TABLE locations (
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
+-- Create changes table for audit log
+CREATE TABLE changes (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  action TEXT NOT NULL,
+  entity TEXT NOT NULL,
+  region_id TEXT,
+  location_id TEXT,
+  before JSONB,
+  after JSONB,
+  by TEXT NOT NULL
+);
+
 -- Enable Row Level Security
 ALTER TABLE regions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE locations ENABLE ROW LEVEL SECURITY;
+ALTER TABLE changes ENABLE ROW LEVEL SECURITY;
 
 -- Create policies (allow all for demo)
 CREATE POLICY "Allow all on regions" ON regions FOR ALL USING (true);
 CREATE POLICY "Allow all on locations" ON locations FOR ALL USING (true);
+CREATE POLICY "Allow all on changes" ON changes FOR ALL USING (true);
 ```
 
 ### 4. Setup Storage (Opsional)
@@ -76,17 +92,11 @@ npm run dev
 3. Set environment variables di Vercel
 4. Deploy otomatis
 
-### Firebase Hosting (Alternatif)
-```bash
-npm run build
-firebase deploy
-```
-
 ## Fitur
 
 - 🗺️ Peta interaktif SPBU & SPBE
 - 📊 Dashboard CRUD data
-- 🔄 Realtime updates
+- 🔄 Realtime updates dengan Supabase
 - 📱 Responsive design
 - 🎨 Modern UI dengan Tailwind CSS
 
@@ -108,3 +118,11 @@ firebase deploy
 - `services`: Array layanan
 - `hours`: Jam operasional
 - `phone`: Nomor telepon
+
+## Teknologi
+
+- **Next.js 15** - React framework
+- **Supabase** - Database & Realtime
+- **TypeScript** - Type safety
+- **Tailwind CSS** - Styling
+- **PostgreSQL** - Database engine

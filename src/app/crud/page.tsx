@@ -2,26 +2,11 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import { Region, Location, LocationType } from '@/types/sa'
-import { db } from '@/lib/firebase'
-import {
-  addDoc,
-  collection,
-  deleteDoc,
-  doc,
-  getDocs,
-  limit,
-  onSnapshot,
-  orderBy,
-  query,
-  serverTimestamp,
-  setDoc,
-  updateDoc,
-  Timestamp
-} from 'firebase/firestore'
+import { supabase } from '@/lib/supabase'
 
 interface ChangeItem {
   id: string
-  at?: Timestamp
+  at?: string
   by?: string
   action: 'create' | 'update' | 'delete'
   entity: 'region' | 'location'
@@ -80,22 +65,54 @@ export default function CrudPage() {
 
   // Subscribe regions + locations realtime
   useEffect(() => {
-    const unsubRegions = onSnapshot(collection(db, 'regions'), async (snap) => {
-      const next: Region[] = []
-      for (const d of snap.docs) {
-        const base = d.data() as Region
-        // Load locations subcollection
-        const locSnap = await getDocs(collection(db, 'regions', d.id, 'locations'))
-        const locations: Location[] = locSnap.docs.map(l => l.data() as Location)
-        const spbuCount = locations.filter(l => l.type === 'SPBU').length
-        const spbeCount = locations.filter(l => l.type === 'SPBE').length
-        next.push({ ...base, id: d.id, locations, spbuCount, spbeCount })
+    const fetchData = async () => {
+      try {
+        // Fetch regions
+        const { data: regionsData, error: regionsError } = await supabase
+          .from('regions')
+          .select('*')
+        
+        if (regionsError) throw regionsError
+
+        // Fetch locations for each region
+        const regionsWithLocations: Region[] = []
+        for (const region of regionsData || []) {
+          const { data: locationsData, error: locationsError } = await supabase
+            .from('locations')
+            .select('*')
+            .eq('region_id', region.id)
+          
+          if (locationsError) throw locationsError
+          
+          const locations = locationsData || []
+          const spbuCount = locations.filter(l => l.type === 'SPBU').length
+          const spbeCount = locations.filter(l => l.type === 'SPBE').length
+          
+          regionsWithLocations.push({
+            ...region,
+            locations,
+            spbuCount,
+            spbeCount
+          })
+        }
+        
+        setRegions(regionsWithLocations)
+      } catch (error) {
+        console.error('Error fetching data:', error)
       }
-      setRegions(next)
-    })
+    }
+
+    fetchData()
+
+    // Set up realtime subscription
+    const subscription = supabase
+      .channel('regions-changes')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'regions' }, fetchData)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'locations' }, fetchData)
+      .subscribe()
 
     return () => {
-      unsubRegions()
+      subscription.unsubscribe()
     }
   }, [])
 
@@ -135,15 +152,39 @@ export default function CrudPage() {
   const deleteRegion = async (index: number) => {
     if (!hasAccess) return
     const region = regions[index]
-    await deleteDoc(doc(db, 'regions', region.id))
-    await addDoc(collection(db, 'changes'), {
-      at: serverTimestamp(),
-      action: 'delete',
-      entity: 'region',
-      regionId: region.id,
-      before: region,
-      by: 'shared-secret'
-    })
+    
+    try {
+      // Delete all locations first
+      const { error: locationsError } = await supabase
+        .from('locations')
+        .delete()
+        .eq('region_id', region.id)
+      
+      if (locationsError) throw locationsError
+      
+      // Delete region
+      const { error: regionError } = await supabase
+        .from('regions')
+        .delete()
+        .eq('id', region.id)
+      
+      if (regionError) throw regionError
+      
+      // Log change
+      await supabase
+        .from('changes')
+        .insert({
+          at: new Date().toISOString(),
+          action: 'delete',
+          entity: 'region',
+          regionId: region.id,
+          before: region,
+          by: 'shared-secret'
+        })
+    } catch (error) {
+      console.error('Error deleting region:', error)
+      alert('Gagal menghapus wilayah')
+    }
   }
 
   const addLocation = () => {
@@ -173,54 +214,121 @@ export default function CrudPage() {
   const commitRegion = async () => {
     if (!hasAccess) return
     if (!editingRegion) return
-    const payload: Region = {
-      ...editingRegion,
-      spbuCount: editingRegion.locations.filter(l => l.type === 'SPBU').length,
-      spbeCount: editingRegion.locations.filter(l => l.type === 'SPBE').length,
-    }
-
-    // Cegah duplikasi wilayah saat create
-    if (selectedRegionIndex == null && regions.some(r => r.id === payload.id)) {
-      alert('Wilayah sudah ada. Silakan pilih wilayah lain atau edit yang ada.')
-      return
-    }
-
-    if (selectedRegionIndex == null) {
-      // create region doc and its locations
-      await setDoc(doc(db, 'regions', payload.id), {
-        id: payload.id,
-        name: payload.name,
-        color: payload.color,
-        spbuCount: payload.spbuCount,
-        spbeCount: payload.spbeCount
-      })
-      for (const loc of payload.locations) {
-        await setDoc(doc(db, 'regions', payload.id, 'locations', loc.id), loc)
+    
+    setSaving(true)
+    try {
+      const payload: Region = {
+        ...editingRegion,
+        spbuCount: editingRegion.locations.filter(l => l.type === 'SPBU').length,
+        spbeCount: editingRegion.locations.filter(l => l.type === 'SPBE').length,
       }
-      await addDoc(collection(db, 'changes'), {
-        at: serverTimestamp(), action: 'create', entity: 'region', regionId: payload.id, after: payload, by: 'shared-secret'
-      })
-    } else {
-      const old = regions[selectedRegionIndex]
-      await updateDoc(doc(db, 'regions', payload.id), {
-        name: payload.name,
-        color: payload.color,
-        spbuCount: payload.spbuCount,
-        spbeCount: payload.spbeCount
-      })
-      // Replace all locations of the region to keep it simple
-      const oldLocSnap = await getDocs(collection(db, 'regions', payload.id, 'locations'))
-      await Promise.all(oldLocSnap.docs.map(d => deleteDoc(d.ref)))
-      for (const loc of payload.locations) {
-        await setDoc(doc(db, 'regions', payload.id, 'locations', loc.id), loc)
+
+      // Cegah duplikasi wilayah saat create
+      if (selectedRegionIndex == null && regions.some(r => r.id === payload.id)) {
+        alert('Wilayah sudah ada. Silakan pilih wilayah lain atau edit yang ada.')
+        return
       }
-      await addDoc(collection(db, 'changes'), {
-        at: serverTimestamp(), action: 'update', entity: 'region', regionId: payload.id, before: old, after: payload, by: 'shared-secret'
-      })
+
+      if (selectedRegionIndex == null) {
+        // Create region
+        const { error: regionError } = await supabase
+          .from('regions')
+          .insert({
+            id: payload.id,
+            name: payload.name,
+            color: payload.color,
+            spbu_count: payload.spbuCount,
+            spbe_count: payload.spbeCount
+          })
+        
+        if (regionError) throw regionError
+        
+        // Create locations
+        if (payload.locations.length > 0) {
+          const locationsToInsert = payload.locations.map(loc => ({
+            ...loc,
+            region_id: payload.id
+          }))
+          
+          const { error: locationsError } = await supabase
+            .from('locations')
+            .insert(locationsToInsert)
+          
+          if (locationsError) throw locationsError
+        }
+        
+        // Log change
+        await supabase
+          .from('changes')
+          .insert({
+            at: new Date().toISOString(),
+            action: 'create',
+            entity: 'region',
+            regionId: payload.id,
+            after: payload,
+            by: 'shared-secret'
+          })
+      } else {
+        const old = regions[selectedRegionIndex]
+        
+        // Update region
+        const { error: regionError } = await supabase
+          .from('regions')
+          .update({
+            name: payload.name,
+            color: payload.color,
+            spbu_count: payload.spbuCount,
+            spbe_count: payload.spbeCount
+          })
+          .eq('id', payload.id)
+        
+        if (regionError) throw regionError
+        
+        // Delete old locations
+        const { error: deleteError } = await supabase
+          .from('locations')
+          .delete()
+          .eq('region_id', payload.id)
+        
+        if (deleteError) throw deleteError
+        
+        // Insert new locations
+        if (payload.locations.length > 0) {
+          const locationsToInsert = payload.locations.map(loc => ({
+            ...loc,
+            region_id: payload.id
+          }))
+          
+          const { error: locationsError } = await supabase
+            .from('locations')
+            .insert(locationsToInsert)
+          
+          if (locationsError) throw locationsError
+        }
+        
+        // Log change
+        await supabase
+          .from('changes')
+          .insert({
+            at: new Date().toISOString(),
+            action: 'update',
+            entity: 'region',
+            regionId: payload.id,
+            before: old,
+            after: payload,
+            by: 'shared-secret'
+          })
+      }
+      
+      setEditingRegion(null)
+      setEditingLocation(null)
+      setEditingLocationIndex(null)
+    } catch (error) {
+      console.error('Error saving region:', error)
+      alert('Gagal menyimpan wilayah')
+    } finally {
+      setSaving(false)
     }
-    setEditingRegion(null)
-    setEditingLocation(null)
-    setEditingLocationIndex(null)
   }
 
   const commitLocation = () => {
@@ -442,12 +550,32 @@ function ChangeHistory() {
   const [items, setItems] = useState<ChangeItem[]>([])
 
   useEffect(() => {
-    const q = query(collection(db, 'changes'), orderBy('at', 'desc'), limit(50))
-    const unsub = onSnapshot(q, (snap) => {
-      const rows: ChangeItem[] = snap.docs.map(d => ({ id: d.id, ...(d.data() as Omit<ChangeItem, 'id'>) }))
-      setItems(rows)
-    })
-    return () => unsub()
+    const fetchChanges = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('changes')
+          .select('*')
+          .order('at', { ascending: false })
+          .limit(50)
+        
+        if (error) throw error
+        setItems(data || [])
+      } catch (error) {
+        console.error('Error fetching changes:', error)
+      }
+    }
+
+    fetchChanges()
+
+    // Set up realtime subscription
+    const subscription = supabase
+      .channel('changes-changes')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'changes' }, fetchChanges)
+      .subscribe()
+
+    return () => {
+      subscription.unsubscribe()
+    }
   }, [])
 
   return (
@@ -462,7 +590,7 @@ function ChangeHistory() {
       <div className="max-h-64 overflow-auto text-sm">
         {items.map((it) => (
           <div key={it.id} className="grid grid-cols-5 gap-2 px-3 py-2 border-t">
-            <div>{it.at?.toDate ? it.at.toDate().toLocaleString() : '-'}</div>
+            <div>{it.at ? new Date(it.at).toLocaleString() : '-'}</div>
             <div>{it.by || 'admin'}</div>
             <div>{it.action}</div>
             <div>{it.entity}{it.locationId ? `/${it.locationId}` : ''}</div>

@@ -3,8 +3,7 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { Region, Location } from '@/types/sa'
-import { db } from '@/lib/firebase'
-import { collection, getDocs, onSnapshot } from 'firebase/firestore'
+import { supabase } from '@/lib/supabase'
 
 export default function PetaSPBUSPBEPage() {
   const [regions, setRegions] = useState<Region[]>([])
@@ -15,19 +14,55 @@ export default function PetaSPBUSPBEPage() {
   const [mapSvg, setMapSvg] = useState<string>('')
 
   useEffect(() => {
-    const unsub = onSnapshot(collection(db, 'regions'), async (snap) => {
-      const next: Region[] = []
-      for (const d of snap.docs) {
-        const base = d.data() as Region
-        const locSnap = await getDocs(collection(db, 'regions', d.id, 'locations'))
-        const locations: Location[] = locSnap.docs.map(l => l.data() as Location)
-        const spbuCount = locations.filter(l => l.type === 'SPBU').length
-        const spbeCount = locations.filter(l => l.type === 'SPBE').length
-        next.push({ ...base, id: d.id, locations, spbuCount, spbeCount })
+    const fetchData = async () => {
+      try {
+        // Fetch regions
+        const { data: regionsData, error: regionsError } = await supabase
+          .from('regions')
+          .select('*')
+        
+        if (regionsError) throw regionsError
+
+        // Fetch locations for each region
+        const regionsWithLocations: Region[] = []
+        for (const region of regionsData || []) {
+          const { data: locationsData, error: locationsError } = await supabase
+            .from('locations')
+            .select('*')
+            .eq('region_id', region.id)
+          
+          if (locationsError) throw locationsError
+          
+          const locations = locationsData || []
+          const spbuCount = locations.filter(l => l.type === 'SPBU').length
+          const spbeCount = locations.filter(l => l.type === 'SPBE').length
+          
+          regionsWithLocations.push({
+            ...region,
+            locations,
+            spbuCount,
+            spbeCount
+          })
+        }
+        
+        if (regionsWithLocations.length) setRegions(regionsWithLocations)
+      } catch (error) {
+        console.error('Error fetching data:', error)
       }
-      if (next.length) setRegions(next)
-    })
-    return () => unsub()
+    }
+
+    fetchData()
+
+    // Set up realtime subscription
+    const subscription = supabase
+      .channel('regions-changes')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'regions' }, fetchData)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'locations' }, fetchData)
+      .subscribe()
+
+    return () => {
+      subscription.unsubscribe()
+    }
   }, [])
 
   // Load SVG map
