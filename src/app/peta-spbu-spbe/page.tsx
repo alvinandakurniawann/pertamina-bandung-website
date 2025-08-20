@@ -226,7 +226,8 @@ export default function PetaSPBUSPBEPage() {
         `
         svgEl.insertBefore(styleEl, svgEl.firstChild)
 
-        // Clear any previous data-region tags (for hot reload or re-process)
+        // Clear previous overlays/tags on each re-process
+        svgEl.querySelectorAll('.region-hit').forEach(n => n.parentElement?.removeChild(n))
         svgEl.querySelectorAll('[data-region]').forEach(n => n.removeAttribute('data-region'))
 
         // Build a set of normalized region names from DB
@@ -361,6 +362,9 @@ export default function PetaSPBUSPBEPage() {
   }
 
   const handleRegionClick = (region: UiRegion) => {
+    // Reset previously selected location/modal state to avoid stale handlers
+    setSelectedLocation(null)
+    setShowLocationModal(false)
     setSelectedRegion(region)
     setShowRegionModal(true)
   }
@@ -404,6 +408,74 @@ export default function PetaSPBUSPBEPage() {
             <div
               className="relative bg-white rounded-lg overflow-hidden border-2 border-gray-200 mx-auto max-w-[1200px]"
               ref={svgContainerRef}
+              onClick={(e) => {
+                const svg = svgContainerRef.current?.querySelector('svg') as SVGSVGElement | null
+                if (!svg) return
+                dlog('click container', e.type)
+                let slug: string | null = null
+                const el = e.target as Element
+                slug = el.getAttribute?.('data-region') || el.closest?.('[data-region]')?.getAttribute('data-region') || null
+                if (!slug) {
+                  const hits = (document.elementsFromPoint?.(e.clientX, e.clientY) || []) as Element[]
+                  for (const h of hits) {
+                    const s = h.getAttribute?.('data-region') || h.closest?.('[data-region]')?.getAttribute('data-region')
+                    if (s) { slug = s; break }
+                  }
+                }
+                if (!slug) {
+                  try {
+                    const candidates = Array.from(svg.querySelectorAll('[data-region]')) as SVGGraphicsElement[]
+                    if (candidates.length) {
+                      const ctm = svg.getScreenCTM()
+                      if (ctm) {
+                        const pt = svg.createSVGPoint()
+                        pt.x = (e as any).clientX
+                        pt.y = (e as any).clientY
+                        const loc = pt.matrixTransform(ctm.inverse())
+                        for (const cand of candidates) {
+                          const b = cand.getBBox()
+                          if (loc.x >= b.x && loc.x <= b.x + b.width && loc.y >= b.y && loc.y <= b.y + b.height) {
+                            slug = cand.getAttribute('data-region')
+                            break
+                          }
+                        }
+                      }
+                    }
+                  } catch {}
+                }
+                if (!slug) {
+                  try {
+                    const idNodes = Array.from(svg.querySelectorAll('[id]')) as SVGGraphicsElement[]
+                    const centers: { slug: string; cx: number; cy: number }[] = []
+                    for (const n of idNodes) {
+                      const rawId = (n.getAttribute('id') || '').trim()
+                      const s = normalizeSlug(rawId)
+                      if (!regionsLookup.knownSlugs.has(s)) continue
+                      const b = n.getBBox()
+                      centers.push({ slug: s, cx: b.x + b.width / 2, cy: b.y + b.height / 2 })
+                    }
+                    const ctm = svg.getScreenCTM()
+                    if (centers.length && ctm) {
+                      const pt = svg.createSVGPoint()
+                      pt.x = (e as any).clientX
+                      pt.y = (e as any).clientY
+                      const loc = pt.matrixTransform(ctm.inverse())
+                      let bestSlug: string | null = null
+                      let bestD = Number.POSITIVE_INFINITY
+                      for (const c of centers) {
+                        const dx = c.cx - (loc as any).x
+                        const dy = c.cy - (loc as any).y
+                        const d = dx*dx + dy*dy
+                        if (d < bestD) { bestD = d; bestSlug = c.slug }
+                      }
+                      slug = bestSlug
+                    }
+                  } catch {}
+                }
+                if (!slug) return
+                const region = getRegionByAny(slug)
+                if (region) handleRegionClick(region)
+              }}
             >
               {mapSvg ? (
                 <div className="w-full" dangerouslySetInnerHTML={{ __html: mapSvg.replace('<svg ', '<svg style=\"width:100%;height:auto;min-height:650px\" ') }} />
