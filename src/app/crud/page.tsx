@@ -370,7 +370,7 @@ export default function CrudPage() {
   return (
     <main className="min-h-screen bg-gray-50 p-6 text-gray-800">
       <div className="container mx-auto">
-        <h1 className="text-2xl text-center font-bold mb-1 text-gray-900">Manajemen Data Peta (CRUD)</h1>
+        <h1 className="text-2xl font-bold mb-1 text-gray-900">Manajemen Data Peta (CRUD)</h1>
         <p className="text-sm text-gray-600 mb-3">Halaman ini tersembunyi dari header. Akses via /crud</p>
 
         <div className="mb-4 p-3 border rounded bg-white">

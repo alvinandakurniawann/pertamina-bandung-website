@@ -1,5 +1,5 @@
-  'use client'
-// ini versi yang keacak mapnya
+'use client'
+
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
@@ -55,24 +55,6 @@ export default function PetaSPBUSPBEPage() {
   const searchParams = useSearchParams()
   const debug = (searchParams?.get('debug') === '1')
   const dlog = (...args: any[]) => { if (debug) console.log('[PETA]', ...args) }
-
-  // Helper function to calculate text similarity
-  const calculateTextSimilarity = (text1: string, text2: string): number => {
-    const t1 = text1.toLowerCase().trim()
-    const t2 = text2.toLowerCase().trim()
-    
-    if (t1 === t2) return 1.0
-    if (t1.includes(t2) || t2.includes(t1)) return 0.8
-    
-    // Simple character-based similarity
-    const chars1 = new Set(t1.split(''))
-    const chars2 = new Set(t2.split(''))
-    const intersection = new Set([...chars1].filter(x => chars2.has(x)))
-    const union = new Set([...chars1, ...chars2])
-    
-    return intersection.size / union.size
-  }
-
   const [regions, setRegions] = useState<UiRegion[]>([])
   const [selectedRegion, setSelectedRegion] = useState<UiRegion | null>(null)
   const [selectedLocation, setSelectedLocation] = useState<UiLocation | null>(null)
@@ -90,8 +72,8 @@ export default function PetaSPBUSPBEPage() {
           supabase.from('locations').select('*'),
         ])
         if (regionsError) throw regionsError
-          if (locationsError) throw locationsError
-          
+        if (locationsError) throw locationsError
+
         const locsByRegion = new Map<string, UiLocation[]>()
         for (const loc of (dbLocations || []) as DbLocation[]) {
           const arr = locsByRegion.get(loc.region_id) || []
@@ -140,12 +122,9 @@ export default function PetaSPBUSPBEPage() {
       dlog('click', e.type)
       let slug: string | null = null
       const el = e.target as Element
-      
-      // Step 1: Check clicked element or closest parent with data-region
       slug = el.getAttribute?.('data-region') || el.closest?.('[data-region]')?.getAttribute('data-region') || null
       if (debug) dlog('step1 target/closest slug =', slug)
 
-      // Step 2: Check elementsFromPoint if step 1 failed
       if (!slug) {
         const hits = (document.elementsFromPoint?.(e.clientX, e.clientY) || []) as Element[]
         for (const h of hits) {
@@ -155,7 +134,6 @@ export default function PetaSPBUSPBEPage() {
         if (debug) dlog('step2 elementsFromPoint slug =', slug)
       }
 
-      // Step 3: Check bounding box of existing data-region elements if step 2 failed
       if (!slug) {
         try {
           const candidates = Array.from(svg.querySelectorAll('[data-region]')) as SVGGraphicsElement[]
@@ -179,17 +157,43 @@ export default function PetaSPBUSPBEPage() {
         if (debug) dlog('step3 bbox slug =', slug)
       }
 
-      // No more fallbacks - if we can't find a region, don't guess
       if (!slug) {
-        dlog('No region found for click at', e.clientX, e.clientY)
-        return
+        // Final fallback: compute nearest label using current inline svg ids
+        try {
+          const idNodes = Array.from(svg.querySelectorAll('[id]')) as SVGGraphicsElement[]
+          const centers: { slug: string; cx: number; cy: number }[] = []
+          for (const n of idNodes) {
+            const rawId = (n.getAttribute('id') || '').trim()
+            const s = normalizeSlug(rawId)
+            if (!regionsLookup.knownSlugs.has(s)) continue
+            const b = n.getBBox()
+            centers.push({ slug: s, cx: b.x + b.width / 2, cy: b.y + b.height / 2 })
+          }
+          const ctm = svg.getScreenCTM()
+          if (centers.length && ctm) {
+            const pt = svg.createSVGPoint()
+            pt.x = e.clientX
+            pt.y = e.clientY
+            const loc = pt.matrixTransform(ctm.inverse())
+            let bestSlug: string | null = null
+            let bestD = Number.POSITIVE_INFINITY
+            for (const c of centers) {
+              const dx = c.cx - (loc as any).x
+              const dy = c.cy - (loc as any).y
+              const d = dx*dx + dy*dy
+              if (d < bestD) { bestD = d; bestSlug = c.slug }
+            }
+            slug = bestSlug
+          }
+        } catch {}
+        if (debug) dlog('step4 nearest-label slug =', slug)
       }
 
+      if (!slug) return
       if (debug) {
         try { svg.querySelectorAll('.region-hit.active').forEach(n => n.classList.remove('active')) } catch {}
         try { svg.querySelectorAll(`[data-region="${slug}"]`).forEach(n => n.classList.add('active')) } catch {}
       }
-      
       const region = getRegionByAny(slug)
       if (region) handleRegionClick(region)
       else dlog('No region matched for slug', slug)
@@ -202,8 +206,6 @@ export default function PetaSPBUSPBEPage() {
   }, [regions, mapSvg])
 
   useEffect(() => {
-    if (regions.length === 0) return // Wait for regions to be loaded
-    
     const loadMap = async () => {
       try {
         const res = await fetch('/map.svg', { cache: 'no-store' })
@@ -215,247 +217,122 @@ export default function PetaSPBUSPBEPage() {
         const doc = parser.parseFromString(raw, 'image/svg+xml')
         const svgEl = doc.documentElement as unknown as SVGSVGElement
 
-        // Add CSS for clickable areas
-        const styleEl = document.createElement('style')
+        const styleEl = doc.createElementNS('http://www.w3.org/2000/svg', 'style')
         styleEl.textContent = `
-          .region-hit {
-            pointer-events: auto !important;
-            cursor: pointer !important;
-            ${debug ? `
-              stroke: red !important;
-              stroke-width: 3px !important;
-              fill: rgba(255, 0, 0, 0.2) !important;
-              opacity: 0.8 !important;
-            ` : ''}
-          }
-          text, tspan {
-            pointer-events: none !important;
-          }
+          [data-region] { cursor: pointer; transition: filter .15s ease; }
+          text, tspan { pointer-events: none; }
+          .region-hit { fill: ${debug ? '#ff0000' : '#000'}; fill-opacity: ${debug ? '0.12' : '0.03'}; stroke: ${debug ? '#ff0000' : 'none'}; stroke-opacity: ${debug ? '0.5' : '0'}; pointer-events: auto; }
+          .region-hit:hover, .region-hit.active { filter: drop-shadow(0 0 3px rgba(0,0,0,0.25)); }
         `
-        svgEl.appendChild(styleEl)
+        svgEl.insertBefore(styleEl, svgEl.firstChild)
 
         // Clear previous overlays/tags on each re-process
         svgEl.querySelectorAll('.region-hit').forEach(n => n.parentElement?.removeChild(n))
         svgEl.querySelectorAll('[data-region]').forEach(n => n.removeAttribute('data-region'))
 
-        // known slugs from DB
-        const knownSlugs = regions.map(r => r.id)
-        dlog('known slugs:', knownSlugs)
+        // Build a set of normalized region names from DB
+        const known = new Set<string>()
+        regions.forEach(r => { known.add(normalizeSlug(r.name)); known.add(normalizeSlug(r.id)) })
+        dlog('Known slugs from DB:', Array.from(known))
 
-        // find all text nodes that might be region labels
-        const textNodes = svgEl.querySelectorAll('text, tspan')
-        let labelCenters: Array<{ slug: string; cx: number; cy: number }> = []
-        
-        // Also look for paths with fill="black" which might be text labels
-        const blackPaths = svgEl.querySelectorAll('path[fill="black"]')
-        dlog(`Found ${blackPaths.length} black paths (potential text labels)`)
-        
-        // Try to match black paths to region names by analyzing their position
-        blackPaths.forEach((pathEl, index) => {
-          try {
-            const path = pathEl as SVGGraphicsElement
-            const bbox = path.getBBox()
-            // Black paths are usually small and positioned near region centers
-            if (bbox.width < 100 && bbox.height < 100) {
-              const cx = bbox.x + bbox.width / 2
-              const cy = bbox.y + bbox.height / 2
-              
-              // Find the closest region by position
-              let bestSlug: string | null = null
-              let bestD = Number.POSITIVE_INFINITY
-              
-              for (const region of regions) {
-                // Use region name similarity as a fallback
-                const score = calculateTextSimilarity(region.name, `region_${index}`)
-                if (score > 0.3) {
-                  const d = Math.abs(cx - 360) + Math.abs(cy - 247) // Distance from map center
-                  if (d < bestD) {
-                    bestD = d
-                    bestSlug = region.id
-                  }
-                }
-              }
-              
-              if (bestSlug) {
-                labelCenters.push({ slug: bestSlug, cx, cy })
-                dlog(`Black path ${index} -> ${bestSlug} at (${cx}, ${cy})`)
-              }
-            }
-          } catch (e) {
-            dlog(`Failed to process black path ${index}:`, e)
-          }
-        })
-        
-        textNodes.forEach((textEl) => {
-          const text = textEl.textContent?.trim()
-          if (!text) return
-          
-          // try to match text to known region names
-          let bestSlug: string | null = null
-          let bestScore = 0
-          
-          for (const region of regions) {
-            const score = calculateTextSimilarity(text, region.name)
-            if (score > bestScore && score > 0.6) {
-              bestScore = score
-              bestSlug = region.id
-            }
-          }
-          
-          if (bestSlug) {
+        // Find label glyph paths that carry ids matching region names
+        const labelNodes = Array.from(svgEl.querySelectorAll('[id]'))
+          .filter((el) => known.has(normalizeSlug(el.getAttribute('id') || '')))
+
+        // Find candidate geometry shapes that represent areas (exclude tiny shapes)
+        const candidates = Array.from(svgEl.querySelectorAll('path,polygon,rect,circle'))
+          .filter((el) => {
+            const tag = el.tagName.toLowerCase()
+            if (!['path','polygon','rect','circle'].includes(tag)) return false
+            // Prefer filled regions or shapes with visible white stroke borders
+            const fill = (el.getAttribute('fill') || '').trim().toLowerCase()
+            const stroke = (el.getAttribute('stroke') || '').trim().toLowerCase()
+            const hasFill = !!fill && fill !== 'none'
+            const hasWhiteStroke = stroke === '#fff' || stroke === '#ffffff' || stroke === 'white' || /rgb\(255\s*,\s*255\s*,\s*255\)/.test(stroke)
+            if (!hasFill && !hasWhiteStroke) return false
             try {
-              const bbox = (textEl as SVGTextElement | SVGTSpanElement).getBBox()
-              const cx = bbox.x + bbox.width / 2
-              const cy = bbox.y + bbox.height / 2
-              labelCenters.push({ slug: bestSlug, cx, cy })
-              dlog(`Label "${text}" -> ${bestSlug} at (${cx}, ${cy})`)
-            } catch (e) {
-              dlog(`Failed to get bbox for text "${text}":`, e)
+              const b = (el as any as SVGGraphicsElement).getBBox()
+              return b.width * b.height > 200
+            } catch {
+              return false
             }
-          }
-        })
+          }) as SVGGraphicsElement[]
+        dlog('Found geometry candidates:', candidates.length)
 
-        // find area geometry candidates (paths without id that have fill attribute)
-        const candidates: SVGGraphicsElement[] = []
-        svgEl.querySelectorAll('path:not([id]), polygon:not([id]), rect:not([id]), circle:not([id])').forEach((el) => {
-          const path = el as SVGGraphicsElement
-          // Check for fill attribute directly
-          const fill = path.getAttribute('fill')
-          const hasFill = fill && fill !== 'none' && fill !== 'transparent'
-          
-          if (hasFill) {
-            candidates.push(path)
-            dlog(`Found path with fill: ${fill}`)
-          }
-        })
-        
-        dlog('Geometry candidates:', candidates.length)
-
-        // Create a grid-based mapping system since black paths have invalid coordinates
-        const vb = svgEl.viewBox && svgEl.viewBox.baseVal
-        const x0 = vb?.x ?? 0
-        const y0 = vb?.y ?? 0
-        const W = vb?.width ?? 720
-        const H = vb?.height ?? 495
-        
-        // Create a grid for region mapping
-        const GRID_SIZE = 20
-        const grid: Array<{ x: number; y: number; regionId: string | null }> = []
-        
-        for (let y = y0; y < y0 + H; y += GRID_SIZE) {
-          for (let x = x0; x < x0 + W; x += GRID_SIZE) {
-            grid.push({ x, y, regionId: null })
-          }
-        }
-        
-        // Map each candidate to grid cells based on their position
-        candidates.forEach((cand, index) => {
+        // Pre-calc label centers
+        const labelCenters = labelNodes.map((labelEl) => {
           try {
-            const bbox = cand.getBBox()
-            const centerX = bbox.x + bbox.width / 2
-            const centerY = bbox.y + bbox.height / 2
-            
-            // Find which grid cells this region covers
-            const startGridX = Math.floor((centerX - x0) / GRID_SIZE)
-            const startGridY = Math.floor((centerY - y0) / GRID_SIZE)
-            const endGridX = Math.ceil((centerX + bbox.width / 2 - x0) / GRID_SIZE)
-            const endGridY = Math.ceil((centerY + bbox.height / 2 - y0) / GRID_SIZE)
-            
-            // Assign region ID to covered grid cells
-            for (let gy = startGridY; gy <= endGridY; gy++) {
-              for (let gx = startGridX; gx <= endGridX; gx++) {
-                const gridIndex = gy * Math.ceil(W / GRID_SIZE) + gx
-                if (gridIndex >= 0 && gridIndex < grid.length) {
-                  grid[gridIndex].regionId = regions[index]?.id || null
-                }
-              }
-            }
-            
-            dlog(`Region ${index} covers grid cells (${startGridX},${startGridY}) to (${endGridX},${endGridY})`)
-          } catch (e) {
-            dlog(`Failed to process candidate ${index}:`, e)
+            const id = (labelEl.getAttribute('id') || '').trim()
+            const slug = normalizeSlug(id)
+            const b = (labelEl as any as SVGGraphicsElement).getBBox()
+            return { slug, cx: b.x + b.width / 2, cy: b.y + b.height / 2 }
+          } catch {
+            return null
           }
-        })
-
-        // filter label centers to be within viewBox
-        if (vb) {
-          labelCenters = labelCenters.filter(({ cx, cy }) => 
-            cx >= vb.x && cx <= vb.x + vb.width && 
-            cy >= vb.y && cy <= vb.y + vb.height
-          )
-        }
+        }).filter(Boolean) as { slug: string; cx: number; cy: number }[]
+        dlog('Label centers detected:', labelCenters.length)
 
         let overlayCount = 0
-        
-        // Create clickable areas based on filled paths (these are the actual region areas)
         if (candidates.length > 0) {
-          // Use filled paths to create precise region boundaries
-          candidates.forEach((cand, index) => {
+          // Case A: we have area geometry; attach overlays to each shape
+          candidates.forEach((cand) => {
             try {
-              const bbox = cand.getBBox()
-              const regionId = regions[index]?.id
-              
-              if (regionId) {
-                // Create a clickable area overlay
-                const overlay = cand.cloneNode(true) as SVGGraphicsElement
-                overlay.setAttribute('data-region', regionId)
-                overlay.classList.add('region-hit')
-                // Make the overlay transparent but clickable
-                overlay.setAttribute('fill', 'transparent')
-                overlay.setAttribute('stroke', 'transparent')
-                cand.parentElement?.appendChild(overlay)
-                overlayCount += 1
-                dlog(`Area overlay for ${regionId} at (${bbox.x}, ${bbox.y})`)
+              const cb = cand.getBBox()
+              const cxc = cb.x + cb.width / 2
+              const cyc = cb.y + cb.height / 2
+              let bestSlug: string | null = null
+              let bestD = Number.POSITIVE_INFINITY
+              for (const { slug, cx, cy } of labelCenters) {
+                const d = (cxc - cx) ** 2 + (cyc - cy) ** 2
+                if (d < bestD) { bestD = d; bestSlug = slug }
               }
-            } catch (e) {
-              dlog(`Failed to process area:`, e)
-            }
+              if (!bestSlug) return
+              const overlay = cand.cloneNode(true) as SVGGraphicsElement
+              overlay.setAttribute('data-region', bestSlug)
+              overlay.classList.add('region-hit')
+              cand.parentElement?.appendChild(overlay)
+              overlayCount += 1
+            } catch {}
           })
         } else {
-          // Fallback: create a more precise Voronoi-like grid
+          // Case B: no area geometry; create modest circular hit areas at each label only
           if (!labelCenters.length) {
             dlog('No labels found; skip overlay creation to avoid errors')
           } else {
-            // Create a finer grid for better precision
-            const STEP = Math.max(12, Math.min(W, H) / 60)
-            
-            for (let y = y0 + STEP / 2; y < y0 + H; y += STEP) {
-              for (let x = x0 + STEP / 2; x < x0 + W; x += STEP) {
-                // find nearest label center
-                let bestSlug: string | null = null
-                let bestD = Number.POSITIVE_INFINITY
-                
-                for (const c of labelCenters) {
-                  const dx = c.cx - x
-                  const dy = c.cy - y
-                  const d = dx * dx + dy * dy
-                  if (d < bestD) { 
-                    bestD = d; 
-                    bestSlug = c.slug 
-                  }
-                }
-                
-                if (!bestSlug) continue
-                
-                const dot = doc.createElementNS('http://www.w3.org/2000/svg', 'circle') as unknown as SVGGraphicsElement
-                dot.setAttribute('cx', String(x))
-                dot.setAttribute('cy', String(y))
-                dot.setAttribute('r', String(STEP * 0.5)) // Smaller dots for better precision
-                dot.setAttribute('data-region', bestSlug)
-                dot.classList.add('region-hit')
-                svgEl.appendChild(dot)
-                overlayCount += 1
+            for (let i = 0; i < labelCenters.length; i++) {
+              const { slug, cx, cy } = labelCenters[i]
+              // radius based on distance to nearest label, clamped
+              let nearest = Number.POSITIVE_INFINITY
+              for (let j = 0; j < labelCenters.length; j++) {
+                if (i === j) continue
+                const dx = labelCenters[j].cx - cx
+                const dy = labelCenters[j].cy - cy
+                const d = Math.sqrt(dx*dx + dy*dy)
+                if (d < nearest) nearest = d
               }
+              const r = Math.max(22, Math.min((nearest || 60) * 0.35, 60))
+              const circle = doc.createElementNS('http://www.w3.org/2000/svg', 'circle') as unknown as SVGGraphicsElement
+              circle.setAttribute('cx', String(cx))
+              circle.setAttribute('cy', String(cy))
+              circle.setAttribute('r', String(r))
+              circle.setAttribute('data-region', slug)
+              circle.classList.add('region-hit')
+              svgEl.appendChild(circle)
+              overlayCount += 1
             }
           }
         }
-
         dlog('Overlays created:', overlayCount, 'mode =', candidates.length > 0 ? 'geometry' : 'circle')
-        setMapSvg(doc.documentElement.outerHTML)
-      } catch (e) { console.error('Failed to load map.svg', e) }
+
+        const serializer = new XMLSerializer()
+        const out = serializer.serializeToString(doc)
+        setMapSvg(out)
+      } catch (e) {
+        console.error('Failed to load map.svg', e)
+      }
     }
     loadMap()
-  }, [regions, debug]) // Now depends on regions
+  }, [regions])
 
   const regionsLookup = useMemo(() => {
     const bySlug = new Map<string, UiRegion>()
@@ -566,7 +443,35 @@ export default function PetaSPBUSPBEPage() {
                     }
                   } catch {}
                 }
-                // Do not use nearest-label fallback to avoid wrong matches
+                if (!slug) {
+                  try {
+                    const idNodes = Array.from(svg.querySelectorAll('[id]')) as SVGGraphicsElement[]
+                    const centers: { slug: string; cx: number; cy: number }[] = []
+                    for (const n of idNodes) {
+                      const rawId = (n.getAttribute('id') || '').trim()
+                      const s = normalizeSlug(rawId)
+                      if (!regionsLookup.knownSlugs.has(s)) continue
+                      const b = n.getBBox()
+                      centers.push({ slug: s, cx: b.x + b.width / 2, cy: b.y + b.height / 2 })
+                    }
+                    const ctm = svg.getScreenCTM()
+                    if (centers.length && ctm) {
+                      const pt = svg.createSVGPoint()
+                      pt.x = (e as any).clientX
+                      pt.y = (e as any).clientY
+                      const loc = pt.matrixTransform(ctm.inverse())
+                      let bestSlug: string | null = null
+                      let bestD = Number.POSITIVE_INFINITY
+                      for (const c of centers) {
+                        const dx = c.cx - (loc as any).x
+                        const dy = c.cy - (loc as any).y
+                        const d = dx*dx + dy*dy
+                        if (d < bestD) { bestD = d; bestSlug = c.slug }
+                      }
+                      slug = bestSlug
+                    }
+                  } catch {}
+                }
                 if (!slug) return
                 const region = getRegionByAny(slug)
                 if (region) handleRegionClick(region)
