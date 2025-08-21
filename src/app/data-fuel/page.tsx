@@ -70,9 +70,11 @@ export default function DataFuelPage() {
                 </div>
               </div>
 
-              <nav className="space-y-2">
+              <nav className="space-y-2 border rounded-lg w-56 text-center border-gray-300">
                 <Link href="/" className="block px-4 py-2 rounded text-black font-medium">Beranda</Link>
-                <Link href="/data-fuel" className="block bg-[#001482] text-white px-4 py-3 rounded-lg font-medium">Data Fuel</Link>
+                <div className="buttonwrappper w-px222 display flex justify-center items-center">
+                  <Link href="/data-fuel" className="block bg-[#001482] text-white px-4 py-3 w-36 rounded-lg font-medium">Data Fuel</Link>
+                </div>
                 <Link href="/peta-sa" className="block px-4 py-2 rounded text-black font-medium">Data LPG</Link>
               </nav>
 
@@ -87,7 +89,7 @@ export default function DataFuelPage() {
               <button className="bg-[#001482] text-white px-5 py-2 rounded-lg text-sm font-medium">Tambah Data</button>
             </div>
 
-            <div className="flex flex-wrap gap-3 items-center mb-4">
+            <div className="flex flex-wrap gap-3 text-black items-center mb-4">
               <div className="flex items-center gap-2 border rounded-md px-3 py-2 text-sm bg-white">
                 <input
                   type="text"
@@ -116,13 +118,13 @@ export default function DataFuelPage() {
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder="Cari wilayah..."
-                className="border rounded-md px-3 py-2 text-sm bg-white min-w-[200px]"
+                className="border rounded-md px-3 py-2 text-sm text-grey bg-white min-w-[200px]"
               />
             </div>
 
-            <div className="bg-white border rounded-lg overflow-hidden">
-              <div className="grid grid-cols-[60px_1fr_200px_180px_140px_100px] gap-2 px-4 py-2 bg-gray-100 border-b text-[15px] font-medium">
-                <div className="self-center">No</div>
+            <div className="bg-white border rounded-md overflow-hidden">
+              <div className="grid grid-cols-[60px_1fr_200px_180px_140px_100px] text-black gap-2 px-4 py-2 bg-gray-100 border-grey text-[16px] font-medium">
+                <div className="self-center ">No</div>
                 <div className="self-center">Wilayah</div>
                 <div className="self-center">Total Kuantitas</div>
                 <div className="self-center">Tanggal</div>
@@ -134,8 +136,8 @@ export default function DataFuelPage() {
                 <div key={r.no} className="grid grid-cols-[60px_1fr_200px_180px_140px_100px] gap-2 px-4 py-3 border-b text-[15px]">
                   <div className="self-center text-gray-800">{r.no}</div>
                   <div className="self-center text-gray-800">{r.wilayah}</div>
-                  <div className="self-center text-right tabular-nums">{formatKl(r.totalKuantitasKl)}</div>
-                  <div className="self-center">{r.tanggal}</div>
+                  <div className="self-center text-black tabular-nums">{formatKl(r.totalKuantitasKl)}</div>
+                  <div className="self-center text-black">{r.tanggal}</div>
                   <div className="self-center">
                     <span className={`inline-flex items-center gap-2 text-sm ${r.status === 'Berhasil' ? 'text-gray-700' : 'text-red-600'}`}>
                       <span className={`w-2.5 h-2.5 rounded-full ${r.status === 'Berhasil' ? 'bg-emerald-500' : 'bg-red-500'}`} />

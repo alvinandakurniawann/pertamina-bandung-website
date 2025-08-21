@@ -4,7 +4,7 @@ export default function Home() {
   return (
     <main className="min-h-screen">
       {/* Hero Section */}
-      <section className="relative h-screen flex items-center justify-center bg-gradient-to-br from-blue-900 via-blue-800 to-blue-700">
+      <section className="relative h-screen flex items-center justify-center bg-gradient-to-br from-[#011482] to-[#70ACDA]">
         <div className="absolute inset-0 bg-black/30"></div>
         <div className="relative z-10 text-center text-white px-4">
           <h1 className="text-5xl md:text-7xl font-bold mb-6">
