@@ -1,69 +1,32 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
-import { Region, Location, LocationType } from '@/types/sa'
+import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
+import Link from 'next/link'
 
-interface ChangeItem {
+interface Region {
   id: string
-  at?: string
-  by?: string
-  action: 'create' | 'update' | 'delete'
-  entity: 'region' | 'location'
-  regionId: string
-  locationId?: string
-  before?: unknown
-  after?: unknown
+  name: string
+  color: string
+  spbu_count: number
+  spbe_count: number
 }
 
-const emptyLocation = (): Location => ({
-  id: '',
-  name: '',
-  type: 'SPBU',
-  address: '',
-  services: [],
-  hours: '',
-  phone: ''
-})
+interface Location {
+  id: string
+  name: string
+  type: 'SPBU' | 'SPBE'
+  region_id: string
+}
 
-const emptyRegion = (): Region => ({
-  id: '',
-  name: '',
-  color: '#90EE90',
-  spbuCount: 0,
-  spbeCount: 0,
-  locations: []
-})
-
-export default function CrudPage() {
-  // Render-only-on-client to avoid hydration mismatch from browser extensions adding attrs
+export default function CrudHomePage() {
   const [mounted, setMounted] = useState(false)
+  const [regions, setRegions] = useState<Region[]>([])
+  const [locations, setLocations] = useState<Location[]>([])
+  const [loading, setLoading] = useState(true)
+
   useEffect(() => { setMounted(true) }, [])
 
-  const [regions, setRegions] = useState<Region[]>([])
-  const [selectedRegionIndex, setSelectedRegionIndex] = useState<number | null>(null)
-  const [editingRegion, setEditingRegion] = useState<Region | null>(null)
-  const [editingLocationIndex, setEditingLocationIndex] = useState<number | null>(null)
-  const [editingLocation, setEditingLocation] = useState<Location | null>(null)
-  const [saving, setSaving] = useState(false)
-  const [filter, setFilter] = useState('')
-  const [accessKey, setAccessKey] = useState<string>('')
-  const MAP_REGIONS: Array<{ id: string; name: string; defaultColor: string }> = [
-    { id: 'bojonagara', name: 'Bojonagara', defaultColor: '#90EE90' },
-    { id: 'cibeunying', name: 'Cibeunying', defaultColor: '#32CD32' },
-    { id: 'tegallega', name: 'Tegallega', defaultColor: '#FFB6C1' },
-    { id: 'karees', name: 'Karees', defaultColor: '#87CEEB' },
-    { id: 'ujung-berung', name: 'Ujung Berung', defaultColor: '#DDA0DD' },
-    { id: 'gede-bage', name: 'Gede Bage', defaultColor: '#FFA500' },
-  ]
-
-  const hasAccess = useMemo(() => {
-    const expected = (process.env.NEXT_PUBLIC_CRUD_SECRET || 'CRUD-SECRET-LOCAL').trim()
-    const provided = accessKey.trim()
-    return expected.length > 0 && provided.length > 0 && provided === expected
-  }, [accessKey])
-
-  // Subscribe regions + locations realtime
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -71,535 +34,247 @@ export default function CrudPage() {
         const { data: regionsData, error: regionsError } = await supabase
           .from('regions')
           .select('*')
+          .order('name')
         
         if (regionsError) throw regionsError
 
-        // Fetch locations for each region
-        const regionsWithLocations: Region[] = []
-        for (const region of regionsData || []) {
-          const { data: locationsData, error: locationsError } = await supabase
-            .from('locations')
-            .select('*')
-            .eq('region_id', region.id)
-          
-          if (locationsError) throw locationsError
-          
-          const locations = locationsData || []
-          const spbuCount = locations.filter(l => l.type === 'SPBU').length
-          const spbeCount = locations.filter(l => l.type === 'SPBE').length
-          
-          regionsWithLocations.push({
-            ...region,
-            locations,
-            spbuCount,
-            spbeCount
-          })
-        }
+        // Fetch locations
+        const { data: locationsData, error: locationsError } = await supabase
+          .from('locations')
+          .select('*')
         
-        setRegions(regionsWithLocations)
+        if (locationsError) throw locationsError
+
+        setRegions(regionsData || [])
+        setLocations(locationsData || [])
       } catch (error) {
         console.error('Error fetching data:', error)
+      } finally {
+        setLoading(false)
       }
     }
 
     fetchData()
-
-    // Set up realtime subscription
-    const subscription = supabase
-      .channel('regions-changes')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'regions' }, fetchData)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'locations' }, fetchData)
-      .subscribe()
-
-    return () => {
-      subscription.unsubscribe()
-    }
   }, [])
-
-  useEffect(() => {
-    const stored = localStorage.getItem('crudKey') || ''
-    if (stored) {
-      setAccessKey(stored)
-    } else {
-      const expected = (process.env.NEXT_PUBLIC_CRUD_SECRET || 'CRUD-SECRET-LOCAL').trim()
-      if (expected) {
-        setAccessKey(expected)
-        localStorage.setItem('crudKey', expected)
-      }
-    }
-  }, [])
-
-  const filteredRegions = useMemo(() => {
-    if (!filter.trim()) return regions
-    const q = filter.toLowerCase()
-    return regions.filter(r => r.name.toLowerCase().includes(q) || r.id.toLowerCase().includes(q))
-  }, [regions, filter])
-
-  const startAddRegion = () => {
-    setSelectedRegionIndex(null)
-    setEditingRegion(emptyRegion())
-    setEditingLocation(null)
-    setEditingLocationIndex(null)
-  }
-
-  const startEditRegion = (index: number) => {
-    setSelectedRegionIndex(index)
-    setEditingRegion(JSON.parse(JSON.stringify(regions[index])) as Region)
-    setEditingLocation(null)
-    setEditingLocationIndex(null)
-  }
-
-  const deleteRegion = async (index: number) => {
-    if (!hasAccess) return
-    const region = regions[index]
-    
-    try {
-      // Delete all locations first
-      const { error: locationsError } = await supabase
-        .from('locations')
-        .delete()
-        .eq('region_id', region.id)
-      
-      if (locationsError) throw locationsError
-      
-      // Delete region
-      const { error: regionError } = await supabase
-        .from('regions')
-        .delete()
-        .eq('id', region.id)
-      
-      if (regionError) throw regionError
-      
-      // Log change
-      await supabase
-        .from('changes')
-        .insert({
-          at: new Date().toISOString(),
-          action: 'delete',
-          entity: 'region',
-          regionId: region.id,
-          before: region,
-          by: 'shared-secret'
-        })
-    } catch (error) {
-      console.error('Error deleting region:', error)
-      alert('Gagal menghapus wilayah')
-    }
-  }
-
-  const addLocation = () => {
-    if (!editingRegion) return
-    const next = { ...editingRegion }
-    next.locations = [...next.locations, emptyLocation()]
-    setEditingRegion(next)
-    setEditingLocationIndex(next.locations.length - 1)
-    setEditingLocation(next.locations[next.locations.length - 1])
-  }
-
-  const editLocation = (index: number) => {
-    if (!editingRegion) return
-    setEditingLocationIndex(index)
-    setEditingLocation(JSON.parse(JSON.stringify(editingRegion.locations[index])) as Location)
-  }
-
-  const removeLocation = (index: number) => {
-    if (!editingRegion) return
-    const next = { ...editingRegion }
-    next.locations = next.locations.filter((_, i) => i !== index)
-    next.spbuCount = next.locations.filter(l => l.type === 'SPBU').length
-    next.spbeCount = next.locations.filter(l => l.type === 'SPBE').length
-    setEditingRegion(next)
-  }
-
-  const commitRegion = async () => {
-    if (!hasAccess) return
-    if (!editingRegion) return
-    
-    setSaving(true)
-    try {
-      const payload: Region = {
-        ...editingRegion,
-        spbuCount: editingRegion.locations.filter(l => l.type === 'SPBU').length,
-        spbeCount: editingRegion.locations.filter(l => l.type === 'SPBE').length,
-      }
-
-      // Cegah duplikasi wilayah saat create
-      if (selectedRegionIndex == null && regions.some(r => r.id === payload.id)) {
-        alert('Wilayah sudah ada. Silakan pilih wilayah lain atau edit yang ada.')
-        return
-      }
-
-      if (selectedRegionIndex == null) {
-        // Create region
-        const { error: regionError } = await supabase
-          .from('regions')
-          .insert({
-            id: payload.id,
-            name: payload.name,
-            color: payload.color,
-            spbu_count: payload.spbuCount,
-            spbe_count: payload.spbeCount
-          })
-        
-        if (regionError) throw regionError
-        
-        // Create locations
-        if (payload.locations.length > 0) {
-          const locationsToInsert = payload.locations.map(loc => ({
-            ...loc,
-            region_id: payload.id
-          }))
-          
-          const { error: locationsError } = await supabase
-            .from('locations')
-            .insert(locationsToInsert)
-          
-          if (locationsError) throw locationsError
-        }
-        
-        // Log change
-        await supabase
-          .from('changes')
-          .insert({
-            at: new Date().toISOString(),
-            action: 'create',
-            entity: 'region',
-            regionId: payload.id,
-            after: payload,
-            by: 'shared-secret'
-          })
-      } else {
-        const old = regions[selectedRegionIndex]
-        
-        // Update region
-        const { error: regionError } = await supabase
-          .from('regions')
-          .update({
-            name: payload.name,
-            color: payload.color,
-            spbu_count: payload.spbuCount,
-            spbe_count: payload.spbeCount
-          })
-          .eq('id', payload.id)
-        
-        if (regionError) throw regionError
-        
-        // Delete old locations
-        const { error: deleteError } = await supabase
-          .from('locations')
-          .delete()
-          .eq('region_id', payload.id)
-        
-        if (deleteError) throw deleteError
-        
-        // Insert new locations
-        if (payload.locations.length > 0) {
-          const locationsToInsert = payload.locations.map(loc => ({
-            ...loc,
-            region_id: payload.id
-          }))
-          
-          const { error: locationsError } = await supabase
-            .from('locations')
-            .insert(locationsToInsert)
-          
-          if (locationsError) throw locationsError
-        }
-        
-        // Log change
-        await supabase
-          .from('changes')
-          .insert({
-            at: new Date().toISOString(),
-            action: 'update',
-            entity: 'region',
-            regionId: payload.id,
-            before: old,
-            after: payload,
-            by: 'shared-secret'
-          })
-      }
-      
-      setEditingRegion(null)
-      setEditingLocation(null)
-      setEditingLocationIndex(null)
-    } catch (error) {
-      console.error('Error saving region:', error)
-      alert('Gagal menyimpan wilayah')
-    } finally {
-      setSaving(false)
-    }
-  }
-
-  const commitLocation = () => {
-    if (editingRegion == null || editingLocationIndex == null || editingLocation == null) return
-    const next = { ...editingRegion }
-    const locs = next.locations.slice()
-    locs[editingLocationIndex] = editingLocation
-    next.locations = locs
-    setEditingRegion(next)
-    setEditingLocation(null)
-    setEditingLocationIndex(null)
-  }
-
-  const saveAll = async () => {
-    if (!hasAccess) return
-    setSaving(true)
-    try {
-      await fetch('/api/sa', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ regions })
-      })
-    } finally {
-      setSaving(false)
-    }
-  }
 
   if (!mounted) {
     return (
-      <main className="min-h-screen bg-gray-50 p-6 text-gray-800">
-        <div className="container mx-auto">
-          <h1 className="text-2xl font-bold mb-1 text-gray-900">Manajemen Data Peta (CRUD)</h1>
-          <div className="mt-4 h-40 rounded bg-white border animate-pulse" />
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Memuat...</p>
         </div>
-      </main>
+      </div>
     )
   }
 
   return (
-    <main className="min-h-screen bg-gray-50 p-6 text-gray-800">
-      <div className="container mx-auto">
-        <h1 className="text-2xl text-center font-bold mb-1 text-gray-900">Manajemen Data Peta (CRUD)</h1>
-        <p className="text-sm text-gray-600 mb-3">Halaman ini tersembunyi dari header. Akses via /crud</p>
-
-        <div className="mb-4 p-3 border rounded bg-white">
-          <div className="flex flex-col md:flex-row gap-3 md:items-end">
-            <label className="text-sm md:w-72">Kunci Akses (shared secret)
-              <input
-                value={accessKey}
-                onChange={(e) => { setAccessKey(e.target.value); localStorage.setItem('crudKey', e.target.value) }}
-                className="mt-1 border rounded px-3 py-2 w-full"
-                placeholder="Masukkan kunci akses"
-                type="password"
-              />
-            </label>
-            <div className={`text-sm ${hasAccess ? 'text-green-700' : 'text-red-700'}`}>
-              {hasAccess ? 'Akses tulis diizinkan' : 'Tidak ada akses tulis. Masukkan kunci yang benar.'}
+    <div className="min-h-screen bg-gray-50">
+      {/* Sidebar */}
+      <div className="fixed left-0 top-0 h-full w-64 bg-white shadow-lg">
+        <div className="p-6">
+          {/* Logo */}
+          <div className="mb-8">
+            <div className="bg-red-600 text-white text-center py-4 px-6 rounded-lg">
+              <h1 className="text-lg font-bold">PERTAMINA PETRA NIAGA BANDUNG</h1>
             </div>
           </div>
-        </div>
 
-        <div className="flex items-center gap-2 mb-4">
-          <input
-            value={filter}
-            onChange={(e) => setFilter(e.target.value)}
-            className="border rounded px-3 py-2 w-full md:w-64"
-            placeholder="Cari wilayah..."
-          />
-          <button onClick={startAddRegion} className="bg-blue-600 text-white px-4 py-2 rounded">Tambah Wilayah</button>
-          <button onClick={saveAll} disabled={saving || !hasAccess} className="bg-green-600 text-white px-4 py-2 rounded disabled:opacity-60">
-            {saving ? 'Menyimpan...' : 'Simpan Semua'}
-          </button>
-        </div>
+          {/* User Profile */}
+          <div className="mb-8">
+            <div className="bg-white border rounded-lg p-4 shadow-sm">
+              <div className="flex items-center space-x-3">
+                <div className="w-12 h-12 bg-gray-300 rounded-full flex items-center justify-center">
+                  <span className="text-gray-600 font-semibold">AS</span>
+                </div>
+                <div>
+                  <p className="font-semibold text-gray-800">Ahmad Sumbul</p>
+                  <p className="text-sm text-gray-500">Admin</p>
+                </div>
+              </div>
+            </div>
+          </div>
 
-        <div className="grid md:grid-cols-2 gap-6">
-          <div className="bg-white rounded shadow p-4">
-            <h2 className="font-semibold mb-3 text-gray-900">Daftar Wilayah</h2>
-            <ul className="space-y-2">
-              {filteredRegions.map((r, idx) => (
-                <li key={r.id} className="flex items-center justify-between border rounded p-2">
-                  <div className="flex items-center gap-3">
-                    <span className="w-4 h-4 rounded" style={{ backgroundColor: r.color }} />
+          {/* Navigation */}
+          <nav className="space-y-2">
+            <Link 
+              href="/crud" 
+              className="block w-full bg-blue-700 text-white px-4 py-3 rounded-lg font-medium"
+            >
+              Beranda
+            </Link>
+            <Link 
+              href="/crud/data-fuel" 
+              className="block w-full bg-white text-gray-700 px-4 py-3 rounded-lg font-medium hover:bg-gray-50"
+            >
+              Data Fuel
+            </Link>
+            <Link 
+              href="/crud/data-lpg" 
+              className="block w-full bg-white text-gray-700 px-4 py-3 rounded-lg font-medium hover:bg-gray-50"
+            >
+              Data LPG
+            </Link>
+          </nav>
+        </div>
+      </div>
+
+      {/* Main Content */}
+      <div className="ml-64 p-8">
+        <div className="max-w-7xl mx-auto">
+          <h1 className="text-3xl font-bold text-gray-800 mb-8">2025 Progres</h1>
+
+          {/* Data Penjualan Section */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+            {/* Progress Indicators */}
+            <div className="bg-white rounded-lg shadow-sm p-6">
+              <h2 className="text-xl font-semibold text-gray-800 mb-6">Data Penjualan</h2>
+              
+              <div className="space-y-6">
+                {/* Target Fuel */}
+                <div>
+                  <h3 className="font-medium text-gray-700 mb-3">Target Fuel:</h3>
+                  <div className="space-y-3">
                     <div>
-                      <div className="font-medium">{r.name}</div>
-                      <div className="text-xs text-gray-500">{r.id} • SPBU {r.spbuCount} • SPBE {r.spbeCount}</div>
+                      <div className="flex justify-between text-sm mb-1">
+                        <span>Penjualan PSO</span>
+                        <span className="font-medium">60%</span>
+                      </div>
+                      <div className="w-full bg-gray-200 rounded-full h-2">
+                        <div className="bg-blue-600 h-2 rounded-full" style={{ width: '60%' }}></div>
+                      </div>
+                    </div>
+                    <div>
+                      <div className="flex justify-between text-sm mb-1">
+                        <span>Penjualan NPSO</span>
+                        <span className="font-medium">100%</span>
+                      </div>
+                      <div className="w-full bg-gray-200 rounded-full h-2">
+                        <div className="bg-green-600 h-2 rounded-full" style={{ width: '100%' }}></div>
+                      </div>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <button onClick={() => startEditRegion(idx)} className="text-blue-600 hover:underline">Edit</button>
-                    <button onClick={() => deleteRegion(idx)} disabled={!hasAccess} className="text-red-600 hover:underline disabled:opacity-50">Hapus</button>
-                  </div>
-                </li>
-              ))}
-            </ul>
+                </div>
 
-            {/* Riwayat Perubahan */}
-            <div className="mt-6">
-              <h3 className="font-semibold mb-2 text-gray-900">Riwayat Perubahan</h3>
-              <ChangeHistory />
+                {/* Target LPG */}
+                <div>
+                  <h3 className="font-medium text-gray-700 mb-3">Target LPG:</h3>
+                  <div className="space-y-3">
+                    <div>
+                      <div className="flex justify-between text-sm mb-1">
+                        <span>Penjualan PSO</span>
+                        <span className="font-medium">65%</span>
+                      </div>
+                      <div className="w-full bg-gray-200 rounded-full h-2">
+                        <div className="bg-blue-600 h-2 rounded-full" style={{ width: '65%' }}></div>
+                      </div>
+                    </div>
+                    <div>
+                      <div className="flex justify-between text-sm mb-1">
+                        <span>Penjualan NPSO</span>
+                        <span className="font-medium">36%</span>
+                      </div>
+                      <div className="w-full bg-gray-200 rounded-full h-2">
+                        <div className="bg-yellow-500 h-2 rounded-full" style={{ width: '36%' }}></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Volume Chart */}
+            <div className="bg-white rounded-lg shadow-sm p-6">
+              <h3 className="text-lg font-semibold text-gray-800 mb-4">Volume</h3>
+              <div className="h-64 flex items-end justify-between space-x-2">
+                {/* Sample chart bars - in real app this would be a proper chart library */}
+                <div className="flex-1 bg-purple-400 rounded-t" style={{ height: '40%' }}></div>
+                <div className="flex-1 bg-blue-400 rounded-t" style={{ height: '60%' }}></div>
+                <div className="flex-1 bg-yellow-400 rounded-t" style={{ height: '30%' }}></div>
+                <div className="flex-1 bg-red-400 rounded-t" style={{ height: '80%' }}></div>
+                <div className="flex-1 bg-gray-800 rounded-t" style={{ height: '50%' }}></div>
+                <div className="flex-1 bg-green-400 rounded-t" style={{ height: '70%' }}></div>
+                <div className="flex-1 bg-blue-600 rounded-t" style={{ height: '45%' }}></div>
+                <div className="flex-1 bg-purple-600 rounded-t" style={{ height: '55%' }}></div>
+              </div>
+              <div className="flex justify-between text-xs text-gray-500 mt-2">
+                <span>JAN</span>
+                <span>FEB</span>
+                <span>MAR</span>
+                <span>APR</span>
+                <span>MAY</span>
+                <span>JUN</span>
+                <span>JUL</span>
+                <span>AUG</span>
+              </div>
+              <div className="text-xs text-gray-400 mt-1">
+                <div className="flex justify-between">
+                  <span>10.000kl</span>
+                  <span>7.500kl</span>
+                  <span>5.000kl</span>
+                  <span>2.500kl</span>
+                </div>
+              </div>
             </div>
           </div>
 
-          <div className="bg-white rounded shadow p-4">
-            <h2 className="font-semibold mb-3 text-gray-900">Form Wilayah</h2>
-            {editingRegion ? (
-              <div className="space-y-3">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  <label className="text-sm text-gray-700">Wilayah Peta
-                    <select
-                      value={editingRegion.id}
-                      onChange={(e) => {
-                        const sel = MAP_REGIONS.find(m => m.id === e.target.value)
-                        if (!sel) return
-                        const next = { ...editingRegion, id: sel.id, name: sel.name }
-                        if (!editingRegion.color) next.color = sel.defaultColor
-                        setEditingRegion(next)
-                      }}
-                      className="mt-1 border rounded px-3 py-2 w-full"
-                    >
-                      <option value="" disabled>Pilih wilayah…</option>
-                      {MAP_REGIONS
-                        .filter(m => selectedRegionIndex != null ? true : !regions.some(r => r.id === m.id))
-                        .map(m => (
-                          <option key={m.id} value={m.id}>{m.name}</option>
-                        ))}
-                    </select>
-                  </label>
-                  <label className="text-sm text-gray-700">Nama
-                    <input value={editingRegion.name} onChange={(e) => setEditingRegion({ ...editingRegion, name: e.target.value })} className="mt-1 border rounded px-3 py-2 w-full" />
-                  </label>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                  <label className="text-sm text-gray-700">Warna
-                    <input type="color" value={editingRegion.color} onChange={(e) => setEditingRegion({ ...editingRegion, color: e.target.value })} className="mt-1 h-10 w-16" />
-                  </label>
-                  <div className="text-sm flex items-end gap-2">
-                    <span>SPBU:</span>
-                    <span className="px-2 py-1 bg-gray-100 rounded">{editingRegion.locations.filter(l => l.type === 'SPBU').length}</span>
-                    <span>SPBE:</span>
-                    <span className="px-2 py-1 bg-gray-100 rounded">{editingRegion.locations.filter(l => l.type === 'SPBE').length}</span>
-                  </div>
-                </div>
-
-                <div className="flex items-center justify-between mt-2">
-                  <h3 className="font-medium">Lokasi</h3>
-                  <button onClick={addLocation} className="text-sm bg-blue-50 text-blue-700 px-3 py-1 rounded">Tambah Lokasi</button>
-                </div>
-                <div className="space-y-2 max-h-64 overflow-auto">
-                  {editingRegion.locations.map((loc, i) => (
-                    <div key={i} className="border rounded p-2">
-                      <div className="flex items-center justify-between">
-                        <div className="font-medium">{loc.name || '(nama belum diisi)'}</div>
-                        <div className="flex items-center gap-2">
-                          <button onClick={() => editLocation(i)} className="text-blue-600 text-sm">Edit</button>
-                          <button onClick={() => removeLocation(i)} className="text-red-600 text-sm">Hapus</button>
-                        </div>
-                      </div>
-                      <div className="text-xs text-gray-500">{loc.type} • {loc.address}</div>
-                    </div>
-                  ))}
-                </div>
-
-                <div className="flex gap-2">
-                  <button onClick={commitRegion} disabled={!hasAccess} className="bg-green-600 text-white px-4 py-2 rounded disabled:opacity-50">Simpan Wilayah</button>
+          {/* Rincian Penjualan Section */}
+          <div className="bg-white rounded-lg shadow-sm p-6">
+            <h2 className="text-xl font-semibold text-gray-800 mb-6">Rincian Penjualan</h2>
+            
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              {/* Penjualan Fuel */}
+              <div>
+                <h3 className="font-medium text-gray-700 mb-4">Penjualan Fuel</h3>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b">
+                        <th className="text-left py-2 font-medium">Lokasi</th>
+                        <th className="text-right py-2 font-medium">Volume PSO</th>
+                        <th className="text-right py-2 font-medium">Volume Non PSO</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {regions.slice(0, 10).map((region) => (
+                        <tr key={region.id} className="border-b">
+                          <td className="py-2">{region.name}</td>
+                          <td className="text-right py-2">{(Math.random() * 5000 + 2000).toFixed(0)} kl</td>
+                          <td className="text-right py-2">{(Math.random() * 5000 + 2000).toFixed(0)} kl</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
               </div>
-            ) : (
-              <div className="text-gray-500">Pilih wilayah untuk diedit atau klik Tambah Wilayah.</div>
-            )}
+
+              {/* Penjualan LPG */}
+              <div>
+                <h3 className="font-medium text-gray-700 mb-4">Penjualan LPG</h3>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b">
+                        <th className="text-left py-2 font-medium">Lokasi</th>
+                        <th className="text-right py-2 font-medium">Volume PSO</th>
+                        <th className="text-right py-2 font-medium">Volume Non PSO</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {regions.slice(0, 10).map((region) => (
+                        <tr key={region.id} className="border-b">
+                          <td className="py-2">{region.name}</td>
+                          <td className="text-right py-2">{(Math.random() * 5000 + 2000).toFixed(0)} kl</td>
+                          <td className="text-right py-2">{(Math.random() * 5000 + 2000).toFixed(0)} kl</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
-
-        {editingLocation && (
-          <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-lg w-full max-w-2xl p-4">
-              <div className="flex items-center justify-between mb-3">
-                <h3 className="font-semibold">Edit Lokasi</h3>
-                <button onClick={() => { setEditingLocation(null); setEditingLocationIndex(null) }} className="text-gray-500">✕</button>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                <label className="text-sm">ID
-                  <input value={editingLocation.id} onChange={(e) => setEditingLocation({ ...editingLocation, id: e.target.value })} className="mt-1 border rounded px-3 py-2 w-full" />
-                </label>
-                <label className="text-sm">Nama
-                  <input value={editingLocation.name} onChange={(e) => setEditingLocation({ ...editingLocation, name: e.target.value })} className="mt-1 border rounded px-3 py-2 w-full" />
-                </label>
-                <label className="text-sm">Tipe
-                  <select value={editingLocation.type} onChange={(e) => setEditingLocation({ ...editingLocation, type: e.target.value as LocationType })} className="mt-1 border rounded px-3 py-2 w-full">
-                    <option value="SPBU">SPBU</option>
-                    <option value="SPBE">SPBE</option>
-                  </select>
-                </label>
-                <label className="text-sm">Telepon
-                  <input value={editingLocation.phone} onChange={(e) => setEditingLocation({ ...editingLocation, phone: e.target.value })} className="mt-1 border rounded px-3 py-2 w-full" />
-                </label>
-                <label className="text-sm md:col-span-2">Alamat
-                  <input value={editingLocation.address} onChange={(e) => setEditingLocation({ ...editingLocation, address: e.target.value })} className="mt-1 border rounded px-3 py-2 w-full" />
-                </label>
-                <label className="text-sm">Jam Operasional
-                  <input value={editingLocation.hours} onChange={(e) => setEditingLocation({ ...editingLocation, hours: e.target.value })} className="mt-1 border rounded px-3 py-2 w-full" />
-                </label>
-                <label className="text-sm md:col-span-2">Layanan (pisahkan dengan koma)
-                  <input value={editingLocation.services.join(', ')} onChange={(e) => setEditingLocation({ ...editingLocation, services: e.target.value.split(',').map(s => s.trim()).filter(Boolean) })} className="mt-1 border rounded px-3 py-2 w-full" />
-                </label>
-              </div>
-              <div className="flex justify-end gap-2 mt-4">
-                <button onClick={() => { setEditingLocation(null); setEditingLocationIndex(null) }} className="px-4 py-2 rounded border">Batal</button>
-                <button onClick={commitLocation} className="px-4 py-2 rounded bg-blue-600 text-white">Simpan</button>
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
-    </main>
-  )
-}
-
-function ChangeHistory() {
-  const [items, setItems] = useState<ChangeItem[]>([])
-
-  useEffect(() => {
-    const fetchChanges = async () => {
-      try {
-        const { data, error } = await supabase
-          .from('changes')
-          .select('*')
-          .order('at', { ascending: false })
-          .limit(50)
-        
-        if (error) throw error
-        setItems(data || [])
-      } catch (error) {
-        console.error('Error fetching changes:', error)
-      }
-    }
-
-    fetchChanges()
-
-    // Set up realtime subscription
-    const subscription = supabase
-      .channel('changes-changes')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'changes' }, fetchChanges)
-      .subscribe()
-
-    return () => {
-      subscription.unsubscribe()
-    }
-  }, [])
-
-  return (
-    <div className="border rounded">
-      <div className="grid grid-cols-5 gap-2 px-3 py-2 text-xs font-semibold bg-gray-50">
-        <div>Waktu</div>
-        <div>User</div>
-        <div>Aksi</div>
-        <div>Target</div>
-        <div>Ringkasan</div>
-      </div>
-      <div className="max-h-64 overflow-auto text-sm">
-        {items.map((it) => (
-          <div key={it.id} className="grid grid-cols-5 gap-2 px-3 py-2 border-t">
-            <div>{it.at ? new Date(it.at).toLocaleString() : '-'}</div>
-            <div>{it.by || 'admin'}</div>
-            <div>{it.action}</div>
-            <div>{it.entity}{it.locationId ? `/${it.locationId}` : ''}</div>
-            <div className="truncate" title={it.regionId}>region: {it.regionId}</div>
-          </div>
-        ))}
-        {!items.length && (
-          <div className="px-3 py-4 text-gray-500">Belum ada perubahan.</div>
-        )}
       </div>
     </div>
   )
