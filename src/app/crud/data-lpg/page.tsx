@@ -16,8 +16,20 @@ interface Location {
   address: string
   hours: string
   phone: string
+  code: string
   region_id: string
   region?: Region
+}
+
+interface LPGSale {
+  id?: string
+  location_id: string
+  lpg_3kg: number
+  lpg_12kg: number
+  lpg_50kg: number
+  lpg_industri: number
+  month: string
+  year: number
 }
 
 export default function DataLPGPage() {
@@ -27,9 +39,12 @@ export default function DataLPGPage() {
   const [loading, setLoading] = useState(true)
   const [showModal, setShowModal] = useState(false)
   const [editingLocation, setEditingLocation] = useState<Location | null>(null)
+  const [editingLpgSale, setEditingLpgSale] = useState<LPGSale | null>(null)
   const [selectedRegion, setSelectedRegion] = useState('all')
   const [selectedMonth, setSelectedMonth] = useState('all')
   const [selectedType, setSelectedType] = useState('all')
+  const [saving, setSaving] = useState(false)
+  const [notification, setNotification] = useState<{ type: 'success' | 'error', message: string } | null>(null)
 
   useEffect(() => { setMounted(true) }, [])
 
@@ -49,7 +64,7 @@ export default function DataLPGPage() {
             *,
             region:regions(name)
           `)
-          .order('name')
+          .order('created_at', { ascending: false })
         
         if (locationsError) throw locationsError
 
@@ -66,6 +81,8 @@ export default function DataLPGPage() {
   }, [])
 
   const filteredLocations = locations.filter(location => {
+    // LPG page hanya menampilkan SPBE
+    if (location.type !== 'SPBE') return false
     if (selectedRegion !== 'all' && location.region_id !== selectedRegion) return false
     if (selectedType !== 'all' && location.type !== selectedType) return false
     return true
@@ -79,19 +96,175 @@ export default function DataLPGPage() {
       address: '',
       hours: '',
       phone: '',
+      code: '',
       region_id: regions[0]?.id || ''
+    })
+    setEditingLpgSale({
+      id: '',
+      location_id: '',
+      lpg_3kg: 0,
+      lpg_12kg: 0,
+      lpg_50kg: 0,
+      lpg_industri: 0,
+      month: 'Januari',
+      year: 2025
     })
     setShowModal(true)
   }
 
   const openEditModal = (location: Location) => {
     setEditingLocation({ ...location })
+    // TODO: Fetch existing LPG sale data for this location
+    setEditingLpgSale({
+      id: '',
+      location_id: location.id,
+      lpg_3kg: 0,
+      lpg_12kg: 0,
+      lpg_50kg: 0,
+      lpg_industri: 0,
+      month: 'Januari',
+      year: 2025
+    })
     setShowModal(true)
   }
 
   const closeModal = () => {
     setShowModal(false)
     setEditingLocation(null)
+    setEditingLpgSale(null)
+  }
+
+  const showNotification = (type: 'success' | 'error', message: string) => {
+    setNotification({ type, message })
+    setTimeout(() => setNotification(null), 5000)
+  }
+
+    const saveData = async () => {
+    if (!editingLocation || !editingLpgSale) return
+    
+    // Validate required fields
+    if (!editingLocation.name || !editingLocation.address || !editingLocation.region_id) {
+      showNotification('error', 'Mohon isi semua field yang wajib diisi (Nama, Alamat, Wilayah)')
+      return
+    }
+    
+    setSaving(true)
+    try {
+      console.log('Saving location data:', editingLocation)
+      
+      // Save location first
+      let locationId = editingLocation.id
+      if (!locationId) {
+        // Create new location
+        const { data: newLocation, error: locationError } = await supabase
+          .from('locations')
+          .insert([{
+            name: editingLocation.name,
+            type: editingLocation.type,
+            address: editingLocation.address,
+            hours: editingLocation.hours,
+            phone: editingLocation.phone,
+            code: editingLocation.code,
+            region_id: editingLocation.region_id
+          }])
+          .select()
+          .single()
+        
+        if (locationError) {
+          console.error('Location insert error:', locationError)
+          throw locationError
+        }
+        locationId = newLocation.id
+        console.log('New location created with ID:', locationId)
+      } else {
+        // Update existing location
+        const { error: locationError } = await supabase
+          .from('locations')
+          .update({
+            name: editingLocation.name,
+            type: editingLocation.type,
+            address: editingLocation.address,
+            hours: editingLocation.hours,
+            phone: editingLocation.phone,
+            code: editingLocation.code,
+            region_id: editingLocation.region_id
+          })
+          .eq('id', locationId)
+        
+        if (locationError) {
+          console.error('Location update error:', locationError)
+          throw locationError
+        }
+        console.log('Location updated successfully')
+      }
+
+             // Save LPG sale data
+       console.log('Saving LPG sale data:', editingLpgSale)
+       
+       if (editingLpgSale.id) {
+         // Update existing LPG sale
+         const { error: lpgError } = await supabase
+           .from('lpg_sales')
+           .update({
+             lpg_3kg: editingLpgSale.lpg_3kg,
+             lpg_12kg: editingLpgSale.lpg_12kg,
+             lpg_50kg: editingLpgSale.lpg_50kg,
+             lpg_industri: editingLpgSale.lpg_industri,
+             month: editingLpgSale.month,
+             year: editingLpgSale.year
+           })
+           .eq('id', editingLpgSale.id)
+         
+         if (lpgError) {
+           console.error('LPG sale update error:', lpgError)
+           throw lpgError
+         }
+         console.log('LPG sale updated successfully')
+       } else {
+         // Create new LPG sale
+         const { error: lpgError } = await supabase
+           .from('lpg_sales')
+           .insert([{
+             location_id: locationId,
+             lpg_3kg: editingLpgSale.lpg_3kg,
+             lpg_12kg: editingLpgSale.lpg_12kg,
+             lpg_50kg: editingLpgSale.lpg_50kg,
+             lpg_industri: editingLpgSale.lpg_industri,
+             month: editingLpgSale.month,
+             year: editingLpgSale.year
+           }])
+         
+         if (lpgError) {
+           console.error('LPG sale insert error:', lpgError)
+           throw lpgError
+         }
+         console.log('LPG sale created successfully')
+       }
+
+             // Skip logging to changes table for now to avoid 400 errors
+       // TODO: Fix changes table schema or remove this logging
+
+      showNotification('success', 'Data berhasil disimpan!')
+      closeModal()
+      
+      // Refresh data
+      const { data: locationsData, error: locationsError } = await supabase
+        .from('locations')
+        .select(`
+          *,
+          region:regions(name)
+        `)
+        .order('name')
+      
+      if (!locationsError) {
+        setLocations(locationsData || [])
+      }
+    } catch (error) {
+      console.error('Error saving data:', error)
+      showNotification('error', 'Gagal menyimpan data. Silakan coba lagi.')
+    } finally {
+      setSaving(false)
+    }
   }
 
   if (!mounted) {
@@ -113,20 +286,6 @@ export default function DataLPGPage() {
           <div className="mb-8">
             <div className="bg-red-600 text-white text-center py-4 px-6 rounded-lg">
               <h1 className="text-lg font-bold">PERTAMINA PETRA NIAGA BANDUNG</h1>
-            </div>
-          </div>
-
-          <div className="mb-8">
-            <div className="bg-white border rounded-lg p-4 shadow-sm">
-              <div className="flex items-center space-x-3">
-                <div className="w-12 h-12 bg-gray-300 rounded-full flex items-center justify-center">
-                  <span className="text-gray-600 font-semibold">AS</span>
-                </div>
-                <div>
-                  <p className="font-semibold text-gray-800">Ahmad Sumbul</p>
-                  <p className="text-sm text-gray-500">Admin</p>
-                </div>
-              </div>
             </div>
           </div>
 
@@ -156,6 +315,27 @@ export default function DataLPGPage() {
       {/* Main Content */}
       <div className="ml-64 p-8">
         <div className="max-w-7xl mx-auto">
+          {/* Notification */}
+          {notification && (
+            <div className={`mb-6 p-4 rounded-lg ${
+              notification.type === 'success' 
+                ? 'bg-green-100 border border-green-400 text-green-700' 
+                : 'bg-red-100 border border-red-400 text-red-700'
+            }`}>
+              <div className="flex items-center">
+                <span className="font-medium">
+                  {notification.type === 'success' ? '✅' : '❌'} {notification.message}
+                </span>
+                <button 
+                  onClick={() => setNotification(null)}
+                  className="ml-auto text-gray-500 hover:text-gray-700"
+                >
+                  ✕
+                </button>
+              </div>
+            </div>
+          )}
+
           <div className="flex items-center justify-between mb-8">
             <h1 className="text-3xl font-bold text-gray-900">Data LPG</h1>
             <button
@@ -264,22 +444,22 @@ export default function DataLPGPage() {
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                         {index + 1}
                       </td>
-                                             <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">
-                         {location.name}
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">
+                        {location.name}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                        {location.address}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                        {location.hours}
+                      </td>
+                                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                         {location.code || '34.43242'}
                        </td>
-                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                         {location.address}
-                       </td>
-                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                         {location.hours}
-                       </td>
-                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                         34.43242
-                       </td>
-                       <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">
-                         {(Math.random() * 3000 + 2000).toFixed(0)} kg
-                       </td>
-                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">
+                        {(Math.random() * 3000 + 2000).toFixed(0)} kg
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
                         <button
                           onClick={() => openEditModal(location)}
                           className="text-blue-600 hover:text-blue-900"
@@ -304,9 +484,9 @@ export default function DataLPGPage() {
           <div className="bg-white rounded-lg w-full max-w-4xl max-h-[90vh] overflow-y-auto">
             <div className="p-6">
               <div className="flex items-center justify-between mb-6">
-                                 <h2 className="text-2xl font-bold text-gray-900">
-                   {editingLocation?.id ? 'Edit Data' : 'Tambah Data Baru'}
-                 </h2>
+                <h2 className="text-2xl font-bold text-gray-900">
+                  {editingLocation?.id ? 'Edit Data' : 'Tambah Data Baru'}
+                </h2>
                 <button
                   onClick={closeModal}
                   className="text-gray-400 hover:text-gray-600"
@@ -320,69 +500,82 @@ export default function DataLPGPage() {
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 {/* Data SPBE Section */}
                 <div>
-                                     <h3 className="text-lg font-semibold text-gray-900 mb-4">Data SPBE</h3>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Data SPBE</h3>
                   <div className="space-y-4">
-                    <div>
-                                             <label className="block text-sm font-semibold text-gray-900 mb-2">
+                                         <div>
+                       <label className="block text-sm font-semibold text-gray-900 mb-2">
                          Nama SPBE
                        </label>
-                                               <input
-                           type="text"
-                           value={editingLocation?.name || ''}
-                           onChange={(e) => setEditingLocation(prev => prev ? { ...prev, name: e.target.value } : null)}
-                           className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
-                           placeholder="SPBE Antapani"
-                         />
-                    </div>
-                    
-                    <div>
-                                             <label className="block text-sm font-semibold text-gray-900 mb-2">
-                         No Telepon
-                       </label>
-                                             <input
+                       <input
                          type="text"
-                         value={editingLocation?.phone || ''}
-                         onChange={(e) => setEditingLocation(prev => prev ? { ...prev, phone: e.target.value } : null)}
+                         value={editingLocation?.name || ''}
+                         onChange={(e) => setEditingLocation(prev => prev ? { ...prev, name: e.target.value } : null)}
                          className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
-                         placeholder="(022) 6112345"
+                         placeholder="SPBE Antapani"
                        />
+                     </div>
+                     
+                     <div>
+                       <label className="block text-sm font-semibold text-gray-900 mb-2">
+                         Alamat SPBE
+                       </label>
+                       <input
+                         type="text"
+                         value={editingLocation?.address || ''}
+                         onChange={(e) => setEditingLocation(prev => prev ? { ...prev, address: e.target.value } : null)}
+                         className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+                         placeholder="Jl. Antapani No. 123"
+                       />
+                     </div>
+                    
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-900 mb-2">
+                        No Telepon
+                      </label>
+                      <input
+                        type="text"
+                        value={editingLocation?.phone || ''}
+                        onChange={(e) => setEditingLocation(prev => prev ? { ...prev, phone: e.target.value } : null)}
+                        className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+                        placeholder="(022) 6112345"
+                      />
                     </div>
                     
                     <div>
-                                             <label className="block text-sm font-semibold text-gray-900 mb-2">
-                         Kode SPBE
-                       </label>
+                      <label className="block text-sm font-semibold text-gray-900 mb-2">
+                        Kode SPBE
+                      </label>
                                              <input
                          type="text"
-                         value="34.402.23"
+                         value={editingLocation?.code || ''}
+                         onChange={(e) => setEditingLocation(prev => prev ? { ...prev, code: e.target.value } : null)}
                          className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
                          placeholder="34.402.23"
-                         readOnly
                        />
                     </div>
                     
                     <div>
-                                             <label className="block text-sm font-semibold text-gray-900 mb-2">
-                         Waktu Operasi
-                       </label>
-                                             <input
-                         type="text"
-                         value={editingLocation?.hours || ''}
-                         onChange={(e) => setEditingLocation(prev => prev ? { ...prev, hours: e.target.value } : null)}
-                         className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
-                         placeholder="05:00 - 23:00"
-                       />
+                      <label className="block text-sm font-semibold text-gray-900 mb-2">
+                        Waktu Operasi
+                      </label>
+                      <input
+                        type="text"
+                        value={editingLocation?.hours || ''}
+                        onChange={(e) => setEditingLocation(prev => prev ? { ...prev, hours: e.target.value } : null)}
+                        className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+                        placeholder="05:00 - 23:00"
+                      />
                     </div>
                     
                     <div>
-                                             <label className="block text-sm font-semibold text-gray-900 mb-2">
-                         Wilayah SPBE
-                       </label>
-                                             <select
-                         value={editingLocation?.region_id || ''}
-                         onChange={(e) => setEditingLocation(prev => prev ? { ...prev, region_id: e.target.value } : null)}
-                         className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
-                       >
+                      <label className="block text-sm font-semibold text-gray-900 mb-2">
+                        Wilayah SPBE
+                      </label>
+                      <select
+                        value={editingLocation?.region_id || ''}
+                        onChange={(e) => setEditingLocation(prev => prev ? { ...prev, region_id: e.target.value } : null)}
+                        className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+                      >
                         {regions.map((region) => (
                           <option key={region.id} value={region.id}>
                             {region.name}
@@ -392,9 +585,9 @@ export default function DataLPGPage() {
                     </div>
                     
                     <div>
-                                             <label className="block text-sm font-semibold text-gray-900 mb-2">
-                         Layanan
-                       </label>
+                      <label className="block text-sm font-semibold text-gray-900 mb-2">
+                        Layanan
+                      </label>
                       <div className="flex flex-wrap gap-2">
                         {['LPG 3kg', 'LPG 12kg', 'LPG 50kg'].map((service) => (
                           <span
@@ -405,93 +598,99 @@ export default function DataLPGPage() {
                           </span>
                         ))}
                       </div>
-                                             <button className="mt-2 text-sm text-green-600 hover:text-green-800 font-medium">
-                         + Add
-                       </button>
+                      
                     </div>
                   </div>
                 </div>
 
                 {/* Data Penjualan LPG Section */}
                 <div>
-                                     <h3 className="text-lg font-semibold text-gray-900 mb-4">Data Penjualan LPG</h3>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Data Penjualan LPG</h3>
                   <div className="space-y-4">
                     <div>
-                                             <label className="block text-sm font-semibold text-gray-900 mb-2">
-                         Volume LPG 3kg
-                       </label>
-                                             <div className="relative">
-                         <input
-                           type="number"
-                           className="w-full border border-gray-300 rounded-lg px-3 py-2 pr-10 focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
-                           placeholder="1,500"
-                         />
-                         <span className="absolute right-3 top-2 text-gray-700 font-medium">kg</span>
-                       </div>
+                      <label className="block text-sm font-semibold text-gray-900 mb-2">
+                        Volume LPG 3kg
+                      </label>
+                      <div className="relative">
+                        <input
+                          type="number"
+                          value={editingLpgSale?.lpg_3kg || 0}
+                          onChange={(e) => setEditingLpgSale(prev => prev ? { ...prev, lpg_3kg: parseFloat(e.target.value) || 0 } : null)}
+                          className="w-full border border-gray-300 rounded-lg px-3 py-2 pr-10 focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+                          placeholder="1,500"
+                        />
+                        <span className="absolute right-3 top-2 text-gray-700 font-medium">kg</span>
+                      </div>
                     </div>
                     
                     <div>
-                                             <label className="block text-sm font-semibold text-gray-900 mb-2">
-                         Volume LPG 12kg
-                       </label>
-                                             <div className="relative">
-                         <input
-                           type="number"
-                           className="w-full border border-gray-300 rounded-lg px-3 py-2 pr-10 focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
-                           placeholder="2,000"
-                         />
-                         <span className="absolute right-3 top-2 text-gray-700 font-medium">kg</span>
-                       </div>
+                      <label className="block text-sm font-semibold text-gray-900 mb-2">
+                        Volume LPG 12kg
+                      </label>
+                      <div className="relative">
+                        <input
+                          type="number"
+                          value={editingLpgSale?.lpg_12kg || 0}
+                          onChange={(e) => setEditingLpgSale(prev => prev ? { ...prev, lpg_12kg: parseFloat(e.target.value) || 0 } : null)}
+                          className="w-full border border-gray-300 rounded-lg px-3 py-2 pr-10 focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+                          placeholder="2,000"
+                        />
+                        <span className="absolute right-3 top-2 text-gray-700 font-medium">kg</span>
+                      </div>
                     </div>
                     
                     <div>
-                                             <label className="block text-sm font-semibold text-gray-900 mb-2">
-                         Volume LPG 50kg
-                       </label>
-                                             <div className="relative">
-                         <input
-                           type="number"
-                           className="w-full border border-gray-300 rounded-lg px-3 py-2 pr-10 focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
-                           placeholder="500"
-                         />
-                         <span className="absolute right-3 top-2 text-gray-700 font-medium">kg</span>
-                       </div>
+                      <label className="block text-sm font-semibold text-gray-900 mb-2">
+                        Volume LPG 50kg
+                      </label>
+                      <div className="relative">
+                        <input
+                          type="number"
+                          value={editingLpgSale?.lpg_50kg || 0}
+                          onChange={(e) => setEditingLpgSale(prev => prev ? { ...prev, lpg_50kg: parseFloat(e.target.value) || 0 } : null)}
+                          className="w-full border border-gray-300 rounded-lg px-3 py-2 pr-10 focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+                          placeholder="500"
+                        />
+                        <span className="absolute right-3 top-2 text-gray-700 font-medium">kg</span>
+                      </div>
                     </div>
                     
                     <div>
-                                             <label className="block text-sm font-semibold text-gray-900 mb-2">
-                         Volume LPG Industri
-                       </label>
-                                             <div className="relative">
-                         <input
-                           type="number"
-                           className="w-full border border-gray-300 rounded-lg px-3 py-2 pr-10 focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
-                           placeholder="1,000"
-                         />
-                         <span className="absolute right-3 top-2 text-gray-700 font-medium">kg</span>
-                       </div>
+                      <label className="block text-sm font-semibold text-gray-900 mb-2">
+                        Volume LPG Industri
+                      </label>
+                      <div className="relative">
+                        <input
+                          type="number"
+                          value={editingLpgSale?.lpg_industri || 0}
+                          onChange={(e) => setEditingLpgSale(prev => prev ? { ...prev, lpg_industri: parseFloat(e.target.value) || 0 } : null)}
+                          className="w-full border border-gray-300 rounded-lg px-3 py-2 pr-10 focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+                          placeholder="1,000"
+                        />
+                        <span className="absolute right-3 top-2 text-gray-700 font-medium">kg</span>
+                      </div>
                     </div>
                     
-                                         <button className="w-full text-sm text-green-600 hover:text-green-800 border border-green-200 rounded-lg py-2 font-medium">
-                       + Tambah Produk
-                     </button>
+                    
                   </div>
                 </div>
               </div>
 
               {/* Action Buttons */}
               <div className="flex justify-end gap-4 mt-8 pt-6 border-t">
-                                 <button
-                   onClick={closeModal}
-                   className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 font-medium"
-                 >
-                   Cancel
-                 </button>
-                 <button
-                   className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium"
-                 >
-                   Save
-                 </button>
+                <button
+                  onClick={closeModal}
+                  className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 font-medium"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={saveData}
+                  disabled={saving}
+                  className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 font-medium"
+                >
+                  {saving ? 'Menyimpan...' : 'Save'}
+                </button>
               </div>
             </div>
           </div>

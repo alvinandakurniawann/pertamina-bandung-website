@@ -42,6 +42,7 @@ export default function CrudHomePage() {
         const { data: locationsData, error: locationsError } = await supabase
           .from('locations')
           .select('*')
+          .order('created_at', { ascending: false })
         
         if (locationsError) throw locationsError
 
@@ -80,20 +81,7 @@ export default function CrudHomePage() {
             </div>
           </div>
 
-          {/* User Profile */}
-          <div className="mb-8">
-            <div className="bg-white border rounded-lg p-4 shadow-sm">
-              <div className="flex items-center space-x-3">
-                <div className="w-12 h-12 bg-gray-300 rounded-full flex items-center justify-center">
-                  <span className="text-gray-600 font-semibold">AS</span>
-                </div>
-                <div>
-                  <p className="font-semibold text-gray-800">Ahmad Sumbul</p>
-                  <p className="text-sm text-gray-500">Admin</p>
-                </div>
-              </div>
-            </div>
-          </div>
+
 
           {/* Navigation */}
           <nav className="space-y-2">
@@ -218,14 +206,71 @@ export default function CrudHomePage() {
             </div>
           </div>
 
+          {/* Statistik Lokasi Section */}
+          <div className="bg-white rounded-lg shadow-sm p-6 mb-8">
+            <h2 className="text-xl font-semibold text-gray-800 mb-6">Statistik Lokasi</h2>
+            
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {/* Total SPBU */}
+              <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                <div className="flex items-center">
+                  <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
+                    <svg className="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                    </svg>
+                  </div>
+                  <div className="ml-4">
+                    <p className="text-sm font-medium text-red-600">Total SPBU</p>
+                    <p className="text-2xl font-bold text-red-900">
+                      {locations.filter(loc => loc.type === 'SPBU').length}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Total SPBE */}
+              <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                <div className="flex items-center">
+                  <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
+                    <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                    </svg>
+                  </div>
+                  <div className="ml-4">
+                    <p className="text-sm font-medium text-green-600">Total SPBE</p>
+                    <p className="text-2xl font-bold text-green-900">
+                      {locations.filter(loc => loc.type === 'SPBE').length}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Total Lokasi */}
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <div className="flex items-center">
+                  <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+                    <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                  </div>
+                  <div className="ml-4">
+                    <p className="text-sm font-medium text-blue-600">Total Lokasi</p>
+                    <p className="text-2xl font-bold text-blue-900">{locations.length}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
           {/* Rincian Penjualan Section */}
           <div className="bg-white rounded-lg shadow-sm p-6">
             <h2 className="text-xl font-semibold text-gray-800 mb-6">Rincian Penjualan</h2>
             
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              {/* Penjualan Fuel */}
+              {/* Penjualan Fuel - Hanya SPBU */}
               <div>
-                <h3 className="font-medium text-gray-700 mb-4">Penjualan Fuel</h3>
+                <h3 className="font-medium text-gray-700 mb-4">Penjualan Fuel (SPBU)</h3>
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm">
                     <thead>
@@ -236,21 +281,24 @@ export default function CrudHomePage() {
                       </tr>
                     </thead>
                     <tbody>
-                      {regions.slice(0, 10).map((region) => (
-                        <tr key={region.id} className="border-b">
-                          <td className="py-2">{region.name}</td>
-                          <td className="text-right py-2">{(Math.random() * 5000 + 2000).toFixed(0)} kl</td>
-                          <td className="text-right py-2">{(Math.random() * 5000 + 2000).toFixed(0)} kl</td>
-                        </tr>
-                      ))}
+                      {locations
+                        .filter(loc => loc.type === 'SPBU')
+                        .slice(0, 10)
+                        .map((location) => (
+                          <tr key={location.id} className="border-b">
+                            <td className="py-2">{location.name}</td>
+                            <td className="text-right py-2">{(Math.random() * 5000 + 2000).toFixed(0)} kl</td>
+                            <td className="text-right py-2">{(Math.random() * 5000 + 2000).toFixed(0)} kl</td>
+                          </tr>
+                        ))}
                     </tbody>
                   </table>
                 </div>
               </div>
 
-              {/* Penjualan LPG */}
+              {/* Penjualan LPG - Hanya SPBE */}
               <div>
-                <h3 className="font-medium text-gray-700 mb-4">Penjualan LPG</h3>
+                <h3 className="font-medium text-gray-700 mb-4">Penjualan LPG (SPBE)</h3>
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm">
                     <thead>
@@ -261,13 +309,16 @@ export default function CrudHomePage() {
                       </tr>
                     </thead>
                     <tbody>
-                      {regions.slice(0, 10).map((region) => (
-                        <tr key={region.id} className="border-b">
-                          <td className="py-2">{region.name}</td>
-                          <td className="text-right py-2">{(Math.random() * 5000 + 2000).toFixed(0)} kl</td>
-                          <td className="text-right py-2">{(Math.random() * 5000 + 2000).toFixed(0)} kl</td>
-                        </tr>
-                      ))}
+                      {locations
+                        .filter(loc => loc.type === 'SPBE')
+                        .slice(0, 10)
+                        .map((location) => (
+                          <tr key={location.id} className="border-b">
+                            <td className="py-2">{location.name}</td>
+                            <td className="text-right py-2">{(Math.random() * 5000 + 2000).toFixed(0)} kg</td>
+                            <td className="text-right py-2">{(Math.random() * 5000 + 2000).toFixed(0)} kg</td>
+                          </tr>
+                        ))}
                     </tbody>
                   </table>
                 </div>
