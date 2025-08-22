@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import Link from 'next/link'
+import Head from 'next/head'
 
 interface Region {
   id: string
@@ -39,13 +40,13 @@ export default function CrudHomePage() {
         if (regionsError) throw regionsError
 
         // Fetch locations
-        const { data: locationsData, error: locationsError } = await supabase
-          .from('locations')
-          .select('*')
+          const { data: locationsData, error: locationsError } = await supabase
+            .from('locations')
+            .select('*')
           .order('created_at', { ascending: false })
-        
-        if (locationsError) throw locationsError
-
+          
+          if (locationsError) throw locationsError
+          
         setRegions(regionsData || [])
         setLocations(locationsData || [])
       } catch (error) {
@@ -65,13 +66,20 @@ export default function CrudHomePage() {
           <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600 mx-auto"></div>
           <p className="mt-4 text-gray-600">Memuat...</p>
         </div>
-      </div>
+        </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Sidebar */}
+    <>
+      <Head>
+        <title>CRUD - Pertamina Cabang Bandung</title>
+        <meta name="description" content="Sistem manajemen data SPBU dan SPBE Pertamina Cabang Bandung" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <link rel="icon" href="/favicon.ico" />
+      </Head>
+      <div className="min-h-screen bg-gray-50">
+        {/* Sidebar */}
       <div className="fixed left-0 top-0 h-full w-64 bg-white shadow-lg">
         <div className="p-6">
           {/* Logo */}
@@ -85,12 +93,18 @@ export default function CrudHomePage() {
 
           {/* Navigation */}
           <nav className="space-y-2">
-            <Link 
-              href="/crud" 
-              className="block w-full bg-blue-700 text-white px-4 py-3 rounded-lg font-medium"
-            >
-              Beranda
-            </Link>
+                         <Link 
+               href="/" 
+               className="block w-full bg-gray-100 text-gray-700 px-4 py-3 rounded-lg font-medium hover:bg-gray-200 mb-4"
+             >
+               ← Kembali ke Homepage
+             </Link>
+             <Link 
+               href="/crud" 
+               className="block w-full bg-blue-700 text-white px-4 py-3 rounded-lg font-medium"
+             >
+               Overview
+             </Link>
             <Link 
               href="/crud/data-fuel" 
               className="block w-full bg-white text-gray-700 px-4 py-3 rounded-lg font-medium hover:bg-gray-50"
@@ -140,9 +154,9 @@ export default function CrudHomePage() {
                       <div className="w-full bg-gray-200 rounded-full h-2">
                         <div className="bg-green-600 h-2 rounded-full" style={{ width: '100%' }}></div>
                       </div>
-                    </div>
-                  </div>
-                </div>
+            </div>
+          </div>
+        </div>
 
                 {/* Target LPG */}
                 <div>
@@ -156,7 +170,7 @@ export default function CrudHomePage() {
                       <div className="w-full bg-gray-200 rounded-full h-2">
                         <div className="bg-blue-600 h-2 rounded-full" style={{ width: '65%' }}></div>
                       </div>
-                    </div>
+        </div>
                     <div>
                       <div className="flex justify-between text-sm mb-1">
                         <span>Penjualan NPSO</span>
@@ -167,9 +181,9 @@ export default function CrudHomePage() {
                       </div>
                     </div>
                   </div>
-                </div>
-              </div>
+                  </div>
             </div>
+          </div>
 
             {/* Volume Chart */}
             <div className="bg-white rounded-lg shadow-sm p-6">
@@ -202,9 +216,9 @@ export default function CrudHomePage() {
                   <span>5.000kl</span>
                   <span>2.500kl</span>
                 </div>
-              </div>
-            </div>
-          </div>
+                </div>
+                  </div>
+                </div>
 
           {/* Statistik Lokasi Section */}
           <div className="bg-white rounded-lg shadow-sm p-6 mb-8">
@@ -224,9 +238,9 @@ export default function CrudHomePage() {
                     <p className="text-2xl font-bold text-red-900">
                       {locations.filter(loc => loc.type === 'SPBU').length}
                     </p>
-                  </div>
                 </div>
-              </div>
+                        </div>
+                      </div>
 
               {/* Total SPBE */}
               <div className="bg-green-50 border border-green-200 rounded-lg p-4">
@@ -242,8 +256,8 @@ export default function CrudHomePage() {
                       {locations.filter(loc => loc.type === 'SPBE').length}
                     </p>
                   </div>
+                    </div>
                 </div>
-              </div>
 
               {/* Total Lokasi */}
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
@@ -260,8 +274,8 @@ export default function CrudHomePage() {
                   </div>
                 </div>
               </div>
-            </div>
           </div>
+        </div>
 
           {/* Rincian Penjualan Section */}
           <div className="bg-white rounded-lg shadow-sm p-6">
@@ -275,9 +289,9 @@ export default function CrudHomePage() {
                   <table className="w-full text-sm">
                     <thead>
                       <tr className="border-b">
-                        <th className="text-left py-2 font-medium">Lokasi</th>
-                        <th className="text-right py-2 font-medium">Volume PSO</th>
-                        <th className="text-right py-2 font-medium">Volume Non PSO</th>
+                        <th className="text-left py-2 font-medium text-gray-800">Lokasi</th>
+                        <th className="text-right py-2 font-medium text-gray-800">Volume PSO</th>
+                        <th className="text-right py-2 font-medium text-gray-800">Volume Non PSO</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -286,14 +300,14 @@ export default function CrudHomePage() {
                         .slice(0, 10)
                         .map((location) => (
                           <tr key={location.id} className="border-b">
-                            <td className="py-2">{location.name}</td>
-                            <td className="text-right py-2">{(Math.random() * 5000 + 2000).toFixed(0)} kl</td>
-                            <td className="text-right py-2">{(Math.random() * 5000 + 2000).toFixed(0)} kl</td>
+                            <td className="py-2 text-gray-900">{location.name}</td>
+                            <td className="text-right py-2 text-gray-900">{(Math.random() * 5000 + 2000).toFixed(0)} kl</td>
+                            <td className="text-right py-2 text-gray-900">{(Math.random() * 5000 + 2000).toFixed(0)} kl</td>
                           </tr>
                         ))}
                     </tbody>
                   </table>
-                </div>
+              </div>
               </div>
 
               {/* Penjualan LPG - Hanya SPBE */}
@@ -303,9 +317,9 @@ export default function CrudHomePage() {
                   <table className="w-full text-sm">
                     <thead>
                       <tr className="border-b">
-                        <th className="text-left py-2 font-medium">Lokasi</th>
-                        <th className="text-right py-2 font-medium">Volume PSO</th>
-                        <th className="text-right py-2 font-medium">Volume Non PSO</th>
+                        <th className="text-left py-2 font-medium text-gray-800">Lokasi</th>
+                        <th className="text-right py-2 font-medium text-gray-800">Volume PSO</th>
+                        <th className="text-right py-2 font-medium text-gray-800">Volume Non PSO</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -314,20 +328,21 @@ export default function CrudHomePage() {
                         .slice(0, 10)
                         .map((location) => (
                           <tr key={location.id} className="border-b">
-                            <td className="py-2">{location.name}</td>
-                            <td className="text-right py-2">{(Math.random() * 5000 + 2000).toFixed(0)} kg</td>
-                            <td className="text-right py-2">{(Math.random() * 5000 + 2000).toFixed(0)} kg</td>
+                            <td className="py-2 text-gray-900">{location.name}</td>
+                            <td className="text-right py-2 text-gray-900">{(Math.random() * 5000 + 2000).toFixed(0)} kg</td>
+                            <td className="text-right py-2 text-gray-900">{(Math.random() * 5000 + 2000).toFixed(0)} kg</td>
                           </tr>
                         ))}
                     </tbody>
                   </table>
-                </div>
               </div>
             </div>
           </div>
-        </div>
+      </div>
+          </div>
       </div>
     </div>
+    </>
   )
 }
 

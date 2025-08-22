@@ -5,6 +5,8 @@ import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { Region as UiRegion, Location as UiLocation } from '@/types/sa'
 import { supabase } from '@/lib/supabase'
+import Header from '@/components/Header'
+import Footer from '@/components/Footer'
 
 type DbRegion = {
   id: string
@@ -503,12 +505,14 @@ export default function PetaSPBUSPBEPage() {
   }
 
   const closeLocationModal = () => {
-    setShowLocationModal(false)
+    setShowRegionModal(false)
     setSelectedLocation(null)
   }
 
   return (
-    <main className="min-h-screen bg-gray-50">
+    <>
+      <Header />
+      <main className="min-h-screen bg-gray-50">
       <section className="bg-gradient-to-r from-blue-900 to-blue-700 text-white py-16">
         <div className="container mx-auto px-4 text-center">
           <h1 className="text-4xl md:text-5xl font-bold mb-4">Peta SPBU dan SPBE Bandung</h1>
@@ -740,6 +744,8 @@ export default function PetaSPBUSPBEPage() {
         </div>
       </section>
     </main>
+      <Footer />
+    </>
   )
 }
 

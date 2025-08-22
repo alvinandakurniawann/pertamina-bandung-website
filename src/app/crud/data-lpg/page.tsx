@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import Link from 'next/link'
+import Head from 'next/head'
 
 interface Region {
   id: string
@@ -279,8 +280,15 @@ export default function DataLPGPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Sidebar */}
+    <>
+      <Head>
+        <title>Data LPG - Pertamina Cabang Bandung</title>
+        <meta name="description" content="Sistem manajemen data LPG SPBE Pertamina Cabang Bandung" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <link rel="icon" href="/favicon.ico" />
+      </Head>
+      <div className="min-h-screen bg-gray-50">
+        {/* Sidebar */}
       <div className="fixed left-0 top-0 h-full w-64 bg-white shadow-lg">
         <div className="p-6">
           <div className="mb-8">
@@ -289,13 +297,19 @@ export default function DataLPGPage() {
             </div>
           </div>
 
-          <nav className="space-y-2">
-            <Link 
-              href="/crud" 
-              className="block w-full bg-white text-gray-700 px-4 py-3 rounded-lg font-medium hover:bg-gray-50"
-            >
-              Beranda
-            </Link>
+                     <nav className="space-y-2">
+             <Link 
+               href="/" 
+               className="block w-full bg-gray-100 text-gray-700 px-4 py-3 rounded-lg font-medium hover:bg-gray-200 mb-4"
+             >
+               ← Kembali ke Homepage
+             </Link>
+             <Link 
+               href="/crud" 
+               className="block w-full bg-white text-gray-700 px-4 py-3 rounded-lg font-medium hover:bg-gray-50"
+             >
+               Overview
+             </Link>
             <Link 
               href="/crud/data-fuel" 
               className="block w-full bg-white text-gray-700 px-4 py-3 rounded-lg font-medium hover:bg-gray-50"
@@ -697,6 +711,7 @@ export default function DataLPGPage() {
         </div>
       )}
     </div>
+    </>
   )
 }
 
