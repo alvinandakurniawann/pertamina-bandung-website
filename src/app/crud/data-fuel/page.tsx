@@ -115,8 +115,53 @@ export default function DataFuelPage() {
     setShowModal(true)
   }
 
-  const openEditModal = (location: Location) => {
+  const openEditModal = async (location: Location) => {
     setEditingLocation({ ...location })
+    
+    // Fetch existing fuel sales data for this location
+    try {
+      const { data: fuelSalesData, error: fuelError } = await supabase
+        .from('fuel_sales')
+        .select('*')
+        .eq('location_id', location.id)
+        .single()
+      
+      if (fuelError && fuelError.code !== 'PGRST116') { // PGRST116 = no rows returned
+        console.error('Error fetching fuel sales:', fuelError)
+      }
+      
+      if (fuelSalesData) {
+        setEditingFuelSale(fuelSalesData)
+      } else {
+        // Set default values if no fuel sales data exists
+        setEditingFuelSale({
+          id: '',
+          location_id: location.id,
+          pertalite: 0,
+          pertamax: 0,
+          pertamax_turbo: 0,
+          biosolar: 0,
+          dexlite: 0,
+          month: 'Januari',
+          year: 2025
+        })
+      }
+    } catch (error) {
+      console.error('Error in openEditModal:', error)
+      // Set default values on error
+      setEditingFuelSale({
+        id: '',
+        location_id: location.id,
+        pertalite: 0,
+        pertamax: 0,
+        pertamax_turbo: 0,
+        biosolar: 0,
+        dexlite: 0,
+        month: 'Januari',
+        year: 2025
+      })
+    }
+    
     setShowModal(true)
   }
 
@@ -198,6 +243,7 @@ export default function DataFuelPage() {
          const { error: fuelError } = await supabase
            .from('fuel_sales')
            .update({
+             location_id: locationId, // Ensure location_id is updated
              pertalite: editingFuelSale.pertalite,
              pertamax: editingFuelSale.pertamax,
              pertamax_turbo: editingFuelSale.pertamax_turbo,
@@ -248,7 +294,7 @@ export default function DataFuelPage() {
           *,
           region:regions(name)
         `)
-        .order('name')
+        .order('created_at', { ascending: false })
       
       if (!locationsError) {
         setLocations(locationsData || [])
