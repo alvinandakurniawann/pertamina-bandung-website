@@ -47,8 +47,22 @@ export default function DataFuelPage() {
   const [selectedType, setSelectedType] = useState('all')
   const [saving, setSaving] = useState(false)
   const [notification, setNotification] = useState<{ type: 'success' | 'error', message: string } | null>(null)
+  const [sharedKey, setSharedKey] = useState('')
+  const [isAuthorized, setIsAuthorized] = useState(false)
 
   useEffect(() => { setMounted(true) }, [])
+
+  useEffect(() => {
+    // Check if user is already authorized from localStorage
+    const savedAuth = localStorage.getItem('pertamina-auth')
+    if (savedAuth) {
+      const authData = JSON.parse(savedAuth)
+      if (authData.isAuthorized && authData.sharedKey) {
+        setSharedKey(authData.sharedKey)
+        setIsAuthorized(true)
+      }
+    }
+  }, [])
 
   useEffect(() => {
     const fetchData = async () => {
@@ -307,6 +321,22 @@ export default function DataFuelPage() {
     }
   }
 
+  const handleSharedKeySubmit = () => {
+    // Simple validation - you can enhance this with actual authentication
+    if (sharedKey.trim() === 'gasmelon3kg') {
+      setIsAuthorized(true)
+      localStorage.setItem('pertamina-auth', JSON.stringify({ isAuthorized: true, sharedKey: sharedKey }))
+    } else {
+      alert('Shared key tidak valid!')
+    }
+  }
+
+  const handleLogout = () => {
+    setIsAuthorized(false)
+    setSharedKey('')
+    localStorage.removeItem('pertamina-auth')
+  }
+
   if (!mounted) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -336,7 +366,45 @@ export default function DataFuelPage() {
             </div>
           </div>
 
-
+          {/* Shared Key Input */}
+          {!isAuthorized ? (
+            <div className="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+              <h3 className="text-sm font-semibold text-yellow-800 mb-3">Akses Write</h3>
+              <div className="space-y-3">
+                <input
+                  type="password"
+                  value={sharedKey}
+                  onChange={(e) => setSharedKey(e.target.value)}
+                  placeholder="Masukkan Shared Key"
+                  className="w-full px-3 py-2 border border-yellow-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-yellow-500"
+                />
+                <button
+                  onClick={handleSharedKeySubmit}
+                  className="w-full bg-yellow-600 text-white px-3 py-2 rounded-md text-sm font-medium hover:bg-yellow-700"
+                >
+                  Verifikasi
+                </button>
+              </div>
+              <p className="text-xs text-yellow-600 mt-2">
+                Masukkan shared key untuk akses write
+              </p>
+            </div>
+          ) : (
+            <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg">
+              <div className="flex items-center">
+                <svg className="w-5 h-5 text-green-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+                <span className="text-sm font-medium text-green-800">Akses Write Aktif</span>
+              </div>
+              <button
+                onClick={handleLogout}
+                className="mt-2 text-xs text-green-600 hover:text-green-800 underline"
+              >
+                Logout
+              </button>
+            </div>
+          )}
 
                      <nav className="space-y-2">
              <Link 
@@ -370,6 +438,20 @@ export default function DataFuelPage() {
              {/* Main Content */}
        <div className="ml-64 p-8">
          <div className="max-w-7xl mx-auto">
+           {/* Access Status */}
+           {!isAuthorized && (
+             <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+               <div className="flex items-center">
+                 <svg className="w-5 h-5 text-red-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                 </svg>
+                 <span className="text-sm font-medium text-red-800">
+                   Akses Write Belum Aktif - Masukkan shared key di sidebar untuk mengedit data
+                 </span>
+               </div>
+             </div>
+           )}
+           
            {/* Notification */}
            {notification && (
              <div className={`mb-6 p-4 rounded-lg ${
@@ -392,12 +474,14 @@ export default function DataFuelPage() {
            )}
           <div className="flex items-center justify-between mb-8">
             <h1 className="text-3xl font-bold text-gray-900">Data Fuel</h1>
-            <button
-              onClick={openAddModal}
-              className="bg-blue-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-700"
-            >
-              Tambah Data
-            </button>
+            {isAuthorized && (
+              <button
+                onClick={openAddModal}
+                className="bg-blue-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-700"
+              >
+                Tambah Data
+              </button>
+            )}
           </div>
 
           {/* Filters */}
@@ -514,14 +598,18 @@ export default function DataFuelPage() {
                         {(Math.random() * 3000 + 2000).toFixed(0)} kl
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                        <button
-                          onClick={() => openEditModal(location)}
-                          className="text-blue-600 hover:text-blue-900"
-                        >
-                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                          </svg>
-                        </button>
+                        {isAuthorized ? (
+                          <button
+                            onClick={() => openEditModal(location)}
+                            className="text-blue-600 hover:text-blue-900"
+                          >
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                            </svg>
+                          </button>
+                        ) : (
+                          <span className="text-gray-400 text-xs">Login required</span>
+                        )}
                       </td>
                     </tr>
                   ))}

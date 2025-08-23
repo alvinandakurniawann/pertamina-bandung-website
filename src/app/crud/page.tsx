@@ -25,8 +25,22 @@ export default function CrudHomePage() {
   const [regions, setRegions] = useState<Region[]>([])
   const [locations, setLocations] = useState<Location[]>([])
   const [loading, setLoading] = useState(true)
+  const [sharedKey, setSharedKey] = useState('')
+  const [isAuthorized, setIsAuthorized] = useState(false)
 
   useEffect(() => { setMounted(true) }, [])
+
+  useEffect(() => {
+    // Check if user is already authorized from localStorage
+    const savedAuth = localStorage.getItem('pertamina-auth')
+    if (savedAuth) {
+      const authData = JSON.parse(savedAuth)
+      if (authData.isAuthorized && authData.sharedKey) {
+        setSharedKey(authData.sharedKey)
+        setIsAuthorized(true)
+      }
+    }
+  }, [])
 
   useEffect(() => {
     const fetchData = async () => {
@@ -59,6 +73,22 @@ export default function CrudHomePage() {
     fetchData()
   }, [])
 
+  const handleSharedKeySubmit = () => {
+    // Simple validation - you can enhance this with actual authentication
+    if (sharedKey.trim() === 'gasmelon3kg') {
+      setIsAuthorized(true)
+      localStorage.setItem('pertamina-auth', JSON.stringify({ isAuthorized: true, sharedKey: sharedKey }))
+    } else {
+      alert('Shared key tidak valid!')
+    }
+  }
+
+  const handleLogout = () => {
+    setIsAuthorized(false)
+    setSharedKey('')
+    localStorage.removeItem('pertamina-auth')
+  }
+
   if (!mounted) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -89,7 +119,45 @@ export default function CrudHomePage() {
             </div>
           </div>
 
-
+          {/* Shared Key Input */}
+          {!isAuthorized ? (
+            <div className="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+              <h3 className="text-sm font-semibold text-yellow-800 mb-3">Akses Write</h3>
+              <div className="space-y-3">
+                <input
+                  type="password"
+                  value={sharedKey}
+                  onChange={(e) => setSharedKey(e.target.value)}
+                  placeholder="Masukkan Shared Key"
+                  className="w-full px-3 py-2 border border-yellow-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-yellow-500"
+                />
+                <button
+                  onClick={handleSharedKeySubmit}
+                  className="w-full bg-yellow-600 text-white px-3 py-2 rounded-md text-sm font-medium hover:bg-yellow-700"
+                >
+                  Verifikasi
+                </button>
+              </div>
+              <p className="text-xs text-yellow-600 mt-2">
+                Masukkan shared key untuk akses write
+              </p>
+            </div>
+          ) : (
+            <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg">
+              <div className="flex items-center">
+                <svg className="w-5 h-5 text-green-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+                <span className="text-sm font-medium text-green-800">Akses Write Aktif</span>
+              </div>
+              <button
+                onClick={handleLogout}
+                className="mt-2 text-xs text-green-600 hover:text-green-800 underline"
+              >
+                Logout
+              </button>
+            </div>
+          )}
 
           {/* Navigation */}
           <nav className="space-y-2">
@@ -124,6 +192,20 @@ export default function CrudHomePage() {
       {/* Main Content */}
       <div className="ml-64 p-8">
         <div className="max-w-7xl mx-auto">
+          {/* Access Status */}
+          {!isAuthorized && (
+            <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+              <div className="flex items-center">
+                <svg className="w-5 h-5 text-red-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                </svg>
+                <span className="text-sm font-medium text-red-800">
+                  Akses Write Belum Aktif - Masukkan shared key di sidebar untuk mengedit data
+                </span>
+              </div>
+            </div>
+          )}
+          
           <h1 className="text-3xl font-bold text-gray-800 mb-8">2025 Progres</h1>
 
           {/* Data Penjualan Section */}
