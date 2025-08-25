@@ -1,4 +1,4 @@
-'use client'
+  'use client'
 
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
@@ -65,6 +65,22 @@ export default function PetaSPBUSPBEPage() {
   const [mapSvg, setMapSvg] = useState<string>('')
   const svgContainerRef = useRef<HTMLDivElement>(null)
 
+  // Generate distinct colors for regions
+  const regionColors = [
+    '#FF6B6B', // Red
+    '#4ECDC4', // Teal
+    '#45B7D1', // Blue
+    '#96CEB4', // Green
+    '#FFEAA7', // Yellow
+    '#DDA0DD', // Plum
+    '#98D8C8', // Mint
+    '#F7DC6F', // Gold
+    '#BB8FCE', // Lavender
+    '#85C1E9', // Sky Blue
+    '#F8C471', // Orange
+    '#82E0AA', // Light Green
+  ]
+
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -74,8 +90,8 @@ export default function PetaSPBUSPBEPage() {
           supabase.from('locations').select('*'),
         ])
         if (regionsError) throw regionsError
-        if (locationsError) throw locationsError
-
+          if (locationsError) throw locationsError
+          
         const locsByRegion = new Map<string, UiLocation[]>()
         for (const loc of (dbLocations || []) as DbLocation[]) {
           const arr = locsByRegion.get(loc.region_id) || []
@@ -219,12 +235,23 @@ export default function PetaSPBUSPBEPage() {
         const doc = parser.parseFromString(raw, 'image/svg+xml')
         const svgEl = doc.documentElement as unknown as SVGSVGElement
 
+        // Debug: Log SVG properties
+        dlog('SVG Properties:', {
+          width: svgEl.getAttribute('width'),
+          height: svgEl.getAttribute('height'),
+          viewBox: svgEl.getAttribute('viewBox'),
+          preserveAspectRatio: svgEl.getAttribute('preserveAspectRatio')
+        })
+
         const styleEl = doc.createElementNS('http://www.w3.org/2000/svg', 'style')
         styleEl.textContent = `
           [data-region] { cursor: pointer; transition: filter .15s ease; }
           text, tspan { pointer-events: none; }
-          .region-hit { fill: ${debug ? '#ff0000' : '#000'}; fill-opacity: ${debug ? '0.12' : '0.03'}; stroke: ${debug ? '#ff0000' : 'none'}; stroke-opacity: ${debug ? '0.5' : '0'}; pointer-events: auto; }
-          .region-hit:hover, .region-hit.active { filter: drop-shadow(0 0 3px rgba(0,0,0,0.25)); }
+          .region-hit { fill: var(--region-color, #e5e7eb); fill-opacity: 0.85; stroke: ${debug ? '#ff0000' : '#ffffff'}; stroke-width: 4; stroke-opacity: 1; pointer-events: auto; filter: drop-shadow(0 0 4px rgba(0,0,0,0.2)); }
+          .region-hit:hover { fill-opacity: 0.95; filter: drop-shadow(0 0 12px rgba(0,0,0,0.4)); transform: scale(1.02); stroke-width: 5; }
+          .region-hit.active { fill-opacity: 1; filter: drop-shadow(0 0 16px rgba(0,0,0,0.6)); stroke-width: 6; }
+          .region-label { font-family: 'Inter', 'Segoe UI', sans-serif; font-size: 16px; font-weight: 800; fill: #1f2937; text-anchor: middle; dominant-baseline: middle; pointer-events: none; text-shadow: 3px 3px 6px rgba(255,255,255,0.9); filter: drop-shadow(0 0 2px rgba(255,255,255,0.8)); }
+          .region-border { stroke: ${debug ? '#ff0000' : '#ffffff'}; stroke-width: 3; stroke-opacity: 1; fill: none; pointer-events: none; }
         `
         svgEl.insertBefore(styleEl, svgEl.firstChild)
 
@@ -237,9 +264,23 @@ export default function PetaSPBUSPBEPage() {
         regions.forEach(r => { known.add(normalizeSlug(r.name)); known.add(normalizeSlug(r.id)) })
         dlog('Known slugs from DB:', Array.from(known))
 
-        // Find label glyph paths that carry ids matching region names
-        const labelNodes = Array.from(svgEl.querySelectorAll('[id]'))
-          .filter((el) => known.has(normalizeSlug(el.getAttribute('id') || '')))
+        // Find text elements that contain region names (visible labels on the map)
+        const textElements = Array.from(svgEl.querySelectorAll('text, tspan'))
+          .filter((el) => {
+            const textContent = (el.textContent || '').trim()
+            if (!textContent) return false
+            
+            // Check if this text matches any region name
+            const normalizedText = normalizeSlug(textContent)
+            return regions.some(region => 
+              normalizeSlug(region.name) === normalizedText ||
+              region.name.toLowerCase().includes(textContent.toLowerCase()) ||
+              textContent.toLowerCase().includes(region.name.toLowerCase())
+            )
+          })
+        
+        dlog('Found text elements with region names:', textElements.length)
+        textElements.forEach(el => dlog('Text element:', el.textContent))
 
         // Find candidate geometry shapes that represent areas (exclude tiny shapes)
         const candidates = Array.from(svgEl.querySelectorAll('path,polygon,rect,circle'))
@@ -261,70 +302,138 @@ export default function PetaSPBUSPBEPage() {
           }) as SVGGraphicsElement[]
         dlog('Found geometry candidates:', candidates.length)
 
-        // Pre-calc label centers
-        const labelCenters = labelNodes.map((labelEl) => {
+        // Pre-calc text centers for region mapping
+        const textCenters = textElements.map((textEl) => {
           try {
-            const id = (labelEl.getAttribute('id') || '').trim()
-            const slug = normalizeSlug(id)
-            const b = (labelEl as any as SVGGraphicsElement).getBBox()
-            return { slug, cx: b.x + b.width / 2, cy: b.y + b.height / 2 }
-          } catch {
+            const textContent = (textEl.textContent || '').trim()
+            // Find the matching region
+            const region = regions.find((r: UiRegion) => 
+              normalizeSlug(r.name) === normalizeSlug(textContent) ||
+              r.name.toLowerCase().includes(textContent.toLowerCase()) ||
+              textContent.toLowerCase().includes(r.name.toLowerCase())
+            )
+            
+            if (!region) return null
+            
+            const b = (textEl as any as SVGGraphicsElement).getBBox()
+            const cx = b.x + b.width / 2
+            const cy = b.y + b.height / 2
+            
+            dlog(`Text "${textContent}" -> Region "${region.name}" at (${cx}, ${cy})`)
+            
+            return { 
+              slug: normalizeSlug(region.name), 
+              region: region,
+              cx: cx, 
+              cy: cy,
+              textContent: textContent
+            }
+          } catch (e) {
+            dlog(`Error processing text element:`, e)
             return null
           }
-        }).filter(Boolean) as { slug: string; cx: number; cy: number }[]
-        dlog('Label centers detected:', labelCenters.length)
+        }).filter(Boolean) as { slug: string; region: UiRegion; cx: number; cy: number; textContent: string }[]
+        
+        dlog('Text centers detected:', textCenters.length)
 
         let overlayCount = 0
-        if (candidates.length > 0) {
-          // Case A: we have area geometry; attach overlays to each shape
-          candidates.forEach((cand) => {
-            try {
-              const cb = cand.getBBox()
-              const cxc = cb.x + cb.width / 2
-              const cyc = cb.y + cb.height / 2
-              let bestSlug: string | null = null
-              let bestD = Number.POSITIVE_INFINITY
-              for (const { slug, cx, cy } of labelCenters) {
-                const d = (cxc - cx) ** 2 + (cyc - cy) ** 2
-                if (d < bestD) { bestD = d; bestSlug = slug }
-              }
-              if (!bestSlug) return
-              const overlay = cand.cloneNode(true) as SVGGraphicsElement
-              overlay.setAttribute('data-region', bestSlug)
-              overlay.classList.add('region-hit')
-              cand.parentElement?.appendChild(overlay)
-              overlayCount += 1
-            } catch {}
+        // Create clickable areas based on text positions
+        if (textCenters.length > 0) {
+          // Create region areas based on text positions
+          textCenters.forEach((textCenter, index) => {
+            const { slug, cx, cy, region } = textCenter
+            
+            // Use distinct color for better visibility
+            const colorIndex = regions.indexOf(region) % regionColors.length
+            const regionColor = regionColors[colorIndex]
+            
+            // Create a more sophisticated fill area that extends to boundaries
+            // This will create an area that looks more like the actual region shape
+            let fillRadius = 120 // Base radius for region fill
+            
+            // Calculate distance to nearest neighbor to avoid overlap
+            let nearest = Number.POSITIVE_INFINITY
+            for (let j = 0; j < textCenters.length; j++) {
+              if (j === index) continue
+              const dx = textCenters[j].cx - cx
+              const dy = textCenters[j].cy - cy
+              const d = Math.sqrt(dx*dx + dy*dy)
+              if (d < nearest) nearest = d
+            }
+            
+            // Adjust radius based on nearest neighbor distance
+            // This ensures regions don't overlap too much but still fill the area
+            if (nearest !== Number.POSITIVE_INFINITY) {
+              fillRadius = Math.min(fillRadius, nearest * 0.6) // Reduced overlap factor
+            }
+            
+            // Ensure minimum radius for good visual coverage
+            fillRadius = Math.max(fillRadius, 80)
+            
+            dlog(`Creating region "${region.name}" at (${cx}, ${cy}) with radius ${fillRadius}`)
+            
+            // Create the main fill area with a more sophisticated shape
+            let fillElement: SVGGraphicsElement
+            
+            // Create an enhanced circle with better visual appeal
+            fillElement = doc.createElementNS('http://www.w3.org/2000/svg', 'circle') as unknown as SVGGraphicsElement
+            fillElement.setAttribute('cx', String(cx))
+            fillElement.setAttribute('cy', String(cy))
+            fillElement.setAttribute('r', String(fillRadius))
+            
+            fillElement.setAttribute('data-region', slug)
+            fillElement.classList.add('region-hit')
+            fillElement.style.setProperty('--region-color', regionColor)
+            svgEl.appendChild(fillElement)
+            
+            // Add white border around the fill area
+            const border = doc.createElementNS('http://www.w3.org/2000/svg', 'circle') as unknown as SVGGraphicsElement
+            border.setAttribute('cx', String(cx))
+            border.setAttribute('cy', String(cy))
+            border.setAttribute('r', String(fillRadius))
+            border.classList.add('region-border')
+            border.setAttribute('stroke', debug ? '#ff0000' : '#ffffff')
+            border.setAttribute('stroke-width', debug ? '8' : '6')
+            border.setAttribute('stroke-opacity', '1')
+            border.setAttribute('fill-opacity', '0')
+            svgEl.appendChild(border)
+            
+            // Add region label on top
+            const label = doc.createElementNS('http://www.w3.org/2000/svg', 'text')
+            label.setAttribute('x', String(cx))
+            label.setAttribute('y', String(cy))
+            label.setAttribute('class', 'region-label')
+            label.textContent = region.name
+            svgEl.appendChild(label)
+            
+            overlayCount += 1
           })
         } else {
-          // Case B: no area geometry; create modest circular hit areas at each label only
-          if (!labelCenters.length) {
-            dlog('No labels found; skip overlay creation to avoid errors')
-          } else {
-            for (let i = 0; i < labelCenters.length; i++) {
-              const { slug, cx, cy } = labelCenters[i]
-              // radius based on distance to nearest label, clamped
-              let nearest = Number.POSITIVE_INFINITY
-              for (let j = 0; j < labelCenters.length; j++) {
-                if (i === j) continue
-                const dx = labelCenters[j].cx - cx
-                const dy = labelCenters[j].cy - cy
-                const d = Math.sqrt(dx*dx + dy*dy)
-                if (d < nearest) nearest = d
-              }
-              const r = Math.max(22, Math.min((nearest || 60) * 0.35, 60))
-              const circle = doc.createElementNS('http://www.w3.org/2000/svg', 'circle') as unknown as SVGGraphicsElement
-              circle.setAttribute('cx', String(cx))
-              circle.setAttribute('cy', String(cy))
-              circle.setAttribute('r', String(r))
-              circle.setAttribute('data-region', slug)
-              circle.classList.add('region-hit')
-              svgEl.appendChild(circle)
-              overlayCount += 1
-            }
-          }
+          dlog('No text centers found; skip overlay creation to avoid errors')
         }
         dlog('Overlays created:', overlayCount, 'mode =', candidates.length > 0 ? 'geometry' : 'circle')
+        
+        // Enhanced debug logging
+        if (debug) {
+          dlog('=== DEBUG MAPPING INFO ===')
+          dlog('Total regions from DB:', regions.length)
+          dlog('SVG elements found:', svgEl.querySelectorAll('*').length)
+          dlog('Text elements with region names:', textElements.length)
+          dlog('Geometry candidates:', candidates.length)
+          dlog('Text centers calculated:', textCenters.length)
+          dlog('Overlays created:', overlayCount)
+          
+          // Log text elements found
+          dlog('Text elements found:', textElements.map(el => el.textContent))
+          
+          // Log text centers mapping
+          dlog('Text centers mapping:', textCenters.map(tc => ({
+            text: tc.textContent,
+            slug: tc.slug,
+            region: tc.region.name,
+            position: { x: tc.cx, y: tc.cy }
+          })))
+        }
 
         const serializer = new XMLSerializer()
         const out = serializer.serializeToString(doc)
@@ -334,7 +443,7 @@ export default function PetaSPBUSPBEPage() {
       }
     }
     loadMap()
-  }, [regions])
+  }, [regions, debug])
 
   const regionsLookup = useMemo(() => {
     const bySlug = new Map<string, UiRegion>()
@@ -389,7 +498,7 @@ export default function PetaSPBUSPBEPage() {
   return (
     <>
       <Header />
-      <main className="min-h-screen bg-gray-50">
+    <main className="min-h-screen bg-gray-50">
       <section className="bg-gradient-to-r from-blue-900 to-blue-700 text-white py-16">
         <div className="container mx-auto px-4 text-center">
           <h1 className="text-4xl md:text-5xl font-bold mb-4">Peta SPBU dan SPBE Bandung</h1>
@@ -405,8 +514,8 @@ export default function PetaSPBUSPBEPage() {
         <div className="container mx-auto px-4">
           <div className="bg-white rounded-lg shadow-lg p-6">
             <div className="text-center mb-8">
-              <h2 className="text-2xl font-bold text-gray-800 mb-4">Peta SPBU dan SPBE Bandung</h2>
-              <p className="text-gray-900">Klik pada area wilayah untuk melihat detail SPBU dan SPBE</p>
+              <h2 className="text-2xl font-bold text-black mb-4">Peta SPBU dan SPBE Bandung</h2>
+              <p className="text-black">Klik pada area wilayah untuk melihat detail SPBU dan SPBE</p>
             </div>
 
             <div
@@ -484,7 +593,7 @@ export default function PetaSPBUSPBEPage() {
               {mapSvg ? (
                 <div className="w-full" dangerouslySetInnerHTML={{ __html: mapSvg.replace('<svg ', '<svg style=\"width:100%;height:auto;min-height:650px\" ') }} />
               ) : (
-                <div className="w-full h-[650px] flex items-center justify-center text-gray-900">Peta sedang dimuat...</div>
+                <div className="w-full h-[650px] flex items-center justify-center text-black">Peta sedang dimuat...</div>
               )}
             </div>
 
@@ -493,8 +602,8 @@ export default function PetaSPBUSPBEPage() {
                 {regions.map((region) => (
                   <div key={region.id} className="flex items-center space-x-2">
                     <div className="w-4 h-4 rounded" style={{ backgroundColor: region.color }}></div>
-                    <span className="font-medium">{region.name}</span>
-                    <span className="text-gray-900">({region.spbuCount} SPBU, {region.spbeCount} SPBE)</span>
+                    <span className="font-medium text-black">{region.name}</span>
+                    <span className="text-black">({region.spbuCount} SPBU, {region.spbeCount} SPBE)</span>
                   </div>
                 ))}
               </div>
@@ -506,21 +615,21 @@ export default function PetaSPBUSPBEPage() {
       {regions.length > 0 && (
         <section className="py-12 bg-white">
           <div className="container mx-auto px-4">
-            <h2 className="text-3xl font-bold text-center mb-12 text-gray-900">Daftar Wilayah</h2>
+            <h2 className="text-3xl font-bold text-center mb-12 text-black">Daftar Wilayah</h2>
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
               {regions.map((region) => (
                 <div key={region.id} className="bg-white border border-gray-200 rounded-lg p-6 hover:shadow-lg transition-shadow duration-300 cursor-pointer" onClick={() => handleRegionClick(region)}>
                   <div className="flex items-start justify-between mb-4">
                     <div>
-                      <h3 className="font-bold text-lg text-gray-800">{region.name}</h3>
-                      <p className="text-sm text-gray-900">Wilayah Bandung</p>
+                      <h3 className="font-bold text-lg text-black">{region.name}</h3>
+                      <p className="text-sm text-black">Wilayah Bandung</p>
                     </div>
                     <div className="w-6 h-6 rounded" style={{ backgroundColor: region.color }}></div>
                   </div>
                   <div className="space-y-2">
-                    <p className="text-sm"><span className="font-medium">SPBU:</span> {region.spbuCount} lokasi</p>
-                    <p className="text-sm"><span className="font-medium">SPBE:</span> {region.spbeCount} lokasi</p>
-                    <p className="text-sm"><span className="font-medium">Total:</span> {region.locations.length} lokasi</p>
+                    <p className="text-sm text-black"><span className="font-medium">SPBU:</span> {region.spbuCount} lokasi</p>
+                    <p className="text-sm text-black"><span className="font-medium">SPBE:</span> {region.spbeCount} lokasi</p>
+                    <p className="text-sm text-black"><span className="font-medium">Total:</span> {region.locations.length} lokasi</p>
                   </div>
                   <div className="mt-4 pt-4 border-t border-gray-200">
                     <button className="text-blue-600 hover:text-blue-800 text-sm font-medium">Lihat Detail →</button>
@@ -540,18 +649,18 @@ export default function PetaSPBUSPBEPage() {
                 <div className="flex items-center space-x-3">
                   <div className="w-8 h-8 rounded" style={{ backgroundColor: selectedRegion.color }}></div>
                   <div>
-                    <h3 className="text-2xl font-bold text-gray-800">{selectedRegion.name}</h3>
-                    <p className="text-gray-900">Wilayah Bandung</p>
+                    <h3 className="text-2xl font-bold text-black">{selectedRegion.name}</h3>
+                    <p className="text-black">Wilayah Bandung</p>
                   </div>
                 </div>
-                <button onClick={closeRegionModal} className="text-gray-900 hover:text-gray-700 transition-colors duration-200">
+                <button onClick={closeRegionModal} className="text-black hover:text-gray-700 transition-colors duration-200">
                   <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
                 </button>
               </div>
 
               <div className="grid md:grid-cols-2 gap-6">
                 <div>
-                  <h4 className="font-bold text-lg text-gray-800 mb-4">Statistik</h4>
+                  <h4 className="font-bold text-lg text-black mb-4">Statistik</h4>
                   <div className="space-y-3">
                     <div className="flex justify-between items-center p-3 bg-red-50 rounded-lg">
                       <span className="font-medium text-red-800">SPBU</span>
@@ -569,18 +678,18 @@ export default function PetaSPBUSPBEPage() {
                 </div>
 
                 <div>
-                  <h4 className="font-bold text-lg text-gray-800 mb-4">Daftar Lokasi</h4>
+                  <h4 className="font-bold text-lg text-black mb-4">Daftar Lokasi</h4>
                   <div className="space-y-3 max-h-64 overflow-y-auto">
                     {selectedRegion.locations.map((location: UiLocation) => (
                       <div key={location.id} className="p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors duration-200" onClick={() => handleLocationClick(location)}>
                         <div className="flex items-center justify-between">
                           <div>
-                            <h5 className="font-medium text-gray-800">{location.name}</h5>
+                            <h5 className="font-medium text-black">{location.name}</h5>
                             <p className={`text-sm font-medium ${location.type === 'SPBU' ? 'text-red-600' : 'text-green-600'}`}>{location.type}</p>
                           </div>
                           <div className={`w-3 h-3 rounded-full ${location.type === 'SPBU' ? 'bg-red-500' : 'bg-green-500'}`}></div>
                         </div>
-                        <p className="text-sm text-gray-900 mt-1">{location.address}</p>
+                        <p className="text-sm text-black mt-1">{location.address}</p>
                       </div>
                     ))}
                   </div>
@@ -601,29 +710,29 @@ export default function PetaSPBUSPBEPage() {
             <div className="p-6">
               <div className="flex items-start justify-between mb-4">
                 <div>
-                  <h3 className="text-xl font-bold text-gray-800">{selectedLocation.name}</h3>
+                  <h3 className="text-xl font-bold text-black">{selectedLocation.name}</h3>
                   <p className={`text-sm font-medium ${selectedLocation.type === 'SPBU' ? 'text-red-600' : 'text-green-600'}`}>{selectedLocation.type}</p>
                 </div>
-                <button onClick={closeLocationModal} className="text-gray-900 hover:text-gray-700 transition-colors duration-200">
+                <button onClick={closeLocationModal} className="text-black hover:text-gray-700 transition-colors duration-200">
                   <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
                 </button>
               </div>
 
               <div className="space-y-4">
                 <div>
-                  <h4 className="font-medium text-gray-800 mb-2">Alamat</h4>
-                  <p className="text-gray-900">{selectedLocation.address}</p>
+                  <h4 className="font-medium text-black mb-2">Alamat</h4>
+                  <p className="text-black">{selectedLocation.address}</p>
                 </div>
                 <div>
-                  <h4 className="font-medium text-gray-800 mb-2">Jam Operasional</h4>
-                  <p className="text-gray-900">{selectedLocation.hours}</p>
+                  <h4 className="font-medium text-black mb-2">Jam Operasional</h4>
+                  <p className="text-black">{selectedLocation.hours}</p>
                 </div>
                 <div>
-                  <h4 className="font-medium text-gray-800 mb-2">Telepon</h4>
-                  <p className="text-gray-900">{selectedLocation.phone}</p>
+                  <h4 className="font-medium text-black mb-2">Telepon</h4>
+                  <p className="text-black">{selectedLocation.phone}</p>
                 </div>
                 <div>
-                  <h4 className="font-medium text-gray-800 mb-2">Layanan</h4>
+                  <h4 className="font-medium text-black mb-2">Layanan</h4>
                   <div className="flex flex-wrap gap-2">
                     {selectedLocation.services.map((service: string, index: number) => (
                       <span key={index} className="bg-blue-100 text-blue-800 text-sm px-3 py-1 rounded-full">{service}</span>
