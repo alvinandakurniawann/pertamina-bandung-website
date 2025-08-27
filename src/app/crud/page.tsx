@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import Link from 'next/link'
-import Head from 'next/head'
 
 interface Region {
   id: string
@@ -21,14 +20,10 @@ interface Location {
 }
 
 export default function CrudHomePage() {
-  const [mounted, setMounted] = useState(false)
   const [regions, setRegions] = useState<Region[]>([])
   const [locations, setLocations] = useState<Location[]>([])
-  const [loading, setLoading] = useState(true)
   const [sharedKey, setSharedKey] = useState('')
   const [isAuthorized, setIsAuthorized] = useState(false)
-
-  useEffect(() => { setMounted(true) }, [])
 
   useEffect(() => {
     // Check if user is already authorized from localStorage
@@ -66,7 +61,7 @@ export default function CrudHomePage() {
       } catch (error) {
         console.error('Error fetching data:', error)
       } finally {
-        setLoading(false)
+
       }
     }
 
@@ -89,25 +84,11 @@ export default function CrudHomePage() {
     localStorage.removeItem('pertamina-auth')
   }
 
-  if (!mounted) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Memuat...</p>
-        </div>
-        </div>
-    )
-  }
+
 
   return (
     <>
-      <Head>
-        <title>CRUD - Pertamina Cabang Bandung</title>
-        <meta name="description" content="Sistem manajemen data SPBU dan SPBE Pertamina Cabang Bandung" />
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <link rel="icon" href="/favicon.ico" />
-      </Head>
+
       <div className="min-h-screen bg-gray-50">
         {/* Sidebar */}
       <div className="fixed left-0 top-0 h-full w-64 bg-white shadow-lg">
@@ -116,48 +97,50 @@ export default function CrudHomePage() {
           <div className="mb-8">
             <div className="bg-red-600 text-white text-center py-4 px-6 rounded-lg">
               <h1 className="text-lg font-bold">PERTAMINA PETRA NIAGA BANDUNG</h1>
-            </div>
           </div>
+        </div>
 
           {/* Shared Key Input */}
-          {!isAuthorized ? (
-            <div className="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-              <h3 className="text-sm font-semibold text-yellow-800 mb-3">Akses Write</h3>
-              <div className="space-y-3">
-                <input
+          <div suppressHydrationWarning>
+            {!isAuthorized ? (
+              <div className="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                <h3 className="text-sm font-semibold text-yellow-800 mb-3">Akses Write</h3>
+                <div className="space-y-3">
+          <input
                   type="password"
-                  value={sharedKey}
-                  onChange={(e) => setSharedKey(e.target.value)}
-                  placeholder="Masukkan Shared Key"
-                  className="w-full px-3 py-2 border border-yellow-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-yellow-500"
-                />
+                    value={sharedKey}
+                    onChange={(e) => setSharedKey(e.target.value)}
+                    placeholder="Masukkan Shared Key"
+                    className="w-full px-3 py-2 border border-yellow-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-yellow-500"
+                  />
+                  <button
+                    onClick={handleSharedKeySubmit}
+                    className="w-full bg-yellow-600 text-white px-3 py-2 rounded-md text-sm font-medium hover:bg-yellow-700"
+                  >
+                    Verifikasi
+          </button>
+        </div>
+                <p className="text-xs text-yellow-600 mt-2">
+                  Masukkan shared key untuk akses write
+                </p>
+              </div>
+            ) : (
+              <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg">
+                <div className="flex items-center">
+                  <svg className="w-5 h-5 text-green-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                  <span className="text-sm font-medium text-green-800">Akses Write Aktif</span>
+                    </div>
                 <button
-                  onClick={handleSharedKeySubmit}
-                  className="w-full bg-yellow-600 text-white px-3 py-2 rounded-md text-sm font-medium hover:bg-yellow-700"
+                  onClick={handleLogout}
+                  className="mt-2 text-xs text-green-600 hover:text-green-800 underline"
                 >
-                  Verifikasi
+                  Logout
                 </button>
-              </div>
-              <p className="text-xs text-yellow-600 mt-2">
-                Masukkan shared key untuk akses write
-              </p>
-            </div>
-          ) : (
-            <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg">
-              <div className="flex items-center">
-                <svg className="w-5 h-5 text-green-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
-                <span className="text-sm font-medium text-green-800">Akses Write Aktif</span>
-              </div>
-              <button
-                onClick={handleLogout}
-                className="mt-2 text-xs text-green-600 hover:text-green-800 underline"
-              >
-                Logout
-              </button>
-            </div>
-          )}
+                  </div>
+            )}
+                  </div>
 
           {/* Navigation */}
           <nav className="space-y-2">
@@ -186,25 +169,27 @@ export default function CrudHomePage() {
               Data LPG
             </Link>
           </nav>
-        </div>
-      </div>
+            </div>
+          </div>
 
       {/* Main Content */}
       <div className="ml-64 p-8">
         <div className="max-w-7xl mx-auto">
           {/* Access Status */}
-          {!isAuthorized && (
-            <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
-              <div className="flex items-center">
-                <svg className="w-5 h-5 text-red-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
-                </svg>
-                <span className="text-sm font-medium text-red-800">
-                  Akses Write Belum Aktif - Masukkan shared key di sidebar untuk mengedit data
-                </span>
+          <div suppressHydrationWarning>
+            {!isAuthorized && (
+              <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+                <div className="flex items-center">
+                  <svg className="w-5 h-5 text-red-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                  </svg>
+                  <span className="text-sm font-medium text-red-800">
+                    Akses Write Belum Aktif - Masukkan shared key di sidebar untuk mengedit data
+                  </span>
+                </div>
               </div>
-            </div>
-          )}
+            )}
+          </div>
           
           <h1 className="text-3xl font-bold text-gray-800 mb-8">2025 Progres</h1>
 
@@ -218,7 +203,7 @@ export default function CrudHomePage() {
                 {/* Target Fuel */}
                 <div>
                   <h3 className="font-medium text-gray-700 mb-3">Target Fuel:</h3>
-                  <div className="space-y-3">
+              <div className="space-y-3">
                     <div>
                       <div className="flex justify-between text-sm mb-1">
                         <span>Penjualan PSO</span>
@@ -226,8 +211,8 @@ export default function CrudHomePage() {
                       </div>
                       <div className="w-full bg-gray-200 rounded-full h-2">
                         <div className="bg-blue-600 h-2 rounded-full" style={{ width: '60%' }}></div>
-                      </div>
                     </div>
+                  </div>
                     <div>
                       <div className="flex justify-between text-sm mb-1">
                         <span>Penjualan NPSO</span>
@@ -236,23 +221,23 @@ export default function CrudHomePage() {
                       <div className="w-full bg-gray-200 rounded-full h-2">
                         <div className="bg-green-600 h-2 rounded-full" style={{ width: '100%' }}></div>
                       </div>
-            </div>
-          </div>
-        </div>
+                </div>
+                  </div>
+                </div>
 
                 {/* Target LPG */}
                 <div>
                   <h3 className="font-medium text-gray-700 mb-3">Target LPG:</h3>
-                  <div className="space-y-3">
+              <div className="space-y-3">
                     <div>
                       <div className="flex justify-between text-sm mb-1">
                         <span>Penjualan PSO</span>
                         <span className="font-medium">65%</span>
-                      </div>
+                </div>
                       <div className="w-full bg-gray-200 rounded-full h-2">
                         <div className="bg-blue-600 h-2 rounded-full" style={{ width: '65%' }}></div>
+                        </div>
                       </div>
-        </div>
                     <div>
                       <div className="flex justify-between text-sm mb-1">
                         <span>Penjualan NPSO</span>
@@ -260,12 +245,12 @@ export default function CrudHomePage() {
                       </div>
                       <div className="w-full bg-gray-200 rounded-full h-2">
                         <div className="bg-yellow-500 h-2 rounded-full" style={{ width: '36%' }}></div>
-                      </div>
                     </div>
-                  </div>
-                  </div>
-            </div>
+                </div>
+                </div>
+              </div>
           </div>
+        </div>
 
             {/* Volume Chart */}
             <div className="bg-white rounded-lg shadow-sm p-6">
@@ -297,10 +282,10 @@ export default function CrudHomePage() {
                   <span>7.500kl</span>
                   <span>5.000kl</span>
                   <span>2.500kl</span>
-                </div>
-                </div>
-                  </div>
-                </div>
+              </div>
+            </div>
+          </div>
+      </div>
 
           {/* Statistik Lokasi Section */}
           <div className="bg-white rounded-lg shadow-sm p-6 mb-8">
@@ -321,8 +306,8 @@ export default function CrudHomePage() {
                       {locations.filter(loc => loc.type === 'SPBU').length}
                     </p>
                 </div>
-                        </div>
-                      </div>
+                </div>
+              </div>
 
               {/* Total SPBE */}
               <div className="bg-green-50 border border-green-200 rounded-lg p-4">
@@ -338,8 +323,8 @@ export default function CrudHomePage() {
                       {locations.filter(loc => loc.type === 'SPBE').length}
                     </p>
                   </div>
-                    </div>
-                </div>
+          </div>
+        </div>
 
               {/* Total Lokasi */}
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
@@ -349,15 +334,15 @@ export default function CrudHomePage() {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                     </svg>
-                  </div>
+              </div>
                   <div className="ml-4">
                     <p className="text-sm font-medium text-blue-600">Total Lokasi</p>
                     <p className="text-2xl font-bold text-blue-900">{locations.length}</p>
-                  </div>
-                </div>
               </div>
+              </div>
+            </div>
           </div>
-        </div>
+      </div>
 
           {/* Rincian Penjualan Section */}
           <div className="bg-white rounded-lg shadow-sm p-6">

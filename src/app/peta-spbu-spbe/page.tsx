@@ -406,7 +406,7 @@ export default function PetaSPBUSPBEPage() {
             label.textContent = region.name
             svgEl.appendChild(label)
             
-            overlayCount += 1
+                overlayCount += 1
           })
         } else {
           dlog('No text centers found; skip overlay creation to avoid errors')

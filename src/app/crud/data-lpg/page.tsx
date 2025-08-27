@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import Link from 'next/link'
-import Head from 'next/head'
 
 interface Region {
   id: string
@@ -34,10 +33,8 @@ interface LPGSale {
 }
 
 export default function DataLPGPage() {
-  const [mounted, setMounted] = useState(false)
   const [locations, setLocations] = useState<Location[]>([])
   const [regions, setRegions] = useState<Region[]>([])
-  const [loading, setLoading] = useState(true)
   const [showModal, setShowModal] = useState(false)
   const [editingLocation, setEditingLocation] = useState<Location | null>(null)
   const [editingLpgSale, setEditingLpgSale] = useState<LPGSale | null>(null)
@@ -48,8 +45,6 @@ export default function DataLPGPage() {
   const [notification, setNotification] = useState<{ type: 'success' | 'error', message: string } | null>(null)
   const [sharedKey, setSharedKey] = useState('')
   const [isAuthorized, setIsAuthorized] = useState(false)
-
-  useEffect(() => { setMounted(true) }, [])
 
   useEffect(() => {
     // Check if user is already authorized from localStorage
@@ -88,7 +83,7 @@ export default function DataLPGPage() {
       } catch (error) {
         console.error('Error fetching data:', error)
       } finally {
-        setLoading(false)
+
       }
     }
 
@@ -298,25 +293,11 @@ export default function DataLPGPage() {
     localStorage.removeItem('pertamina-auth')
   }
 
-  if (!mounted) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Memuat...</p>
-        </div>
-      </div>
-    )
-  }
+
 
   return (
     <>
-      <Head>
-        <title>Data LPG - Pertamina Cabang Bandung</title>
-        <meta name="description" content="Sistem manajemen data LPG SPBE Pertamina Cabang Bandung" />
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <link rel="icon" href="/favicon.ico" />
-      </Head>
+
       <div className="min-h-screen bg-gray-50">
         {/* Sidebar */}
       <div className="fixed left-0 top-0 h-full w-64 bg-white shadow-lg">
@@ -328,44 +309,46 @@ export default function DataLPGPage() {
           </div>
 
           {/* Shared Key Input */}
-          {!isAuthorized ? (
-            <div className="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-              <h3 className="text-sm font-semibold text-yellow-800 mb-3">Akses Write</h3>
-              <div className="space-y-3">
-                <input
-                  type="password"
-                  value={sharedKey}
-                  onChange={(e) => setSharedKey(e.target.value)}
-                  placeholder="Masukkan Shared Key"
-                  className="w-full px-3 py-2 border border-yellow-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-yellow-500"
-                />
+          <div suppressHydrationWarning>
+            {!isAuthorized ? (
+              <div className="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                <h3 className="text-sm font-semibold text-yellow-800 mb-3">Akses Write</h3>
+                <div className="space-y-3">
+                  <input
+                    type="password"
+                    value={sharedKey}
+                    onChange={(e) => setSharedKey(e.target.value)}
+                    placeholder="Masukkan Shared Key"
+                    className="w-full px-3 py-2 border border-yellow-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-yellow-500"
+                  />
+                  <button
+                    onClick={handleSharedKeySubmit}
+                    className="w-full bg-yellow-600 text-white px-3 py-2 rounded-md text-sm font-medium hover:bg-yellow-700"
+                  >
+                    Verifikasi
+                  </button>
+                </div>
+                <p className="text-xs text-yellow-600 mt-2">
+                  Masukkan shared key untuk akses write
+                </p>
+              </div>
+            ) : (
+              <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg">
+                <div className="flex items-center">
+                  <svg className="w-5 h-5 text-green-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                  <span className="text-sm font-medium text-green-800">Akses Write Aktif</span>
+                </div>
                 <button
-                  onClick={handleSharedKeySubmit}
-                  className="w-full bg-yellow-600 text-white px-3 py-2 rounded-md text-sm font-medium hover:bg-yellow-700"
+                  onClick={handleLogout}
+                  className="mt-2 text-xs text-green-600 hover:text-green-800 underline"
                 >
-                  Verifikasi
+                  Logout
                 </button>
               </div>
-              <p className="text-xs text-yellow-600 mt-2">
-                Masukkan shared key untuk akses write
-              </p>
-            </div>
-          ) : (
-            <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg">
-              <div className="flex items-center">
-                <svg className="w-5 h-5 text-green-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
-                <span className="text-sm font-medium text-green-800">Akses Write Aktif</span>
-              </div>
-              <button
-                onClick={handleLogout}
-                className="mt-2 text-xs text-green-600 hover:text-green-800 underline"
-              >
-                Logout
-              </button>
-            </div>
-          )}
+            )}
+          </div>
 
                      <nav className="space-y-2">
              <Link 
@@ -401,19 +384,21 @@ export default function DataLPGPage() {
       {/* Main Content */}
       <div className="ml-64 p-8">
         <div className="max-w-7xl mx-auto">
-          {/* Access Status */}
-          {!isAuthorized && (
-            <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
-              <div className="flex items-center">
-                <svg className="w-5 h-5 text-red-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
-                </svg>
-                <span className="text-sm font-medium text-red-800">
-                  Akses Write Belum Aktif - Masukkan shared key di sidebar untuk mengedit data
-                </span>
-              </div>
-            </div>
-          )}
+                     {/* Access Status */}
+           <div suppressHydrationWarning>
+             {!isAuthorized && (
+               <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+                 <div className="flex items-center">
+                   <svg className="w-5 h-5 text-red-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                   </svg>
+                   <span className="text-sm font-medium text-red-800">
+                     Akses Write Belum Aktif - Masukkan shared key di sidebar untuk mengedit data
+                   </span>
+                 </div>
+               </div>
+             )}
+           </div>
           
           {/* Notification */}
           {notification && (

@@ -6,10 +6,8 @@ export default function Header() {
       <nav className="container mx-auto px-4 py-4">
         <div className="flex items-center justify-between">
           {/* Logo */}
-          <Link href="/" className="flex items-center space-x-2">
-            <div className="flex items-center space-x-2 mb-4s ">
-                <img src="/logopertamina.svg" alt="Pertamina Logo" className="" />
-            </div>
+          <Link href="/" className="flex items-center">
+            <img src="/logopertamina.svg" alt="Pertamina Logo" className="w-32 h-auto" />
           </Link>
 
           {/* Desktop Navigation */}

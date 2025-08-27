@@ -7,14 +7,14 @@ export default function Footer() {
         <div className="grid md:grid-cols-4 gap-8">
           {/* Company Info */}
           <div className="md:col-span-2">
-            <div className="flex items-center space-x-2 mb-4s">
-                <img src="/logo.svg" alt="Pertamina Logo" className="" />
+            <div className="flex items-center space-x-2 mb-4">
+                <img src="/logo.svg" alt="Pertamina Logo" className="w-24 h-auto" />
             </div>
             <div className="flex space-x-4 flex-col pt-12">
               <p className="mb-4 tracking-wider leading-relaxed text-gray-400">
               Melayani kebutuhan energi masyarakat Bandung dan sekitarnya dengan komitmen kualitas dan pelayanan terbaik.
               </p>
-              <div className="flex space-x-4 pt-15">
+              <div className="flex space-x-4 pt-8">
                 <a href="https://tiktok.com" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-white transition duration-300">
                   {/* TikTok */}
                   <svg className="w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
@@ -79,7 +79,7 @@ export default function Footer() {
         </div>
         
         {/* Copyright */}
-        <div className="border-t border-gray-800 h-px 30 mt-5 pt-5">
+        <div className="border-t border-gray-800 mt-8 pt-6">
           <p>© 2024 Pertamina Cabang Bandung. All rights reserved.</p>
         </div>
       </div>
