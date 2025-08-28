@@ -70,10 +70,10 @@ export default function IndexPage() {
       <section className="py-8">
         <div className="container mx-auto px-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
           {/* Card 1: SPBU */}
-          <div className="relative h-[320px] rounded-lg overflow-hidden bg-[#000000] shadow-lg cursor-pointer group">
+          <div className="relative h-[320px] rounded-lg overflow-hidden bg-[#000000] shadow-lg group">
             {/* Tampilan Awal */}
             <img
-              src="/images/spbu.jpg"
+              src="/card.jpg"
               alt="SPBU"
               className="w-full h-full object-cover transition-opacity duration-500 group-hover:opacity-0"
             />
@@ -105,9 +105,9 @@ export default function IndexPage() {
 
 
           {/* Card 2: Pertashop */}
-          <div className="relative w-full h-[320px] rounded-lg overflow-hidden shadow-lg bg-black cursor-pointer group">
+          <div className="relative w-full h-[320px] rounded-lg overflow-hidden shadow-lg bg-black group">
             <img
-              src="/images/pertashop.jpg"
+              src="/card.jpg"
               alt="Pertashop"
               className="w-full h-full object-cover transition-opacity duration-500 group-hover:opacity-0"
             />
@@ -118,12 +118,12 @@ export default function IndexPage() {
             <div className="absolute inset-0 text-white flex flex-col justify-center p-6 opacity-0 group-hover:opacity-100 transition-opacity duration-500" 
             style={{
                 backgroundImage: "url('/hovercard.svg')",
-                backgroundColor: "#AD4040", // warna dasar
+                backgroundColor: "#522222a9", // warna dasar
                 backgroundSize: "cover",
                 backgroundRepeat: "no-repeat",
               }} >
               <h4 className="text-xl font-semibold border-b text-center mb-4">Pertashop</h4>
-              <p className="text-sm text-center">Total {stats.pertashop_total} Unit</p>
+              <p className="text-sm text-center mt-[10px]">Total {stats.pertashop_total} Unit</p>
               <div className='flex flex-col justify-end items-end mt-auto'>
                 <a href="/"><svg className='w-[40px] h-[40px]' xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M16.0037 9.41421L7.39712 18.0208L5.98291 16.6066L14.5895 8H7.00373V6H18.0037V17H16.0037V9.41421Z"></path></svg></a>
               </div>
@@ -131,9 +131,9 @@ export default function IndexPage() {
           </div>
 
           {/* Card 3: SPBE */}
-          <div className="relative w-full h-[320px] rounded-lg overflow-hidden shadow-lg bg-black cursor-pointer group">
+          <div className="relative w-full h-[320px] rounded-lg overflow-hidden shadow-lg bg-black group">
             <img
-              src="/images/spbe.jpg"
+              src="/card.jpg"
               alt="SPBE"
               className="w-full h-full object-cover transition-opacity duration-500 group-hover:opacity-0"
             />
@@ -144,13 +144,13 @@ export default function IndexPage() {
             <div className="absolute inset-0 text-white flex flex-col justify-center p-6 opacity-0 group-hover:opacity-100 transition-opacity duration-500"
             style={{
                 backgroundImage: "url('/hovercard.svg')",
-                backgroundColor: "#8aba3d9d", // warna dasar
+                backgroundColor: "#3242189d", // warna dasar
                 backgroundSize: "cover",
                 backgroundRepeat: "no-repeat",
               }}
             >
               <h4 className="text-xl border-b font-semibold text-center mb-4">SPBE</h4>
-              <ul className="space-y-3 text-sm text-center">
+              <ul className="space-y-3 text-sm text-center gap-[10px] mt-[10px] flex flex-col">
                 <li>{stats.spbe_pso_total} SPBE PSO</li>
                 <li>{stats.spbe_npso_total} SPBE NPSO</li>
               </ul>
@@ -161,9 +161,9 @@ export default function IndexPage() {
           </div>
 
           {/* Card 4: Agen LPG */}
-          <div className="relative w-full h-[320px] rounded-lg overflow-hidden shadow-lg bg-black cursor-pointer group">
+          <div className="relative w-full h-[320px] rounded-lg overflow-hidden shadow-lg bg-black group">
             <img
-              src="/images/agen-lpg.jpg"
+              src="/card.jpg"
               alt="Agen LPG"
               className="w-full h-full object-cover transition-opacity duration-500 group-hover:opacity-0"
             />
@@ -174,13 +174,13 @@ export default function IndexPage() {
             <div className="absolute inset-0 text-white flex flex-col justify-center p-6 opacity-0 group-hover:opacity-100 transition-opacity duration-500"
             style={{
                 backgroundImage: "url('/hovercard.svg')",
-                backgroundColor: "#3D3D3D", // warna dasar
+                backgroundColor: "#3d3d3d94", // warna dasar
                 backgroundSize: "cover",
                 backgroundRepeat: "no-repeat",
               }}
             >
               <h4 className="text-xl font-semibold border-b text-center mb-4">Agen LPG</h4>
-              <ul className="space-y-3 text-sm text-center">
+              <ul className="space-y-3 text-sm text-center gap-[10px] mt-[10px] flex flex-col">
                 <li>{stats.agen_lpg_3kg_total} Agen LPG 3 Kg</li>
                 <li>{stats.lpg_npso_total} LPG NPSO</li>
               </ul>
@@ -193,7 +193,7 @@ export default function IndexPage() {
           {/* Card 5: Pangkalan LPG */}
           <div className="relative w-full h-[320px] rounded-lg overflow-hidden bg-black shadow-lg cursor-pointer group">
             <img
-              src="/images/pangkalan-lpg.jpg"
+              src="/card.jpg"
               alt="Pangkalan LPG"
               className="w-full h-full object-cover transition-opacity duration-500 group-hover:opacity-0"
             />
@@ -204,13 +204,13 @@ export default function IndexPage() {
             <div className="absolute inset-0 text-white flex flex-col justify-center p-6 opacity-0 group-hover:opacity-100 transition-opacity duration-500"
             style={{
                 backgroundImage: "url('/hovercard.svg')",
-                backgroundColor: "#f5a61296", // warna dasar
+                backgroundColor: "#3d290396", // warna dasar
                 backgroundSize: "cover",
                 backgroundRepeat: "no-repeat",
               }}
             >
               <h4 className="text-xl font-semibold text-center border-b mb-4">Pangkalan LPG</h4>
-              <p className="text-sm text-center">{stats.pangkalan_lpg_3kg_total} Pangkalan LPG 3 Kg</p>
+              <p className="text-sm text-center mt-[10px]">{stats.pangkalan_lpg_3kg_total} Pangkalan LPG 3 Kg</p>
               <div className='flex flex-col justify-end items-end mt-auto'>
                 <a href="/"><svg className='w-[40px] h-[40px]' xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M16.0037 9.41421L7.39712 18.0208L5.98291 16.6066L14.5895 8H7.00373V6H18.0037V17H16.0037V9.41421Z"></path></svg></a>
               </div>
@@ -218,7 +218,30 @@ export default function IndexPage() {
           </div>
         </div>
       </section>
-
+      <section>
+          {/* Banner Section */}
+        <div className="flex justify-center items-center" style={{ marginTop: '50px', marginBottom: '0px', backgroundImage: "url('/banner.jpg')", backgroundSize: 'cover', backgroundPosition: 'center', height: '450px', position: 'relative', width: '100%' }}>
+          <div className="top-[50px] left-0 p-8 w-full text-white">
+            <h1 className='mb-[21px] font-bold text-3xl'>LOREM IPSUM</h1>
+            <p className='text-base'>asfjlasfaksflasf</p>
+           <div className='flex justify-center items-center mt-[127px]'> 
+              <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-40 justify-center ">
+                <div className='border-b'>
+                  <h1 className='text-4xl font-bold '>512</h1>
+                  <p className='w-[300px] mt-[5px]'>Number of One-Price Fuel Distribution Points across Indonesia</p>
+                </div>
+                <div className='border-b'>
+                  <h1 className='text-4xl font-bold'>512</h1>
+                  <p className='mt-[5px] w-[300px]'>Number of One-Price Fuel Distribution Points across Indonesia</p>
+                </div><div className='border-b'>
+                  <h1 className='text-4xl font-bold '>512</h1>
+                  <p className='w-[300px] mt-[5px]'>Number of One-Price Fuel Distribution Points across Indonesia</p>
+                </div>
+                </div>  
+              </div>
+            </div>
+          </div>
+      </section>
 
       {/* Stats strip */}
 
