@@ -56,9 +56,6 @@ export default function MapInteractive({ onSelect, debug }: Props) {
       style.textContent = `
         /* pastikan semua elemen wilayah & garis bisa menerima klik */
         g, path, polygon { pointer-events: all !important; }
-        /* nonaktifkan klik pada konektor garis merah */
-        line, polyline { pointer-events: none !important; }
-        path[fill="#FF1B1B"], path[stroke="#FF1B1B"] { pointer-events: none !important; }
       `
       svgRoot.appendChild(style)
 
@@ -137,17 +134,6 @@ export default function MapInteractive({ onSelect, debug }: Props) {
 
       svgRoot.addEventListener('click', (ev: MouseEvent) => {
         const target = ev.target as Element
-        // Abaikan klik pada garis merah/konektor apapun
-        const isConnector = (node: Element | null): boolean => {
-          if (!node || node === svgRoot) return false
-          const tag = node.tagName.toLowerCase()
-          const fill = (node as HTMLElement).getAttribute('fill') || ''
-          const stroke = (node as HTMLElement).getAttribute('stroke') || ''
-          if (tag === 'line' || tag === 'polyline') return true
-          if (tag === 'path' && (fill.toUpperCase() === '#FF1B1B' || stroke.toUpperCase() === '#FF1B1B')) return true
-          return isConnector(node.parentElement)
-        }
-        if (isConnector(target)) return
         // Jika klik sudah ditangani oleh handler elemen label, biarkan
         if (trySelectFromNode(target)) return
         // Fallback: pilih label terdekat
