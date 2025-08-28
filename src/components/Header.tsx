@@ -7,7 +7,7 @@ export default function Header() {
         <div className="flex items-center justify-between">
           {/* Logo */}
           <Link href="/" className="flex items-center">
-            <img src="/logopertamina.svg" alt="Pertamina Logo" className="w-32 h-auto" />
+            <img src="/logopertamina.svg" alt="Pertamina Logo" className="w-40 h-10" />
           </Link>
 
           {/* Desktop Navigation */}

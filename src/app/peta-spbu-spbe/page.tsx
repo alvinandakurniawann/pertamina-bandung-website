@@ -226,7 +226,7 @@ export default function PetaSPBUSPBEPage() {
   useEffect(() => {
     const loadMap = async () => {
       try {
-        const res = await fetch('/map.svg', { cache: 'no-store' })
+        const res = await fetch('/map terbatu.svg', { cache: 'no-store' })
         if (!res.ok) return
         const raw = await res.text()
         if (!raw.trim().startsWith('<svg')) return

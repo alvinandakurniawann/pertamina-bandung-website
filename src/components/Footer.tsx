@@ -2,19 +2,19 @@ import Link from 'next/link';
 
 export default function Footer() {
   return (
-    <footer className="bg-gray-900 text-white py-12">
+    <footer className="bg-gray-900 text-white py-12 h-[365px]">
       <div className="container mx-auto px-4">
-        <div className="grid md:grid-cols-4 gap-8">
+        <div className="grid md:grid-cols-3">
           {/* Company Info */}
-          <div className="md:col-span-2">
+          <div className="md:col-span-1 w-[330px]">
             <div className="flex items-center space-x-2 mb-4">
-                <img src="/logo.svg" alt="Pertamina Logo" className="w-24 h-auto" />
+                <img src="/logo.svg" alt="Pertamina Logo" className="w-46 h-auto" />
             </div>
-            <div className="flex space-x-4 flex-col pt-12">
-              <p className="mb-4 tracking-wider leading-relaxed text-gray-400">
+            <div className="flex space-x-4 flex-col w-[330px] pt-12">
+              <p className="mb-4 tracking-wider leading-relaxed w-[330px] text-gray-400">
               Melayani kebutuhan energi masyarakat Bandung dan sekitarnya dengan komitmen kualitas dan pelayanan terbaik.
               </p>
-              <div className="flex space-x-4 pt-8">
+              <div className="flex space-x-4 pt-10">
                 <a href="https://tiktok.com" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-white transition duration-300">
                   {/* TikTok */}
                   <svg className="w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
@@ -44,7 +44,7 @@ export default function Footer() {
           </div>
 
           {/* Quick Links */}
-          <div>
+          <div className='ml-[110px]'>
             <h4 className="text-lg font-semibold w-[119px] border-b border-gray-600 mb-4">Tautan Cepat</h4>
             <ul className="space-y-2">
               <li>
@@ -62,13 +62,13 @@ export default function Footer() {
           </div>
 
           {/* Contact Information */}
-          <div>
+          <div className='ml-[50px]'>
             <h4 className="text-lg font-semibold border-b border-gray-600 w-[151px] mb-4">Informasi Kontak</h4>
             <div className="space-y-2 text-gray-400">
               <p>Jl. Wirayuda Timur No.1, Lebakgede, Kecamatan Coblong, Kota Bandung, Jawa Barat 40132</p>
               <p className="mt-2">
                 <span className="font-medium">Telepon:</span><br />
-                022-1234567
+                (022) 2516301
               </p>
               <p>
                 <span className="font-medium">Email:</span><br />
@@ -79,8 +79,8 @@ export default function Footer() {
         </div>
         
         {/* Copyright */}
-        <div className="border-t border-gray-800 mt-8 pt-6">
-          <p>© 2024 Pertamina Cabang Bandung. All rights reserved.</p>
+        <div className="border-t text-gray-400 border-gray-600 mt-2 pt-2">
+          <p>© 2025 Pertamina Sales Area Retail Bandung. All rights reserved.</p>
         </div>
       </div>
     </footer>
