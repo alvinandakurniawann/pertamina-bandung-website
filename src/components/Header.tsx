@@ -20,10 +20,10 @@ export default function Header() {
             </Link>
             
             <Link
-              href="/peta-spbu-spbe"
+              href="/index"
               className="text-gray-700 hover:text-blue-600 font-medium transition duration-300"
             >
-              Peta SPBU & SPBE
+              Peta Overview Wilayah dan Outlet
             </Link>
           </div>
 
