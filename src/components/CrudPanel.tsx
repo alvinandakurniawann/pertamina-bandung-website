@@ -55,14 +55,7 @@ export default function CrudPanel() {
         <div className="mb-6 flex items-center justify-center">
           <img src="/logopertamina.svg" alt="Pertamina" className="h-10" />
         </div>
-        <div className="mb-6">
-          <div className="bg-red-600 text-white text-center py-3 px-4 rounded-lg">
-            <h1 className="text-sm font-bold leading-tight">PERTAMINA
-              <br/>PETRA NIAGA
-              <br/>BANDUNG
-            </h1>
-          </div>
-        </div>
+        
 
         <div suppressHydrationWarning>
           {!isAuthorized ? (
