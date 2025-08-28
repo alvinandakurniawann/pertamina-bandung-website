@@ -1,5 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabaseAdmin'
+import { supabase } from '@/lib/supabase'
+
+export async function GET(req: NextRequest) {
+  try {
+    const client = supabaseAdmin ?? supabase
+    const { data, error } = await client.from('settings').select('*').eq('id', 'ui').maybeSingle()
+    if (error) return NextResponse.json({ message: error.message }, { status: 500 })
+    return NextResponse.json({ data, source: supabaseAdmin ? 'admin' : 'anon' })
+  } catch (e: any) {
+    return NextResponse.json({ message: e?.message || 'Bad Request' }, { status: 400 })
+  }
+}
 
 export async function PUT(req: NextRequest) {
   try {
@@ -8,10 +20,9 @@ export async function PUT(req: NextRequest) {
     if (!secret || secret !== process.env.NEXT_PUBLIC_CRUD_SECRET) {
       return NextResponse.json({ message: 'Forbidden' }, { status: 403 })
     }
-    if (!supabaseAdmin) return NextResponse.json({ message: 'Supabase not configured' }, { status: 500 })
-
+    const client = supabaseAdmin ?? supabase
     const { mapSvg } = body
-    const { error } = await supabaseAdmin
+    const { error } = await client
       .from('settings')
       .upsert({ id: 'ui', map_svg: mapSvg }, { onConflict: 'id' })
     if (error) return NextResponse.json({ message: error.message }, { status: 500 })

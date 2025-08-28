@@ -3,6 +3,7 @@ import React, { useEffect, useRef } from 'react'
 
 type Props = {
   onSelect: (key: string, displayName: string) => void
+  debug?: boolean
 }
 
 function toKeyFromClassList(classList: DOMTokenList): { key?: string; display?: string } {
@@ -11,21 +12,37 @@ function toKeyFromClassList(classList: DOMTokenList): { key?: string; display?: 
   const isKab = tokens.includes('Kabupaten')
   const isKota = tokens.includes('Kota')
   if (!isKab && !isKota) return {}
-  const nameTokens = tokens.filter(t => t !== 'Kabupaten' && t !== 'Kota')
+  const nameTokens = tokens.filter(t => t !== 'Kabupaten' && t !== 'Kota' && t !== 'kab-kota-hover' && t !== 'kab-kota-pointer')
   if (nameTokens.length === 0) return {}
   const display = `${isKab ? 'Kabupaten' : 'Kota'} ${nameTokens.join(' ')}`
   const key = `${isKab ? 'kab' : 'kota'}-${nameTokens.join('-').toLowerCase()}`
   return { key, display }
 }
 
-export default function MapInteractive({ onSelect }: Props) {
+export default function MapInteractive({ onSelect, debug }: Props) {
   const containerRef = useRef<HTMLDivElement>(null)
+  const labelsRef = useRef<Array<{ el: Element; key: string; display: string }>>([])
+  const overlayNodesRef = useRef<HTMLElement[]>([])
+  const isDebug = debug ?? (typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('debug') === '1')
+  const connectorsRef = useRef<Array<{ el: Element; key: string; display: string }>>([])
+  const editMode = typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('edit') === '1'
+  const secret = typeof window !== 'undefined' ? (localStorage.getItem('crudSecret') || '') : ''
 
   useEffect(() => {
     let aborted = false
     async function load() {
-      const res = await fetch('/map terbatu.svg')
-      const svgText = await res.text()
+      // 1) Coba ambil dari DB settings.map_svg
+      let svgText = ''
+      try {
+        const s = await fetch('/api/supa/settings', { cache: 'no-store' })
+        const j = await s.json()
+        svgText = j?.data?.map_svg || ''
+      } catch {}
+      // 2) Fallback ke file publik jika kosong (kecuali edit mode: paksa DB)
+      if (!svgText && !editMode) {
+        const res = await fetch('/map terbatu.svg?ts=' + Date.now(), { cache: 'no-store' })
+        svgText = await res.text()
+      }
       if (aborted) return
       const el = containerRef.current
       if (!el) return
@@ -34,28 +51,355 @@ export default function MapInteractive({ onSelect }: Props) {
       const svgRoot = el.querySelector('svg') as SVGSVGElement | null
       if (!svgRoot) return
 
-      // Style: pointer cursor for labels
+      // Style: pointer cursor untuk label dan pastikan elemen bisa diklik
       const style = document.createElement('style')
       style.textContent = `
-        .kab-kota-hover { cursor: pointer; }
+        /* pastikan semua elemen wilayah & garis bisa menerima klik */
+        g, path, polygon { pointer-events: all !important; }
+        /* nonaktifkan klik pada konektor garis merah */
+        line, polyline { pointer-events: none !important; }
+        path[fill="#FF1B1B"], path[stroke="#FF1B1B"] { pointer-events: none !important; }
       `
       svgRoot.appendChild(style)
 
       const attach = (node: Element) => {
         const { key, display } = toKeyFromClassList(node.classList)
         if (!key || !display) return
-        node.classList.add('kab-kota-hover')
         ;(node as any).style && ((node as any).style.pointerEvents = 'all')
+        ;(node as any).style && ((node as any).style.cursor = 'pointer')
         node.addEventListener('click', () => onSelect(key, display))
+        labelsRef.current.push({ el: node, key, display })
       }
 
       // Cari elemen label berbasis class di SVG
       const candidates = Array.from(svgRoot.querySelectorAll('[class]'))
       candidates.forEach(attach)
+
+      // Tambah overlay untuk wilayah kecil: Kota Tasikmalaya (mempermudah klik)
+      try {
+        const tas = labelsRef.current.find(x => /Kota\s+Tasikmalaya/i.test(x.display))
+        if (tas) {
+          const containerRect2 = el.getBoundingClientRect()
+          const r = (tas.el as HTMLElement).getBoundingClientRect()
+          const cx = r.left + r.width / 2 - containerRect2.left
+          const cy = r.top + r.height / 2 - containerRect2.top
+          const hit = document.createElement('div')
+          hit.style.position = 'absolute'
+          hit.style.left = `${cx - 16}px`
+          hit.style.top = `${cy - 16}px`
+          hit.style.width = `32px`
+          hit.style.height = `32px`
+          hit.style.borderRadius = '50%'
+          hit.style.background = 'rgba(42,130,191,0.15)'
+          hit.style.pointerEvents = 'auto'
+          hit.style.zIndex = '9'
+          hit.title = 'Klik: Kota Tasikmalaya'
+          hit.addEventListener('click', (e) => { e.stopPropagation(); onSelect(tas.key, tas.display) })
+          el.style.position = 'relative'
+          el.appendChild(hit)
+          overlayNodesRef.current.push(hit)
+        }
+      } catch {}
+
+      // Konektor garis merah: nonaktifkan klik/edit sesuai permintaan (hanya area & label)
+      const allPaths = Array.from(svgRoot.querySelectorAll('path, polygon'))
+      const toCenter = (elem: Element) => {
+        const r = (elem as HTMLElement).getBoundingClientRect()
+        return { x: r.left + r.width / 2, y: r.top + r.height / 2, w: r.width, h: r.height }
+      }
+      // (Klik garis merah dinonaktifkan sesuai instruksi)
+
+      // Klik pada keseluruhan SVG: fallback ke label terdekat jika target bukan label/elemen beridentitas
+      const getDataRegion = (node: Element | null): string | undefined => {
+        if (!node) return undefined
+        const v = (node as HTMLElement).getAttribute?.('data-region') || undefined
+        return v || getDataRegion(node.parentElement)
+      }
+
+      const trySelectFromNode = (node: Element): boolean => {
+        // 1) data-region eksplisit pada area
+        const dataRegion = getDataRegion(node)
+        if (dataRegion) {
+          const display = dataRegion.startsWith('kab-') ? `Kabupaten ${dataRegion.replace('kab-','').split('-').map(s=>s[0]?.toUpperCase()+s.slice(1)).join(' ')}`
+                         : dataRegion.startsWith('kota-') ? `Kota ${dataRegion.replace('kota-','').split('-').map(s=>s[0]?.toUpperCase()+s.slice(1)).join(' ')}`
+                         : dataRegion
+          onSelect(dataRegion, display)
+          return true
+        }
+        // 2) class token berisi Kabupaten/Kota (kalau area juga punya)
+        const { key, display } = toKeyFromClassList(node.classList)
+        if (key && display) {
+          onSelect(key, display)
+          return true
+        }
+        return false
+      }
+
+      svgRoot.addEventListener('click', (ev: MouseEvent) => {
+        const target = ev.target as Element
+        // Abaikan klik pada garis merah/konektor apapun
+        const isConnector = (node: Element | null): boolean => {
+          if (!node || node === svgRoot) return false
+          const tag = node.tagName.toLowerCase()
+          const fill = (node as HTMLElement).getAttribute('fill') || ''
+          const stroke = (node as HTMLElement).getAttribute('stroke') || ''
+          if (tag === 'line' || tag === 'polyline') return true
+          if (tag === 'path' && (fill.toUpperCase() === '#FF1B1B' || stroke.toUpperCase() === '#FF1B1B')) return true
+          return isConnector(node.parentElement)
+        }
+        if (isConnector(target)) return
+        // Jika klik sudah ditangani oleh handler elemen label, biarkan
+        if (trySelectFromNode(target)) return
+        // Fallback: pilih label terdekat
+        const clickX = ev.clientX, clickY = ev.clientY
+        const nearestFrom = (arr: Array<{ el: Element; key: string; display: string }>) => {
+          let best: { key: string; display: string; d: number } | null = null
+          for (const info of arr) {
+            const r = (info.el as HTMLElement).getBoundingClientRect()
+            const cx = r.left + r.width / 2
+            const cy = r.top + r.height / 2
+            const dx = cx - clickX
+            const dy = cy - clickY
+            const d = dx*dx + dy*dy
+            if (!best || d < best.d) best = { key: info.key, display: info.display, d }
+          }
+          return best
+        }
+        let best = labelsRef.current.length ? nearestFrom(labelsRef.current) : null
+        if (best) onSelect(best.key, best.display)
+      })
+
+      // ==========================
+      // Debug overlay
+      // ==========================
+      if (isDebug) {
+        const containerRect = el.getBoundingClientRect()
+        const shapes = Array.from(svgRoot.querySelectorAll('path, polygon'))
+        let i = 0
+        for (const shape of shapes) {
+          const r = (shape as HTMLElement).getBoundingClientRect()
+          if (r.width === 0 && r.height === 0) continue
+          // rekomendasi key: dari data-region, class, atau label terdekat
+          let recKey: string | undefined
+          let recDisplay: string | undefined
+          const dr = getDataRegion(shape)
+          if (dr) {
+            recKey = dr
+            recDisplay = dr
+          } else {
+            const fromClass = toKeyFromClassList(shape.classList)
+            if (fromClass.key) {
+              recKey = fromClass.key
+              recDisplay = fromClass.display
+            } else if (labelsRef.current.length) {
+              const cx = r.left + r.width / 2
+              const cy = r.top + r.height / 2
+              let best: { key: string; display: string; d: number } | null = null
+              for (const info of labelsRef.current) {
+                const lr = (info.el as HTMLElement).getBoundingClientRect()
+                const lx = lr.left + lr.width / 2
+                const ly = lr.top + lr.height / 2
+                const dx = lx - cx
+                const dy = ly - cy
+                const d = dx*dx + dy*dy
+                if (!best || d < best.d) best = { key: info.key, display: info.display, d }
+              }
+              if (best) { recKey = best.key; recDisplay = best.display }
+            }
+          }
+
+          const badge = document.createElement('div')
+          badge.style.position = 'absolute'
+          badge.style.left = `${r.left - containerRect.left}px`
+          badge.style.top = `${r.top - containerRect.top}px`
+          badge.style.padding = '2px 4px'
+          badge.style.fontSize = '10px'
+          badge.style.background = 'rgba(255,0,0,0.75)'
+          badge.style.color = '#fff'
+          badge.style.borderRadius = '3px'
+          badge.style.pointerEvents = 'auto'
+          badge.style.zIndex = '10'
+          badge.textContent = `#${i} ${(recKey || '').slice(0, 28)}`
+          badge.title = `Klik untuk salin: data-region="${recKey || 'kab-.../kota-...'}"\n${recDisplay || ''}`
+          badge.addEventListener('click', (e) => {
+            e.stopPropagation()
+            const text = `data-region="${recKey || 'kab-...'}"`
+            navigator.clipboard?.writeText(text)
+          })
+
+          // outline shape saat hover badge
+          badge.addEventListener('mouseenter', () => {
+            ;(shape as any).dataset._origStroke = (shape as SVGElement).getAttribute('stroke') || ''
+            ;(shape as SVGElement).setAttribute('stroke', '#ff0000')
+            ;(shape as SVGElement).setAttribute('stroke-width', '2')
+          })
+          badge.addEventListener('mouseleave', () => {
+            const orig = (shape as any).dataset._origStroke
+            if (orig) (shape as SVGElement).setAttribute('stroke', orig)
+          })
+
+          el.style.position = 'relative'
+          el.appendChild(badge)
+          overlayNodesRef.current.push(badge)
+          i += 1
+        }
+      }
+
+      // ==========================
+      // Edit/Save Mode (klik path/polygon lalu pilih wilayah → inject data-region & simpan ke DB)
+      // params: ?edit=1
+      // Panel menyediakan input secret, disimpan ke localStorage key: crudSecret
+      // ==========================
+      if (editMode) {
+        const palette: Array<{ label: string; key: string }> = [
+          { label: 'Kab. Bandung', key: 'kab-bandung' },
+          { label: 'Kota Bandung', key: 'kota-bandung' },
+          { label: 'Kab. Garut', key: 'kab-garut' },
+          { label: 'Kab. Sumedang', key: 'kab-sumedang' },
+          { label: 'Kab. Tasikmalaya', key: 'kab-tasikmalaya' },
+          { label: 'Kota Tasikmalaya', key: 'kota-tasikmalaya' },
+          { label: 'Kab. Ciamis', key: 'kab-ciamis' },
+          { label: 'Kab. Pangandaran', key: 'kab-pangandaran' },
+          { label: 'Kota Banjar', key: 'kota-banjar' },
+          { label: 'Kab. Bandung Barat', key: 'kab-bandung-barat' },
+          { label: 'Kota Cimahi', key: 'kota-cimahi' },
+        ]
+        const panel = document.createElement('div')
+        panel.style.position = 'fixed'
+        panel.style.right = '12px'
+        panel.style.top = '12px'
+        panel.style.background = 'rgba(0,0,0,0.75)'
+        panel.style.color = '#fff'
+        panel.style.padding = '8px'
+        panel.style.borderRadius = '6px'
+        panel.style.zIndex = '50'
+
+        const title = document.createElement('div')
+        title.textContent = 'Edit Wilayah (klik shape lalu pilih)'
+        title.style.fontSize = '12px'
+        title.style.marginBottom = '6px'
+        panel.appendChild(title)
+
+        const btns = document.createElement('div')
+        btns.style.display = 'grid'
+        btns.style.gridTemplateColumns = '1fr 1fr'
+        btns.style.gap = '6px'
+        for (const p of palette) {
+          const b = document.createElement('button')
+          b.textContent = p.label
+          b.style.fontSize = '12px'
+          b.style.padding = '6px'
+          b.style.background = '#2a82bf'
+          b.style.borderRadius = '4px'
+          b.style.border = 'none'
+          b.style.cursor = 'pointer'
+          b.addEventListener('click', () => {
+            const active = (svgRoot as any)._activeShape as SVGElement | null
+            if (!active) return
+            active.setAttribute('data-region', p.key)
+          })
+          btns.appendChild(b)
+        }
+        panel.appendChild(btns)
+
+        const secretWrap = document.createElement('div')
+        secretWrap.style.marginTop = '8px'
+        const secretLabel = document.createElement('div')
+        secretLabel.textContent = 'Secret'
+        secretLabel.style.fontSize = '11px'
+        secretLabel.style.marginBottom = '4px'
+        const secretInput = document.createElement('input')
+        secretInput.type = 'password'
+        secretInput.placeholder = 'x-shared-secret'
+        secretInput.value = secret
+        secretInput.style.width = '100%'
+        secretInput.style.padding = '6px'
+        secretInput.style.borderRadius = '4px'
+        secretInput.style.border = '1px solid #444'
+        secretInput.style.background = '#111'
+        secretInput.style.color = '#fff'
+        const saveSecretBtn = document.createElement('button')
+        saveSecretBtn.textContent = 'Simpan Secret'
+        saveSecretBtn.style.marginTop = '6px'
+        saveSecretBtn.style.width = '100%'
+        saveSecretBtn.style.padding = '6px'
+        saveSecretBtn.style.background = '#525252'
+        saveSecretBtn.style.border = 'none'
+        saveSecretBtn.style.borderRadius = '4px'
+        saveSecretBtn.style.color = '#fff'
+        saveSecretBtn.style.cursor = 'pointer'
+        saveSecretBtn.addEventListener('click', () => {
+          try {
+            localStorage.setItem('crudSecret', secretInput.value || '')
+            alert('Secret disimpan di browser')
+          } catch {}
+        })
+        secretWrap.appendChild(secretLabel)
+        secretWrap.appendChild(secretInput)
+        secretWrap.appendChild(saveSecretBtn)
+        panel.appendChild(secretWrap)
+
+        const save = document.createElement('button')
+        save.textContent = 'Simpan ke DB'
+        save.style.marginTop = '8px'
+        save.style.width = '100%'
+        save.style.padding = '8px'
+        save.style.background = '#16a34a'
+        save.style.border = 'none'
+        save.style.borderRadius = '4px'
+        save.style.color = '#fff'
+        save.style.cursor = 'pointer'
+        save.addEventListener('click', async () => {
+          try {
+            const serialized = svgRoot.outerHTML
+            const finalSecret = secretInput.value || localStorage.getItem('crudSecret') || ''
+            if (!finalSecret) { alert('Isi secret lalu klik Simpan Secret'); return }
+            const res = await fetch('/api/supa/settings', {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json', 'x-shared-secret': finalSecret },
+              body: JSON.stringify({ mapSvg: serialized })
+            })
+            const json = await res.json()
+            if (!res.ok) throw new Error(json?.message || 'Gagal simpan')
+            alert('Berhasil disimpan ke DB (kolom settings.map_svg)')
+          } catch (e: any) {
+            alert(e?.message || 'Gagal simpan')
+          }
+        })
+        panel.appendChild(save)
+
+        document.body.appendChild(panel)
+        overlayNodesRef.current.push(panel)
+
+        // Tandai shape aktif saat diklik
+        const markActive = (shape: SVGElement | null) => {
+          const prev = (svgRoot as any)._activeShape as SVGElement | null
+          if (prev) prev.removeAttribute('data-active')
+          if (shape) shape.setAttribute('data-active', '1')
+          ;(svgRoot as any)._activeShape = shape
+        }
+        svgRoot.addEventListener('click', (ev: any) => {
+          const t = ev.target as SVGElement
+          if (!t) return
+          if (['path','polygon','polyline'].includes(t.tagName.toLowerCase())) {
+            markActive(t)
+          }
+        })
+      }
     }
     load()
-    return () => { aborted = true }
-  }, [onSelect])
+    return () => {
+      aborted = true
+      // bersihkan overlay debug
+      const el = containerRef.current
+      if (el && overlayNodesRef.current.length) {
+        for (const node of overlayNodesRef.current) {
+          try { el.removeChild(node) } catch {}
+        }
+        overlayNodesRef.current = []
+      }
+    }
+  }, [onSelect, isDebug])
 
   return (
     <div ref={containerRef} className="w-full h-auto" aria-label="Peta Wilayah Interaktif" />
