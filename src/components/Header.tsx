@@ -20,7 +20,7 @@ export default function Header() {
             </Link>
             
             <Link
-              href="/index"
+              href="/Peta-Overview-Wilayah"
               className="text-gray-700 hover:text-blue-600 font-medium transition duration-300"
             >
               Peta Overview Wilayah dan Outlet
