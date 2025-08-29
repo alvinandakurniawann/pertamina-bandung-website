@@ -4,7 +4,7 @@ import Header from '@/components/Header'
 import Footer from '@/components/Footer'
 import MapInteractive from '@/components/MapInteractive'
 
-export default function IndexClient() {
+export default function IndexPage() {
   const [currentKey, setCurrentKey] = useState<string>('ALL')
   const [currentName, setCurrentName] = useState<string>('Semua Wilayah')
   const [stats, setStats] = useState({
@@ -16,8 +16,8 @@ export default function IndexClient() {
     lpg_npso_total: 42,
     pangkalan_lpg_3kg_total: 10904,
     spbu_coco: 0,
-    spbu_dodo: 0,
     spbu_codo: 0,
+    spbu_dodo: 0,
   })
 
   const fetchStats = useCallback(async (key: string) => {
@@ -34,13 +34,11 @@ export default function IndexClient() {
           lpg_npso_total: json.data.lpg_npso_total,
           pangkalan_lpg_3kg_total: json.data.pangkalan_lpg_3kg_total,
           spbu_coco: json.data.spbu_coco ?? 0,
-          spbu_dodo: json.data.spbu_dodo ?? 0,
           spbu_codo: json.data.spbu_codo ?? 0,
+          spbu_dodo: json.data.spbu_dodo ?? 0,
         })
       }
-    } catch (e) {
-      // ignore - keep defaults
-    }
+    } catch {}
   }, [])
 
   useEffect(() => { fetchStats('ALL') }, [fetchStats])
@@ -50,6 +48,12 @@ export default function IndexClient() {
     setCurrentName(displayName)
     fetchStats(key)
   }, [fetchStats])
+
+  // ✅ Tambahan untuk popup
+  const [activeModal, setActiveModal] = useState<string | null>(null)
+  const openModal = (id: string) => setActiveModal(id)
+  const closeModal = () => setActiveModal(null)
+
   return (
     <>
     <Header />
@@ -76,7 +80,8 @@ export default function IndexClient() {
       <section className="py-8 mt-[50px]">
         <div className="container mx-auto px-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
           {/* Card 1: SPBU */}
-          <div className="relative h-[320px] rounded-lg overflow-hidden bg-[#000000] shadow-lg group">
+          <div className="relative h-[320px] rounded-lg overflow-hidden bg-[#000000] shadow-lg group cursor-pointer"
+            onClick={() => openModal('spbu')}>
             {/* Tampilan Awal */}
             <img
               src="/card.jpg"
@@ -85,7 +90,7 @@ export default function IndexClient() {
             />
             <div className="absolute inset-0 flex flex-col justify-end items-center pb-6 text-white transition-opacity duration-500 group-hover:opacity-0">
               <h4 className="text-xl font-semibold">SPBU</h4>
-              <p className="text-lg opacity-90">{(stats.spbu_total || ((stats.spbu_coco||0)+(stats.spbu_codo||0)+(stats.spbu_dodo||0)))} SPBU</p>
+              <p className="text-lg opacity-90">{stats.spbu_total} SPBU</p>
             </div>
 
             {/* Tampilan Hover dengan SVG */}
@@ -111,7 +116,8 @@ export default function IndexClient() {
 
 
           {/* Card 2: Pertashop */}
-          <div className="relative w-full h-[320px] rounded-lg overflow-hidden shadow-lg bg-black group">
+          <div className="relative w-full h-[320px] rounded-lg overflow-hidden shadow-lg bg-black group cursor-pointer"
+            onClick={() => openModal('pertashop')}>
             <img
               src="/card.jpg"
               alt="Pertashop"
@@ -137,7 +143,8 @@ export default function IndexClient() {
           </div>
 
           {/* Card 3: SPBE */}
-          <div className="relative w-full h-[320px] rounded-lg overflow-hidden shadow-lg bg-black group">
+          <div className="relative w-full h-[320px] rounded-lg overflow-hidden shadow-lg bg-black group cursor-pointer"
+            onClick={() => openModal('spbe')}>
             <img
               src="/card.jpg"
               alt="SPBE"
@@ -167,7 +174,8 @@ export default function IndexClient() {
           </div>
 
           {/* Card 4: Agen LPG */}
-          <div className="relative w-full h-[320px] rounded-lg overflow-hidden shadow-lg bg-black group">
+          <div className="relative w-full h-[320px] rounded-lg overflow-hidden shadow-lg bg-black group cursor-pointer"
+            onClick={() => openModal('agen')}>
             <img
               src="/card.jpg"
               alt="Agen LPG"
@@ -197,7 +205,8 @@ export default function IndexClient() {
           </div>
 
           {/* Card 5: Pangkalan LPG */}
-          <div className="relative w-full h-[320px] rounded-lg overflow-hidden bg-black shadow-lg cursor-pointer group">
+          <div className="relative w-full h-[320px] rounded-lg overflow-hidden bg-black shadow-lg cursor-pointer group"
+            onClick={() => openModal('pangkalan')}>
             <img
               src="/card.jpg"
               alt="Pangkalan LPG"
@@ -224,15 +233,66 @@ export default function IndexClient() {
           </div>
         </div>
       </section>
-      {/* POPUP */}
-      <section className='flex justify-center items-center'>
-        <div className='w-[1000px] bg-black h-[500px]'>
-          <div className='logo w-full h-[100px]  flex  items-center text-white'>
-              <img src="/logopertamina.svg" alt="Pertamina Logo" className="w-40 h-10" />
+
+      {/* ✅ POPUP */}
+      {activeModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-60 flex justify-center items-center z-50">
+          <div className="bg-white p-6 rounded-lg shadow-lg w-[500px] max-w-[90%] relative">
+            <button
+              onClick={closeModal}
+              className="absolute top-3 right-3 text-gray-500 hover:text-black text-2xl"
+            >
+              &times;
+            </button>
+
+            {activeModal === 'spbu' && (
+              <>
+                <h2 className="text-xl font-bold mb-4">Detail SPBU</h2>
+                <ul className="list-disc pl-5 space-y-2 text-gray-700">
+                  <li>Total SPBU: {stats.spbu_total}</li>
+                  <li>SPBU COCO: {stats.spbu_coco || '-'}</li>
+                  <li>SPBU DODO: {stats.spbu_dodo || '-'}</li>
+                  <li>SPBU CODO: {stats.spbu_codo || '-'}</li>
+                </ul>
+              </>
+            )}
+
+            {activeModal === 'pertashop' && (
+              <>
+                <h2 className="text-xl font-bold mb-4">Detail Pertashop</h2>
+                <p>Total Pertashop: {stats.pertashop_total}</p>
+              </>
+            )}
+
+            {activeModal === 'spbe' && (
+              <>
+                <h2 className="text-xl font-bold mb-4">Detail SPBE</h2>
+                <ul className="list-disc pl-5 space-y-2 text-gray-700">
+                  <li>SPBE PSO: {stats.spbe_pso_total}</li>
+                  <li>SPBE NPSO: {stats.spbe_npso_total}</li>
+                </ul>
+              </>
+            )}
+
+            {activeModal === 'agen' && (
+              <>
+                <h2 className="text-xl font-bold mb-4">Detail Agen LPG</h2>
+                <ul className="list-disc pl-5 space-y-2 text-gray-700">
+                  <li>Agen LPG 3 Kg: {stats.agen_lpg_3kg_total}</li>
+                  <li>LPG NPSO: {stats.lpg_npso_total}</li>
+                </ul>
+              </>
+            )}
+
+            {activeModal === 'pangkalan' && (
+              <>
+                <h2 className="text-xl font-bold mb-4">Detail Pangkalan LPG</h2>
+                <p>Pangkalan LPG 3 Kg: {stats.pangkalan_lpg_3kg_total}</p>
+              </>
+            )}
           </div>
         </div>
-      </section>
-
+      )}
 
       <section>
           {/* Banner Section */}
@@ -241,28 +301,24 @@ export default function IndexClient() {
             <h1 className='mb-[21px] font-bold text-3xl'>LOREM IPSUM</h1>
             <p className='text-base'>asfjlasfaksflasf</p>
            <div className='flex justify-center items-center mt-[127px]'> 
-              <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-40 justify-center ">
-                <div className='border-b'>
-                  <h1 className='text-4xl font-bold '>512</h1>
-                  <p className='w-[300px] mt-[5px]'>Number of One-Price Fuel Distribution Points across Indonesia</p>
+                            <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                <div className="bg-[#ffffffb5] text-black rounded-lg p-4 shadow-lg text-center">
+                  <h3 className="text-xl font-semibold mb-2">Judul 1</h3>
+                  <p className="text-sm">Deskripsi singkat konten pertama.</p>
                 </div>
-                <div className='border-b'>
-                  <h1 className='text-4xl font-bold'>512</h1>
-                  <p className='mt-[5px] w-[300px]'>Number of One-Price Fuel Distribution Points across Indonesia</p>
-                </div><div className='border-b'>
-                  <h1 className='text-4xl font-bold '>512</h1>
-                  <p className='w-[300px] mt-[5px]'>Number of One-Price Fuel Distribution Points across Indonesia</p>
+                <div className="bg-[#ffffffb5] text-black rounded-lg p-4 shadow-lg text-center">
+                  <h3 className="text-xl font-semibold mb-2">Judul 2</h3>
+                  <p className="text-sm">Deskripsi singkat konten kedua.</p>
                 </div>
-                </div>  
+                <div className="bg-[#ffffffb5] text-black rounded-lg p-4 shadow-lg text-center">
+                  <h3 className="text-xl font-semibold mb-2">Judul 3</h3>
+                  <p className="text-sm">Deskripsi singkat konten ketiga.</p>
+                </div>
               </div>
             </div>
           </div>
+        </div>
       </section>
-
-      {/* Stats strip */}
-
-      {/* Footer */}
-      
     </main>
     <Footer />
     </>
