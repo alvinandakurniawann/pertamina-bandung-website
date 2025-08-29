@@ -128,7 +128,7 @@ export default function Home() {
           </div>
 
                      <div className="text-center mt-10">
-             <Link href="/index" className="inline-block bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-8 rounded-lg transition">Lihat Peta Overview Wilayah dan Outlet</Link>
+             <Link href="/Peta-Overview-Wilayah" className="inline-block bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-8 rounded-lg transition">Lihat Peta Overview Wilayah dan Outlet</Link>
            </div>
         </div>
       </section>
