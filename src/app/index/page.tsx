@@ -4,6 +4,11 @@ import Header from '@/components/Header'
 import Footer from '@/components/Footer'
 import MapInteractive from '@/components/MapInteractive'
 
+// Workaround Next.js prerender bug: render this page dynamically at runtime
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
+export const fetchCache = 'force-no-store'
+
 export default function IndexPage() {
   const [currentKey, setCurrentKey] = useState<string>('ALL')
   const [currentName, setCurrentName] = useState<string>('Semua Wilayah')
