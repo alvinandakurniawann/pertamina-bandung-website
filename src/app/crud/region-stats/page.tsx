@@ -9,6 +9,9 @@ type Stat = {
   key: string
   display_name: string
   spbu_total: number
+  spbu_coco: number
+  spbu_codo: number
+  spbu_dodo: number
   pertashop_total: number
   spbe_pso_total: number
   spbe_npso_total: number
@@ -31,7 +34,8 @@ export default function RegionStatsCrudPage() {
   }, [items, filter])
 
   const blank: Stat = {
-    key: '', display_name: '', spbu_total: 0, pertashop_total: 0, spbe_pso_total: 0, spbe_npso_total: 0, agen_lpg_3kg_total: 0, lpg_npso_total: 0, pangkalan_lpg_3kg_total: 0
+    key: '', display_name: '', spbu_total: 0, spbu_coco: 0, spbu_codo: 0, spbu_dodo: 0,
+    pertashop_total: 0, spbe_pso_total: 0, spbe_npso_total: 0, agen_lpg_3kg_total: 0, lpg_npso_total: 0, pangkalan_lpg_3kg_total: 0
   }
 
   useEffect(() => { setEditing(blank); load(); setMounted(true) }, [])
@@ -50,7 +54,11 @@ export default function RegionStatsCrudPage() {
     if (!editing) return
     try {
       if (!editing.key || !editing.display_name) { alert('Key dan Display Name wajib'); return }
-      const { error } = await supabase.from('region_stats').upsert(editing, { onConflict: 'key' })
+      const payload = {
+        ...editing,
+        spbu_total: Number(editing.spbu_coco || 0) + Number(editing.spbu_codo || 0) + Number(editing.spbu_dodo || 0),
+      }
+      const { error } = await supabase.from('region_stats').upsert(payload as any, { onConflict: 'key' })
       if (error) throw error
       await recomputeAllTotals();
       await load(); setEditing(blank); alert('Tersimpan')
@@ -71,14 +79,17 @@ export default function RegionStatsCrudPage() {
     try {
       const { data, error } = await supabase
         .from('region_stats')
-        .select('spbu_total, pertashop_total, spbe_pso_total, spbe_npso_total, agen_lpg_3kg_total, lpg_npso_total, pangkalan_lpg_3kg_total, key')
+        .select('spbu_total, spbu_coco, spbu_codo, spbu_dodo, pertashop_total, spbe_pso_total, spbe_npso_total, agen_lpg_3kg_total, lpg_npso_total, pangkalan_lpg_3kg_total, key')
       if (error) throw error
       const rows = (data || []).filter(r => r.key !== 'ALL') as any[]
       const sum = (field: string) => rows.reduce((acc, r) => acc + (Number(r[field]) || 0), 0)
       const payload = {
         key: 'ALL',
         display_name: 'Semua Wilayah',
-        spbu_total: sum('spbu_total'),
+        spbu_coco: sum('spbu_coco'),
+        spbu_codo: sum('spbu_codo'),
+        spbu_dodo: sum('spbu_dodo'),
+        spbu_total: sum('spbu_coco') + sum('spbu_codo') + sum('spbu_dodo'),
         pertashop_total: sum('pertashop_total'),
         spbe_pso_total: sum('spbe_pso_total'),
         spbe_npso_total: sum('spbe_npso_total'),
@@ -152,7 +163,10 @@ export default function RegionStatsCrudPage() {
                   <input className="w-full border rounded px-3 py-2 text-gray-900 placeholder:text-gray-400" value={editing?.display_name || ''} onChange={e=>setEditing(prev=>({ ...(prev as Stat), display_name: e.target.value }))} />
                 </div>
                 {[
-                  ['spbu_total','SPBU'],
+                  ['spbu_coco','SPBU COCO'],
+                  ['spbu_codo','SPBU CODO'],
+                  ['spbu_dodo','SPBU DODO'],
+                  ['spbu_total','SPBU Total (auto)'],
                   ['pertashop_total','Pertashop'],
                   ['spbe_pso_total','SPBE PSO'],
                   ['spbe_npso_total','SPBE NPSO'],

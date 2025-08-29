@@ -85,7 +85,7 @@ export default function IndexClient() {
             />
             <div className="absolute inset-0 flex flex-col justify-end items-center pb-6 text-white transition-opacity duration-500 group-hover:opacity-0">
               <h4 className="text-xl font-semibold">SPBU</h4>
-              <p className="text-lg opacity-90">{stats.spbu_total} SPBU</p>
+              <p className="text-lg opacity-90">{(stats.spbu_total || ((stats.spbu_coco||0)+(stats.spbu_codo||0)+(stats.spbu_dodo||0)))} SPBU</p>
             </div>
 
             {/* Tampilan Hover dengan SVG */}
