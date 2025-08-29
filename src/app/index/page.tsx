@@ -73,7 +73,7 @@ export default function IndexPage() {
       </section>
 
       {/* Cards */}
-      <section className="py-8">
+      <section className="py-8 mt-[50px]">
         <div className="container mx-auto px-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
           {/* Card 1: SPBU */}
           <div className="relative h-[320px] rounded-lg overflow-hidden bg-[#000000] shadow-lg group">
@@ -226,7 +226,7 @@ export default function IndexPage() {
       </section>
       <section>
           {/* Banner Section */}
-        <div className="flex justify-center items-center" style={{ marginTop: '50px', marginBottom: '0px', backgroundImage: "url('/banner.jpg')", backgroundSize: 'cover', backgroundPosition: 'center', height: '450px', position: 'relative', width: '100%' }}>
+        <div className="flex justify-center items-center" style={{ marginTop: '150px', marginBottom: '200px', backgroundImage: "url('/banner.jpg')", backgroundSize: 'cover', backgroundPosition: 'center', height: '450px', position: 'relative', width: '100%' }}>
           <div className="top-[50px] left-0 p-8 w-full text-white">
             <h1 className='mb-[21px] font-bold text-3xl'>LOREM IPSUM</h1>
             <p className='text-base'>asfjlasfaksflasf</p>
