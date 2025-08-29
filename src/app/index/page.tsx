@@ -15,6 +15,9 @@ export default function IndexPage() {
     agen_lpg_3kg_total: 422,
     lpg_npso_total: 42,
     pangkalan_lpg_3kg_total: 10904,
+    spbu_coco: 0,
+    spbu_dodo: 0,
+    spbu_codo: 0,
   })
 
   const fetchStats = useCallback(async (key: string) => {
@@ -30,6 +33,9 @@ export default function IndexPage() {
           agen_lpg_3kg_total: json.data.agen_lpg_3kg_total,
           lpg_npso_total: json.data.lpg_npso_total,
           pangkalan_lpg_3kg_total: json.data.pangkalan_lpg_3kg_total,
+          spbu_coco: json.data.spbu_coco ?? 0,
+          spbu_dodo: json.data.spbu_dodo ?? 0,
+          spbu_codo: json.data.spbu_codo ?? 0,
         })
       }
     } catch (e) {
