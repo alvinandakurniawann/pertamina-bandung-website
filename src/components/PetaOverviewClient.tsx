@@ -19,7 +19,14 @@ export default function PetaOverviewClient() {
     spbu_codo: 0,
     spbu_dodo: 0,
   })
-  const [debugOn, setDebugOn] = useState<boolean>(true)
+  const [debugOn, setDebugOn] = useState<boolean>(false)
+  const [canShowDebugToggle, setCanShowDebugToggle] = useState<boolean>(false)
+  useEffect(() => {
+    const sp = new URLSearchParams(window.location.search)
+    const v = sp.get('debug') === '1' || sp.get('edit') === '1'
+    setDebugOn(v)
+    setCanShowDebugToggle(v)
+  }, [])
 
   const fetchStats = useCallback(async (key: string) => {
     try {
@@ -77,16 +84,18 @@ export default function PetaOverviewClient() {
         </div>
       </section>
 
-      {/* Debug toggle */}
-      <div className="fixed right-4 bottom-4 z-50">
-        <button
-          onClick={() => setDebugOn(v => !v)}
-          className={`px-4 py-2 rounded shadow text-sm font-medium ${debugOn ? 'bg-red-600 text-white' : 'bg-gray-200 text-gray-900'}`}
-          title="Tampilkan/semnbunyikan overlay debug wilayah"
-        >
-          Debug: {debugOn ? 'ON' : 'OFF'}
-        </button>
-      </div>
+      {/* Debug toggle (hanya muncul saat ?debug=1 atau ?edit=1) */}
+      {canShowDebugToggle && (
+        <div className="fixed right-4 bottom-4 z-50">
+          <button
+            onClick={() => setDebugOn(v => !v)}
+            className={`px-4 py-2 rounded shadow text-sm font-medium ${debugOn ? 'bg-red-600 text-white' : 'bg-gray-200 text-gray-900'}`}
+            title="Tampilkan/sembunyikan overlay debug wilayah"
+          >
+            Debug: {debugOn ? 'ON' : 'OFF'}
+          </button>
+        </div>
+      )}
 
       {/* Cards */}
       <section className="py-8 mt-[50px]">
