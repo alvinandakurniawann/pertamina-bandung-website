@@ -23,9 +23,10 @@ export default function MapInteractive({ onSelect, debug }: Props) {
   const containerRef = useRef<HTMLDivElement>(null)
   const labelsRef = useRef<Array<{ el: Element; key: string; display: string }>>([])
   const overlayNodesRef = useRef<HTMLElement[]>([])
-  const isDebug = debug ?? (typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('debug') === '1')
+  const isLocal = typeof window !== 'undefined' && /^(localhost|127\.0\.0\.1)(:\d+)?$/.test(window.location.host)
+  const isDebug = isLocal ? (debug ?? (typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('debug') === '1')) : false
   const connectorsRef = useRef<Array<{ el: Element; key: string; display: string }>>([])
-  const editMode = typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('edit') === '1'
+  const editMode = isLocal && typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('edit') === '1'
   const secret = typeof window !== 'undefined' ? (localStorage.getItem('crudSecret') || '') : ''
 
   useEffect(() => {
