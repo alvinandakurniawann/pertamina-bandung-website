@@ -51,11 +51,33 @@ export default function MapInteractive({ onSelect, debug }: Props) {
       const svgRoot = el.querySelector('svg') as SVGSVGElement | null
       if (!svgRoot) return
 
+      // Make embedded SVG responsive
+      try {
+        const widthAttr = svgRoot.getAttribute('width') || ''
+        const heightAttr = svgRoot.getAttribute('height') || ''
+        const hasViewBox = !!svgRoot.getAttribute('viewBox')
+        const w = parseFloat(widthAttr)
+        const h = parseFloat(heightAttr)
+        if (!hasViewBox && isFinite(w) && isFinite(h) && w > 0 && h > 0) {
+          svgRoot.setAttribute('viewBox', `0 0 ${w} ${h}`)
+        }
+        svgRoot.removeAttribute('width')
+        svgRoot.removeAttribute('height')
+        svgRoot.setAttribute('preserveAspectRatio', svgRoot.getAttribute('preserveAspectRatio') || 'xMidYMid meet')
+        ;(svgRoot as unknown as HTMLElement).style.width = '100%'
+        ;(svgRoot as unknown as HTMLElement).style.height = 'auto'
+        ;(svgRoot as unknown as HTMLElement).style.maxWidth = '100%'
+        ;(el as HTMLElement).style.width = '100%'
+        ;(el as HTMLElement).style.maxWidth = '100%'
+        ;(el as HTMLElement).style.overflowX = 'hidden'
+      } catch {}
+
       // Style: pointer cursor untuk label dan pastikan elemen bisa diklik
       const style = document.createElement('style')
       style.textContent = `
         /* pastikan semua elemen wilayah & garis bisa menerima klik */
         g, path, polygon { pointer-events: all !important; }
+        :root, svg { max-width: 100%; height: auto; }
       `
       svgRoot.appendChild(style)
 
