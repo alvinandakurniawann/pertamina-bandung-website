@@ -19,6 +19,7 @@ export default function PetaOverviewClient() {
     spbu_codo: 0,
     spbu_dodo: 0,
   })
+  const [debugOn, setDebugOn] = useState<boolean>(true)
 
   const fetchStats = useCallback(async (key: string) => {
     try {
@@ -71,10 +72,21 @@ export default function PetaOverviewClient() {
       <section className="py-8">
         <div className="container mx-auto px-4">
           <div className="p-0 bg-transparent border-0 shadow-none">
-            <MapInteractive onSelect={handleSelect} />
+            <MapInteractive onSelect={handleSelect} debug={debugOn} />
           </div>
         </div>
       </section>
+
+      {/* Debug toggle */}
+      <div className="fixed right-4 bottom-4 z-50">
+        <button
+          onClick={() => setDebugOn(v => !v)}
+          className={`px-4 py-2 rounded shadow text-sm font-medium ${debugOn ? 'bg-red-600 text-white' : 'bg-gray-200 text-gray-900'}`}
+          title="Tampilkan/semnbunyikan overlay debug wilayah"
+        >
+          Debug: {debugOn ? 'ON' : 'OFF'}
+        </button>
+      </div>
 
       {/* Cards */}
       <section className="py-8 mt-[50px]">

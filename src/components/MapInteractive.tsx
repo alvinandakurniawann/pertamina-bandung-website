@@ -131,6 +131,9 @@ export default function MapInteractive({ onSelect, debug }: Props) {
       // Klik pada keseluruhan SVG: fallback ke label terdekat jika target bukan label/elemen beridentitas
       const getDataRegion = (node: Element | null): string | undefined => {
         if (!node) return undefined
+        // Skip nodes explicitly disabled from click
+        const disabled = (node as HTMLElement).getAttribute?.('data-region-disabled')
+        if (disabled === '1') return undefined
         const v = (node as HTMLElement).getAttribute?.('data-region') || undefined
         return v || getDataRegion(node.parentElement)
       }
@@ -158,6 +161,8 @@ export default function MapInteractive({ onSelect, debug }: Props) {
         const target = ev.target as Element
         // Jika klik sudah ditangani oleh handler elemen label, biarkan
         if (trySelectFromNode(target)) return
+        // Saat edit mode: jangan lakukan heuristik klik di luar shape beridentitas
+        if (editMode) return
         // Fallback: pilih label terdekat
         const clickX = ev.clientX, clickY = ev.clientY
         const nearestFrom = (arr: Array<{ el: Element; key: string; display: string }>) => {
@@ -309,6 +314,42 @@ export default function MapInteractive({ onSelect, debug }: Props) {
           btns.appendChild(b)
         }
         panel.appendChild(btns)
+
+        // Row for click disable/enable on active shape
+        const clickCtl = document.createElement('div')
+        clickCtl.style.display = 'grid'
+        clickCtl.style.gridTemplateColumns = '1fr 1fr'
+        clickCtl.style.gap = '6px'
+        clickCtl.style.marginTop = '8px'
+        const disableBtn = document.createElement('button')
+        disableBtn.textContent = 'Nonaktifkan klik (shape aktif)'
+        disableBtn.style.fontSize = '12px'
+        disableBtn.style.padding = '6px'
+        disableBtn.style.background = '#ef4444'
+        disableBtn.style.borderRadius = '4px'
+        disableBtn.style.border = 'none'
+        disableBtn.style.cursor = 'pointer'
+        disableBtn.addEventListener('click', () => {
+          const active = (svgRoot as any)._activeShape as SVGElement | null
+          if (!active) { alert('Pilih shape pada peta terlebih dahulu'); return }
+          active.setAttribute('data-region-disabled', '1')
+        })
+        const enableBtn = document.createElement('button')
+        enableBtn.textContent = 'Aktifkan klik (shape aktif)'
+        enableBtn.style.fontSize = '12px'
+        enableBtn.style.padding = '6px'
+        enableBtn.style.background = '#22c55e'
+        enableBtn.style.borderRadius = '4px'
+        enableBtn.style.border = 'none'
+        enableBtn.style.cursor = 'pointer'
+        enableBtn.addEventListener('click', () => {
+          const active = (svgRoot as any)._activeShape as SVGElement | null
+          if (!active) { alert('Pilih shape pada peta terlebih dahulu'); return }
+          active.removeAttribute('data-region-disabled')
+        })
+        clickCtl.appendChild(disableBtn)
+        clickCtl.appendChild(enableBtn)
+        panel.appendChild(clickCtl)
 
         const secretWrap = document.createElement('div')
         secretWrap.style.marginTop = '8px'
