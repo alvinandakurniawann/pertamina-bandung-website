@@ -16,8 +16,11 @@ export default function IndexPage() {
     lpg_npso_total: 42,
     pangkalan_lpg_3kg_total: 10904,
   })
+  const [loading, setLoading] = useState(false)
+  const [activeSVG, setActiveSVG] = useState<string | null>(null);
 
   const fetchStats = useCallback(async (key: string) => {
+    setLoading(true)
     try {
       const res = await fetch(`/api/region-stats?key=${encodeURIComponent(key)}`, { cache: 'no-store' })
       const json = await res.json()
@@ -35,20 +38,38 @@ export default function IndexPage() {
     } catch (e) {
       // ignore - keep defaults
     }
+    setLoading(false)
   }, [])
 
   useEffect(() => { fetchStats('ALL') }, [fetchStats])
 
   const handleSelect = useCallback((key: string, displayName: string) => {
-    setCurrentKey(key)
-    setCurrentName(displayName)
-    fetchStats(key)
-  }, [fetchStats])
+    setCurrentKey(key);
+    setCurrentName(displayName);
+    fetchStats(key);
+    if (key !== 'ALL') {
+      setActiveSVG(`/wilayah-${key.toLowerCase()}.svg`);
+    }
+  }, [fetchStats]);
+
+  const handleResetSVG = () => {
+    setActiveSVG(null);
+    setCurrentKey('ALL');
+    setCurrentName('Semua Wilayah');
+    fetchStats('ALL');
+  };
 
   // ✅ Tambahan untuk popup
   const [activeModal, setActiveModal] = useState<string | null>(null)
   const openModal = (id: string) => setActiveModal(id)
   const closeModal = () => setActiveModal(null)
+
+  // Contoh data lokasi SPBU, ganti dengan data asli jika ada
+  const [spbuLocations] = useState([
+    { name: "SPBU Dipatiukur 1", type: "CODO", address: "Jl. Soekarno-Hatta No. 112", status: "on" },
+    { name: "SPBU Dipatiukur 1", type: "DODO", address: "Jl. Dipatiukur No. 5", status: "on" },
+    { name: "SPBU Dipatiukur 2", type: "COCO", address: "Jl. Cipamokolan no. 84", status: "off" },
+  ]);
 
   return (
     <>
@@ -66,8 +87,35 @@ export default function IndexPage() {
       {/* Map section */}
       <section className="py-8">
         <div className="container mx-auto px-4">
-          <div className="p-0 bg-transparent border-0 shadow-none">
-            <MapInteractive onSelect={handleSelect} />
+          <div className="p-0 bg-transparent border-0 shadow-none relative">
+            {!activeSVG ? (
+              <MapInteractive onSelect={handleSelect} />
+            ) : (
+              <div className="relative flex justify-center items-center min-h-[400px]">
+                {/* Blur background SVG */}
+                <div className="absolute inset-0 z-0 flex justify-center items-center">
+                  <img
+                    src={activeSVG}
+                    alt="Wilayah"
+                    className="w-full max-w-[600px] h-auto"
+                  />
+                </div>
+                {/* Label nama wilayah tanpa border/card */}
+                {/* Tombol reset */}
+                <button
+                  onClick={handleResetSVG}
+                  className="absolute top-4 right-4 bg-white rounded-full shadow p-2 text-black hover:bg-gray-200 text-xl z-20"
+                  aria-label="Reset"
+                >
+                  &times;
+                </button>
+              </div>
+            )}
+            {loading && (
+              <div className="absolute inset-0 flex items-center justify-center bg-white bg-opacity-70 z-10">
+                <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-blue-500 border-solid"></div>
+              </div>
+            )}
           </div>
         </div>
       </section>
@@ -232,8 +280,8 @@ export default function IndexPage() {
 
       {/* ✅ POPUP */}
       {activeModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-60 flex justify-center items-center z-50">
-          <div className="bg-white p-6 rounded-lg shadow-lg w-[500px] max-w-[90%] relative">
+        <div className="fixed inset-0 bg-black/95 bg-opacity-90 flex justify-center items-center z-50">
+          <div className="bg-white p-6 rounded-lg shadow-lg w-[1024px] max-w-[90%] relative">
             <button
               onClick={closeModal}
               className="absolute top-3 right-3 text-gray-500 hover:text-black text-2xl"
@@ -242,15 +290,73 @@ export default function IndexPage() {
             </button>
 
             {activeModal === 'spbu' && (
-              <>
-                <h2 className="text-xl font-bold mb-4">Detail SPBU</h2>
-                <ul className="list-disc pl-5 space-y-2 text-gray-700">
-                  <li>Total SPBU: {stats.spbu_total}</li>
-                  <li>SPBU COCO: {stats.spbu_coco || '-'}</li>
-                  <li>SPBU DODO: {stats.spbu_dodo || '-'}</li>
-                  <li>SPBU CODO: {stats.spbu_codo || '-'}</li>
-                </ul>
-              </>
+              <div className="bg-white p-8  rounded-xl shadow-lg mx-auto relative">
+                <div className="flex flex-col md:flex-row gap-8">
+                  {/* Statistik */}
+                  <div className="flex-1">
+                    <h2 className="text-xl font-bold mb-4">Statistik</h2>
+                    <div className="flex flex-col gap-3">
+                      <div className="rounded-lg bg-red-200 px-6 py-3 flex justify-between items-center">
+                        <span className="font-semibold text-red-700">SPBU COCO</span>
+                        <span className="font-bold text-xl">{stats.spbu_coco ?? '-'}</span>
+                      </div>
+                      <div className="rounded-lg bg-green-200 px-6 py-3 flex justify-between items-center">
+                        <span className="font-semibold text-green-700">SPBU DODO</span>
+                        <span className="font-bold text-xl">{stats.spbu_dodo ?? '-'}</span>
+                      </div>
+                      <div className="rounded-lg bg-blue-200 px-6 py-3 flex justify-between items-center">
+                        <span className="font-semibold text-blue-700">SPBU CODO</span>
+                        <span className="font-bold text-xl">{stats.spbu_codo ?? '-'}</span>
+                      </div>
+                      <div className="rounded-lg bg-yellow-200 px-6 py-3 flex justify-between items-center">
+                        <span className="font-semibold text-yellow-700">TOTAL LOKASI</span>
+                        <span className="font-bold text-xl">{stats.spbu_total ?? '-'}</span>
+                      </div>
+                    </div>
+                  </div>
+                  {/* Daftar Lokasi */}
+                  <div className="flex-1">
+                    <h2 className="text-xl font-bold mb-4">Daftar Lokasi</h2>
+                    <div className="flex flex-col gap-4">
+                      {spbuLocations.length === 0 ? (
+                        <div className="flex flex-col items-center justify-center py-8">
+                          {/* SVG Segitiga tanda seru */}
+                          <svg width="48" height="48" viewBox="0 0 24 24" fill="none">
+                            <polygon points="12,2 22,20 2,20" fill="#fbbf24"/>
+                            <text x="12" y="16" textAnchor="middle" fontSize="12" fill="#fff" fontWeight="bold">!</text>
+                          </svg>
+                          <span className="mt-2 text-gray-500 font-semibold">Data tidak tersedia</span>
+                        </div>
+                      ) : (
+                        spbuLocations.map((loc, idx) => (
+                          <div key={idx} className="rounded-lg border p-4 flex flex-col mb-2">
+                            <div className="flex justify-between items-center">
+                              <div>
+                                <span className="font-bold text-lg">{loc.name}</span>
+                                <div className={`mt-1 font-semibold ${loc.type === "DODO" ? "text-green-700" : loc.type === "COCO" ? "text-red-700" : "text-blue-700"}`}>{loc.type}</div>
+                                <div className="text-sm text-gray-600">{loc.address}</div>
+                              </div>
+                              <div className="flex flex-col items-end">
+                                <span className="flex items-center gap-2">
+                                  <span className={`w-4 h-4 rounded-full ${loc.status === "on" ? "bg-green-400" : "bg-red-500"}`}></span>
+                                  <span className="text-xs">{loc.status === "on" ? "On Duty" : "Off Duty"}</span>
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </div>
+                </div>
+                {/* Tombol Kembali */}
+                <button
+                  onClick={closeModal}
+                  className="mt-8 w-full py-3 rounded-lg bg-blue-600 text-white font-semibold text-lg hover:bg-blue-700 transition"
+                >
+                  Kembali
+                </button>
+              </div>
             )}
 
             {activeModal === 'pertashop' && (
