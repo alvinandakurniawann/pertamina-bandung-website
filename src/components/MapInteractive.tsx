@@ -23,9 +23,10 @@ export default function MapInteractive({ onSelect, debug }: Props) {
   const containerRef = useRef<HTMLDivElement>(null)
   const labelsRef = useRef<Array<{ el: Element; key: string; display: string }>>([])
   const overlayNodesRef = useRef<HTMLElement[]>([])
-  const isDebug = debug ?? (typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('debug') === '1')
+  const isLocal = typeof window !== 'undefined' && /^(localhost|127\.0\.0\.1)(:\d+)?$/.test(window.location.host)
+  const isDebug = isLocal ? (debug ?? (typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('debug') === '1')) : false
   const connectorsRef = useRef<Array<{ el: Element; key: string; display: string }>>([])
-  const editMode = typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('edit') === '1'
+  const editMode = isLocal && typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('edit') === '1'
   const secret = typeof window !== 'undefined' ? (localStorage.getItem('crudSecret') || '') : ''
 
   useEffect(() => {
@@ -51,13 +52,51 @@ export default function MapInteractive({ onSelect, debug }: Props) {
       const svgRoot = el.querySelector('svg') as SVGSVGElement | null
       if (!svgRoot) return
 
+      // Make embedded SVG responsive
+      try {
+        const widthAttr = svgRoot.getAttribute('width') || ''
+        const heightAttr = svgRoot.getAttribute('height') || ''
+        const hasViewBox = !!svgRoot.getAttribute('viewBox')
+        const w = parseFloat(widthAttr)
+        const h = parseFloat(heightAttr)
+        if (!hasViewBox && isFinite(w) && isFinite(h) && w > 0 && h > 0) {
+          svgRoot.setAttribute('viewBox', `0 0 ${w} ${h}`)
+        }
+        svgRoot.removeAttribute('width')
+        svgRoot.removeAttribute('height')
+        svgRoot.setAttribute('preserveAspectRatio', svgRoot.getAttribute('preserveAspectRatio') || 'xMidYMid meet')
+        ;(svgRoot as unknown as HTMLElement).style.width = '100%'
+        ;(svgRoot as unknown as HTMLElement).style.height = 'auto'
+        ;(svgRoot as unknown as HTMLElement).style.maxWidth = '100%'
+        ;(el as HTMLElement).style.width = '100%'
+        ;(el as HTMLElement).style.maxWidth = '100%'
+        ;(el as HTMLElement).style.overflowX = 'hidden'
+      } catch {}
+
       // Style: pointer cursor untuk label dan pastikan elemen bisa diklik
       const style = document.createElement('style')
       style.textContent = `
         /* pastikan semua elemen wilayah & garis bisa menerima klik */
         g, path, polygon { pointer-events: all !important; }
+        /* shape yang dinonaktifkan klik */
+        [data-region-disabled="1"] { pointer-events: none !important; }
+        :root, svg { max-width: 100%; height: auto; }
       `
       svgRoot.appendChild(style)
+
+      const hasAnyDataRegion = !!svgRoot.querySelector('[data-region]')
+      const strictClicks = hasAnyDataRegion && !editMode
+
+      // Matikan klik pada konektor/garis berwarna merah
+      try {
+        const redish = ['#ff0000', '#f00', 'red', 'rgb(255,0,0)']
+        const connectorEls = Array.from(svgRoot.querySelectorAll('path, line, polyline'))
+          .filter(el => redish.includes((el.getAttribute('stroke') || '').trim().toLowerCase()))
+        connectorEls.forEach(el => {
+          el.setAttribute('data-region-disabled', '1')
+          ;(el as unknown as HTMLElement).style.pointerEvents = 'none'
+        })
+      } catch {}
 
       const attach = (node: Element) => {
         const { key, display } = toKeyFromClassList(node.classList)
@@ -109,8 +148,17 @@ export default function MapInteractive({ onSelect, debug }: Props) {
       // Klik pada keseluruhan SVG: fallback ke label terdekat jika target bukan label/elemen beridentitas
       const getDataRegion = (node: Element | null): string | undefined => {
         if (!node) return undefined
+        // If current node or any ancestor has data-region-disabled="1", stop
+        const isDisabledHere = (node as HTMLElement).getAttribute?.('data-region-disabled') === '1'
+        if (isDisabledHere) return undefined
         const v = (node as HTMLElement).getAttribute?.('data-region') || undefined
-        return v || getDataRegion(node.parentElement)
+        if (v) return v
+        // Pada mode normal + sudah ada data-region di SVG, izinkan panjat parent jika klik pada label teks
+        if (strictClicks) {
+          const tag = (node as HTMLElement).tagName?.toLowerCase?.() || ''
+          if (tag !== 'text' && tag !== 'tspan') return undefined
+        }
+        return getDataRegion(node.parentElement)
       }
 
       const trySelectFromNode = (node: Element): boolean => {
@@ -124,6 +172,7 @@ export default function MapInteractive({ onSelect, debug }: Props) {
           return true
         }
         // 2) class token berisi Kabupaten/Kota (kalau area juga punya)
+        if (hasAnyDataRegion) return false
         const { key, display } = toKeyFromClassList(node.classList)
         if (key && display) {
           onSelect(key, display)
@@ -136,7 +185,10 @@ export default function MapInteractive({ onSelect, debug }: Props) {
         const target = ev.target as Element
         // Jika klik sudah ditangani oleh handler elemen label, biarkan
         if (trySelectFromNode(target)) return
+        // Saat edit mode: jangan lakukan heuristik klik di luar shape beridentitas
+        if (editMode) return
         // Fallback: pilih label terdekat
+        if (hasAnyDataRegion) return
         const clickX = ev.clientX, clickY = ev.clientY
         const nearestFrom = (arr: Array<{ el: Element; key: string; display: string }>) => {
           let best: { key: string; display: string; d: number } | null = null
@@ -288,6 +340,42 @@ export default function MapInteractive({ onSelect, debug }: Props) {
         }
         panel.appendChild(btns)
 
+        // Row for click disable/enable on active shape
+        const clickCtl = document.createElement('div')
+        clickCtl.style.display = 'grid'
+        clickCtl.style.gridTemplateColumns = '1fr 1fr'
+        clickCtl.style.gap = '6px'
+        clickCtl.style.marginTop = '8px'
+        const disableBtn = document.createElement('button')
+        disableBtn.textContent = 'Nonaktifkan klik (shape aktif)'
+        disableBtn.style.fontSize = '12px'
+        disableBtn.style.padding = '6px'
+        disableBtn.style.background = '#ef4444'
+        disableBtn.style.borderRadius = '4px'
+        disableBtn.style.border = 'none'
+        disableBtn.style.cursor = 'pointer'
+        disableBtn.addEventListener('click', () => {
+          const active = (svgRoot as any)._activeShape as SVGElement | null
+          if (!active) { alert('Pilih shape pada peta terlebih dahulu'); return }
+          active.setAttribute('data-region-disabled', '1')
+        })
+        const enableBtn = document.createElement('button')
+        enableBtn.textContent = 'Aktifkan klik (shape aktif)'
+        enableBtn.style.fontSize = '12px'
+        enableBtn.style.padding = '6px'
+        enableBtn.style.background = '#22c55e'
+        enableBtn.style.borderRadius = '4px'
+        enableBtn.style.border = 'none'
+        enableBtn.style.cursor = 'pointer'
+        enableBtn.addEventListener('click', () => {
+          const active = (svgRoot as any)._activeShape as SVGElement | null
+          if (!active) { alert('Pilih shape pada peta terlebih dahulu'); return }
+          active.removeAttribute('data-region-disabled')
+        })
+        clickCtl.appendChild(disableBtn)
+        clickCtl.appendChild(enableBtn)
+        panel.appendChild(clickCtl)
+
         const secretWrap = document.createElement('div')
         secretWrap.style.marginTop = '8px'
         const secretLabel = document.createElement('div')
@@ -324,6 +412,39 @@ export default function MapInteractive({ onSelect, debug }: Props) {
         secretWrap.appendChild(secretInput)
         secretWrap.appendChild(saveSecretBtn)
         panel.appendChild(secretWrap)
+
+        // Tombol reset: replace map_svg di DB dengan file di public
+        const resetBtn = document.createElement('button')
+        resetBtn.textContent = 'Reset ke File Public'
+        resetBtn.style.marginTop = '8px'
+        resetBtn.style.width = '100%'
+        resetBtn.style.padding = '8px'
+        resetBtn.style.background = '#f59e0b' // amber
+        resetBtn.style.border = 'none'
+        resetBtn.style.borderRadius = '4px'
+        resetBtn.style.color = '#000'
+        resetBtn.style.cursor = 'pointer'
+        resetBtn.addEventListener('click', async () => {
+          try {
+            if (!confirm('Ganti peta dari file public? Perubahan di DB akan ditimpa.')) return
+            const res = await fetch('/map terbatu.svg?ts=' + Date.now(), { cache: 'no-store' })
+            if (!res.ok) throw new Error('Gagal memuat file public')
+            const mapSvg = await res.text()
+            const finalSecret = secretInput.value || localStorage.getItem('crudSecret') || ''
+            if (!finalSecret) { alert('Isi secret lalu klik Simpan Secret'); return }
+            const put = await fetch('/api/supa/settings', {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json', 'x-shared-secret': finalSecret },
+              body: JSON.stringify({ mapSvg })
+            })
+            const json = await put.json()
+            if (!put.ok) throw new Error(json?.message || 'Gagal reset')
+            alert('Berhasil reset peta dari file public')
+          } catch (e: any) {
+            alert(e?.message || 'Gagal reset')
+          }
+        })
+        panel.appendChild(resetBtn)
 
         const save = document.createElement('button')
         save.textContent = 'Simpan ke DB'
@@ -371,6 +492,50 @@ export default function MapInteractive({ onSelect, debug }: Props) {
             markActive(t)
           }
         })
+
+        // Izinkan memilih shape aktif melalui klik label (text/tspan)
+        try {
+          const toSvgPoint = (clientX: number, clientY: number) => {
+            const ctm = svgRoot.getScreenCTM()
+            if (!ctm) return null
+            const pt = svgRoot.createSVGPoint()
+            pt.x = clientX
+            pt.y = clientY
+            return pt.matrixTransform(ctm.inverse())
+          }
+          const regionElems = Array.from(svgRoot.querySelectorAll('[data-region]')) as SVGGraphicsElement[]
+          const centers = regionElems.map(el => {
+            try {
+              const b = el.getBBox()
+              return { el, slug: el.getAttribute('data-region') || '', cx: b.x + b.width/2, cy: b.y + b.height/2 }
+            } catch { return null }
+          }).filter(Boolean) as { el: SVGGraphicsElement; slug: string; cx: number; cy: number }[]
+
+          const pickNearest = (x: number, y: number) => {
+            let best: { slug: string; el: SVGGraphicsElement; d: number } | null = null
+            for (const c of centers) {
+              const dx = c.cx - x, dy = c.cy - y
+              const d = dx*dx + dy*dy
+              if (!best || d < best.d) best = { slug: c.slug, el: c.el, d }
+            }
+            return best
+          }
+
+          const labelNodes = Array.from(svgRoot.querySelectorAll('text, tspan')) as SVGGraphicsElement[]
+          labelNodes.forEach(n => {
+            (n as unknown as HTMLElement).style.pointerEvents = 'auto'
+            ;(n as unknown as HTMLElement).style.cursor = 'pointer'
+            n.addEventListener('click', (ev: MouseEvent) => {
+              ev.stopPropagation()
+              const p = toSvgPoint(ev.clientX, ev.clientY)
+              if (!p) return
+              const nearest = pickNearest((p as any).x, (p as any).y)
+              if (!nearest) return
+              // Set active shape agar tombol aktif/nonaktif klik berfungsi
+              markActive(nearest.el as unknown as SVGElement)
+            })
+          })
+        } catch {}
       }
     }
     load()

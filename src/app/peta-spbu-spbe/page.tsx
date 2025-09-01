@@ -1,6 +1,6 @@
   'use client'
 
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { Region as UiRegion, Location as UiLocation } from '@/types/sa'
@@ -53,7 +53,7 @@ function toUiRegion(r: DbRegion, locations: UiLocation[]): UiRegion {
   }
 }
 
-export default function PetaSPBUSPBEPage() {
+function InnerPage() {
   const searchParams = useSearchParams()
   const debug = (searchParams?.get('debug') === '1')
   const dlog = (...args: any[]) => { if (debug) console.log('[PETA]', ...args) }
@@ -760,6 +760,14 @@ export default function PetaSPBUSPBEPage() {
     </main>
       <Footer />
     </>
+  )
+}
+
+export default function PetaSPBUSPBEPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-white" />}>
+      <InnerPage />
+    </Suspense>
   )
 }
 

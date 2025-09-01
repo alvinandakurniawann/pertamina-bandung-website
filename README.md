@@ -1,128 +1,36 @@
-# Pertamina Bandung Website
+## Pertamina Bandung — Company Profile & Wilayah Outlet
 
-Website untuk menampilkan peta SPBU dan SPBE wilayah Bandung.
+Website company profile untuk Sales Area (SA) Retail Bandung yang menampilkan gambaran organisasi, bidang operasional utama, serta tautan ke peta overview wilayah dan outlet SPBU/SPBE di Bandung dan sekitarnya.
 
-## Setup Development
+### Tujuan
+- Menyediakan informasi ringkas tentang SA Retail Bandung kepada masyarakat dan pemangku kepentingan.
+- Memudahkan akses ke peta overview wilayah dan outlet.
 
-### 1. Install Dependencies
-```bash
-npm install
-```
+### Fitur Utama
+- Beranda informatif dengan hero, tagline, dan ajakan bertindak “Lihat Peta Overview Wilayah dan Outlet”.
+- Sejarah SA Retail Bandung dalam format timeline ringkas.
+- Ikhtisar bidang operasional: Distribusi BBM Ritel, Penyaluran LPG, Jaringan Ritel & Pertashop, Digital & Subsidi Tepat, HSSE & Quality, Layanan Masyarakat & CSR.
+- Tautan cepat ke halaman peta overview wilayah & outlet untuk eksplorasi lebih lanjut.
+- Desain responsif dan modern, nyaman di perangkat mobile maupun desktop.
 
-### 2. Setup Supabase
-1. Buat akun di [supabase.com](https://supabase.com)
-2. Buat project baru
-3. Copy URL dan Anon Key dari Settings > API
-4. Buat file `.env.local` dengan isi:
-```env
-NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
-NEXT_PUBLIC_CRUD_SECRET=your_crud_secret_key
-```
+### Navigasi Halaman
+- `/` — Beranda (hero, sejarah, operasional, CTA).
+- `/index` — Peta Overview Wilayah dan Outlet.
 
-### 3. Setup Database Tables
-Jalankan SQL berikut di Supabase SQL Editor:
+### Audiens
+- Masyarakat umum yang membutuhkan informasi lokasi dan layanan energi.
+- Mitra dan pemangku kepentingan di wilayah Bandung.
 
-```sql
--- Create regions table
-CREATE TABLE regions (
-  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  name TEXT NOT NULL,
-  color TEXT NOT NULL DEFAULT '#3B82F6',
-  spbu_count INTEGER DEFAULT 0,
-  spbe_count INTEGER DEFAULT 0,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-);
+### Teknologi
+- Next.js (React) dengan TypeScript.
+- Tailwind CSS untuk styling.
+- Komponen peta/overview pada halaman khusus.
 
--- Create locations table
-CREATE TABLE locations (
-  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  region_id UUID REFERENCES regions(id) ON DELETE CASCADE,
-  name TEXT NOT NULL,
-  type TEXT CHECK (type IN ('SPBU', 'SPBE')) NOT NULL,
-  address TEXT NOT NULL,
-  services TEXT[] DEFAULT '{}',
-  hours TEXT NOT NULL,
-  phone TEXT NOT NULL,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-);
+### Kepemilikan dan Merek
+Materi, logo, dan merek dagang terkait Pertamina adalah milik dan dilindungi oleh pemilik haknya masing‑masing. Penggunaan materi pada situs ini mengikuti ketentuan internal yang berlaku.
 
--- Create changes table for audit log
-CREATE TABLE changes (
-  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  action TEXT NOT NULL,
-  entity TEXT NOT NULL,
-  region_id TEXT,
-  location_id TEXT,
-  before JSONB,
-  after JSONB,
-  by TEXT NOT NULL
-);
+### Status & Deploy
+Proyek ini ditujukan sebagai situs company profile. Cocok untuk di‑deploy pada platform hosting modern.
 
--- Enable Row Level Security
-ALTER TABLE regions ENABLE ROW LEVEL SECURITY;
-ALTER TABLE locations ENABLE ROW LEVEL SECURITY;
-ALTER TABLE changes ENABLE ROW LEVEL SECURITY;
-
--- Create policies (allow all for demo)
-CREATE POLICY "Allow all on regions" ON regions FOR ALL USING (true);
-CREATE POLICY "Allow all on locations" ON locations FOR ALL USING (true);
-CREATE POLICY "Allow all on changes" ON changes FOR ALL USING (true);
-```
-
-### 4. Setup Storage (Opsional)
-Jika ingin menyimpan gambar peta di database:
-1. Buka Storage di Supabase Dashboard
-2. Buat bucket baru bernama `maps`
-3. Upload file `map.svg` ke bucket tersebut
-
-### 5. Run Development Server
-```bash
-npm run dev
-```
-
-## Deployment
-
-### Vercel (Rekomendasi)
-1. Push code ke GitHub
-2. Connect repository ke Vercel
-3. Set environment variables di Vercel
-4. Deploy otomatis
-
-## Fitur
-
-- 🗺️ Peta interaktif SPBU & SPBE
-- 📊 Dashboard CRUD data
-- 🔄 Realtime updates dengan Supabase
-- 📱 Responsive design
-- 🎨 Modern UI dengan Tailwind CSS
-
-## Struktur Data
-
-### Regions
-- `id`: UUID
-- `name`: Nama wilayah
-- `color`: Warna untuk peta
-- `spbu_count`: Jumlah SPBU
-- `spbe_count`: Jumlah SPBE
-
-### Locations
-- `id`: UUID
-- `region_id`: Foreign key ke regions
-- `name`: Nama lokasi
-- `type`: 'SPBU' atau 'SPBE'
-- `address`: Alamat lengkap
-- `services`: Array layanan
-- `hours`: Jam operasional
-- `phone`: Nomor telepon
-
-## Teknologi
-
-- **Next.js 15** - React framework
-- **Supabase** - Database & Realtime
-- **TypeScript** - Type safety
-- **Tailwind CSS** - Styling
-- **PostgreSQL** - Database engine
+### Kontak
+Untuk pertanyaan lebih lanjut terkait konten situs ini, silakan hubungi tim SA Retail Bandung melalui kanal resmi.

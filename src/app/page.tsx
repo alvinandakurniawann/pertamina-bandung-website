@@ -22,7 +22,7 @@ export default function Home() {
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link
-              href="/index"
+              href="/Peta-Overview-Wilayah"
               className="bg-yellow-500 hover:bg-yellow-600 text-black font-semibold py-3 px-8 rounded-lg transition duration-300"
             >
               Lihat Peta Overview Wilayah dan Outlet
@@ -128,7 +128,7 @@ export default function Home() {
           </div>
 
                      <div className="text-center mt-10">
-             <Link href="/index" className="inline-block bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-8 rounded-lg transition">Lihat Peta Overview Wilayah dan Outlet</Link>
+             <Link href="/Peta-Overview-Wilayah" className="inline-block bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-8 rounded-lg transition">Lihat Peta Overview Wilayah dan Outlet</Link>
            </div>
         </div>
       </section>
@@ -144,7 +144,7 @@ export default function Home() {
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             
             <Link
-              href="/index"
+              href="/Peta-Overview-Wilayah"
               className="border-2 border-white hover:bg-white hover:text-blue-900 text-white font-semibold py-3 px-8 rounded-lg transition duration-300"
             >
               Lihat Peta Overview Wilayah dan Outlet

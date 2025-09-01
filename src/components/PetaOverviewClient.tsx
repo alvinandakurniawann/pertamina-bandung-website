@@ -4,7 +4,7 @@ import Header from '@/components/Header'
 import Footer from '@/components/Footer'
 import MapInteractive from '@/components/MapInteractive'
 
-export default function IndexPage() {
+export default function PetaOverviewClient() {
   const [currentKey, setCurrentKey] = useState<string>('ALL')
   const [currentName, setCurrentName] = useState<string>('Semua Wilayah')
   const [stats, setStats] = useState({
@@ -15,6 +15,9 @@ export default function IndexPage() {
     agen_lpg_3kg_total: 422,
     lpg_npso_total: 42,
     pangkalan_lpg_3kg_total: 10904,
+    spbu_coco: 0,
+    spbu_codo: 0,
+    spbu_dodo: 0,
   })
   const [loading, setLoading] = useState(false)
   const [activeSVG, setActiveSVG] = useState<string | null>(null);
@@ -33,6 +36,9 @@ export default function IndexPage() {
           agen_lpg_3kg_total: json.data.agen_lpg_3kg_total,
           lpg_npso_total: json.data.lpg_npso_total,
           pangkalan_lpg_3kg_total: json.data.pangkalan_lpg_3kg_total,
+          spbu_coco: json.data.spbu_coco ?? 0,
+          spbu_codo: json.data.spbu_codo ?? 0,
+          spbu_dodo: json.data.spbu_dodo ?? 0,
         })
       }
     } catch (e) {
@@ -119,6 +125,19 @@ export default function IndexPage() {
           </div>
         </div>
       </section>
+
+      {/* Debug toggle (hanya muncul saat ?debug=1 atau ?edit=1) */}
+      {canShowDebugToggle && (
+        <div className="fixed right-4 bottom-4 z-50">
+          <button
+            onClick={() => setDebugOn(v => !v)}
+            className={`px-4 py-2 rounded shadow text-sm font-medium ${debugOn ? 'bg-red-600 text-white' : 'bg-gray-200 text-gray-900'}`}
+            title="Tampilkan/sembunyikan overlay debug wilayah"
+          >
+            Debug: {debugOn ? 'ON' : 'OFF'}
+          </button>
+        </div>
+      )}
 
       {/* Cards */}
       <section className="py-8 mt-[50px]">
@@ -403,22 +422,23 @@ export default function IndexPage() {
             <h1 className='mb-[21px] font-bold text-3xl'>LOREM IPSUM</h1>
             <p className='text-base'>asfjlasfaksflasf</p>
            <div className='flex justify-center items-center mt-[127px]'> 
-              <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-40 justify-center ">
-                <div className='border-b'>
-                  <h1 className='text-4xl font-bold '>512</h1>
-                  <p className='w-[300px] mt-[5px]'>Number of One-Price Fuel Distribution Points across Indonesia</p>
+                            <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                <div className="bg-[#ffffffb5] text-black rounded-lg p-4 shadow-lg text-center">
+                  <h3 className="text-xl font-semibold mb-2">Judul 1</h3>
+                  <p className="text-sm">Deskripsi singkat konten pertama.</p>
                 </div>
-                <div className='border-b'>
-                  <h1 className='text-4xl font-bold'>512</h1>
-                  <p className='mt-[5px] w-[300px]'>Number of One-Price Fuel Distribution Points across Indonesia</p>
-                </div><div className='border-b'>
-                  <h1 className='text-4xl font-bold '>512</h1>
-                  <p className='w-[300px] mt-[5px]'>Number of One-Price Fuel Distribution Points across Indonesia</p>
+                <div className="bg-[#ffffffb5] text-black rounded-lg p-4 shadow-lg text-center">
+                  <h3 className="text-xl font-semibold mb-2">Judul 2</h3>
+                  <p className="text-sm">Deskripsi singkat konten kedua.</p>
                 </div>
-                </div>  
+                <div className="bg-[#ffffffb5] text-black rounded-lg p-4 shadow-lg text-center">
+                  <h3 className="text-xl font-semibold mb-2">Judul 3</h3>
+                  <p className="text-sm">Deskripsi singkat konten ketiga.</p>
+                </div>
               </div>
             </div>
           </div>
+        </div>
       </section>
     </main>
     <Footer />

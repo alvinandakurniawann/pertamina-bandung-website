@@ -27,6 +27,9 @@ export default function CrudHomePage() {
     key: string
     display_name: string
     spbu_total: number
+    spbu_coco?: number
+    spbu_codo?: number
+    spbu_dodo?: number
     pertashop_total: number
     spbe_pso_total: number
     spbe_npso_total: number
@@ -146,7 +149,7 @@ export default function CrudHomePage() {
               </div>
               <div>
                 <div className="text-sm font-semibold text-red-700">Total SPBU</div>
-                <div className="text-xl font-bold text-red-900">{(regionStats.find(s=>s.key==='ALL')?.spbu_total ?? 0)}</div>
+                <div className="text-xl font-bold text-red-900">{(() => { const all = regionStats.find(s=>s.key==='ALL'); const sum = (all?.spbu_coco||0)+(all?.spbu_codo||0)+(all?.spbu_dodo||0); return all?.spbu_total || sum; })()}</div>
               </div>
             </div>
 
@@ -221,12 +224,13 @@ export default function CrudHomePage() {
             </div>
             {(() => {
               const rows = regionStats.filter(s=>s.key !== 'ALL') as any[]
-              const max = Math.max(1, ...rows.map(r => Number(r[metric]) || 0))
+              const getVal = (r: any) => metric === 'spbu_total' ? ((r.spbu_total ?? ((r.spbu_coco||0)+(r.spbu_codo||0)+(r.spbu_dodo||0))) || 0) : (Number(r[metric]) || 0)
+              const max = Math.max(1, ...rows.map(r => getVal(r)))
               return (
                 <>
                   <div className="h-64 flex items-end gap-2 overflow-x-auto pr-2">
                     {rows.map(r => {
-                      const val = Number(r[metric]) || 0
+                      const val = getVal(r)
                       const h = `${Math.round((val / max) * 100)}%`
                       return (
                         <div key={r.key} className="flex flex-col justify-end items-center min-w-[56px] h-full">
@@ -263,7 +267,7 @@ export default function CrudHomePage() {
                   {regionStats.filter(s=>s.key!=='ALL').map((s)=> (
                     <tr key={s.key} className="border-t">
                       <td className="p-2 text-gray-900">{s.display_name}</td>
-                      <td className="p-2 text-right text-gray-900">{s.spbu_total}</td>
+                      <td className="p-2 text-right text-gray-900">{s.spbu_total || ((s.spbu_coco||0)+(s.spbu_codo||0)+(s.spbu_dodo||0))}</td>
                       <td className="p-2 text-right text-gray-900">{s.pertashop_total}</td>
                       <td className="p-2 text-right text-gray-900">{s.spbe_pso_total}</td>
                       <td className="p-2 text-right text-gray-900">{s.spbe_npso_total}</td>

@@ -8,7 +8,7 @@ export default function Footer() {
           {/* Company Info */}
           <div className="md:col-span-1 w-[330px]">
             <div className="flex items-center space-x-2 mb-4">
-                <img src="/logo.svg" alt="Pertamina Logo" className="w-46 h-auto" />
+                <img src="/Logo.svg" alt="Pertamina Logo" className="w-46 h-auto" />
             </div>
             <div className="flex space-x-4 flex-col w-[330px] pt-12">
               <p className="mb-4 tracking-wider leading-relaxed w-[330px] text-gray-400">
