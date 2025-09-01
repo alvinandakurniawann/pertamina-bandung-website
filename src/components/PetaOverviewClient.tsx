@@ -21,6 +21,8 @@ export default function PetaOverviewClient() {
   })
   const [loading, setLoading] = useState(false)
   const [activeSVG, setActiveSVG] = useState<string | null>(null);
+  const [debugOn, setDebugOn] = useState<boolean>(false)
+  const [canShowDebugToggle, setCanShowDebugToggle] = useState<boolean>(false)
 
   const fetchStats = useCallback(async (key: string) => {
     setLoading(true)
@@ -48,6 +50,14 @@ export default function PetaOverviewClient() {
   }, [])
 
   useEffect(() => { fetchStats('ALL') }, [fetchStats])
+
+  // Detect debug/edit mode from URL params
+  useEffect(() => {
+    const sp = new URLSearchParams(window.location.search)
+    const v = sp.get('debug') === '1' || sp.get('edit') === '1'
+    setDebugOn(v)
+    setCanShowDebugToggle(v)
+  }, [])
 
   const handleSelect = useCallback((key: string, displayName: string) => {
     setCurrentKey(key);
