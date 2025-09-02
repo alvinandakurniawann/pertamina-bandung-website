@@ -75,7 +75,7 @@ export default function PetaOverviewClient() {
     fetchStats('ALL');
   };
 
-  // ✅ Tambahan untuk popup
+  //Tambahan untuk popup
   const [activeModal, setActiveModal] = useState<string | null>(null)
   const openModal = (id: string) => setActiveModal(id)
   const closeModal = () => setActiveModal(null)
@@ -137,17 +137,6 @@ export default function PetaOverviewClient() {
       </section>
 
       {/* Debug toggle (hanya muncul saat ?debug=1 atau ?edit=1) */}
-      {canShowDebugToggle && (
-        <div className="fixed right-4 bottom-4 z-50">
-          <button
-            onClick={() => setDebugOn(v => !v)}
-            className={`px-4 py-2 rounded shadow text-sm font-medium ${debugOn ? 'bg-red-600 text-white' : 'bg-gray-200 text-gray-900'}`}
-            title="Tampilkan/sembunyikan overlay debug wilayah"
-          >
-            Debug: {debugOn ? 'ON' : 'OFF'}
-          </button>
-        </div>
-      )}
 
       {/* Cards */}
       <section className="py-8 mt-[50px]">
@@ -318,8 +307,9 @@ export default function PetaOverviewClient() {
               &times;
             </button>
 
+            {/* SPBU */}
             {activeModal === 'spbu' && (
-              <div className="bg-white p-8  rounded-xl shadow-lg mx-auto relative">
+              <div className="bg-white p-8 rounded-xl shadow-lg mx-auto relative">
                 <div className="flex flex-col md:flex-row gap-8">
                   {/* Statistik */}
                   <div className="flex-1">
@@ -388,38 +378,204 @@ export default function PetaOverviewClient() {
               </div>
             )}
 
+            {/* Pertashop */}
             {activeModal === 'pertashop' && (
-              <>
-                <h2 className="text-xl font-bold mb-4">Detail Pertashop</h2>
-                <p>Total Pertashop: {stats.pertashop_total}</p>
-              </>
+              <div className="bg-white p-8 rounded-xl shadow-lg mx-auto relative">
+                <div className="flex flex-col md:flex-row gap-8">
+                  {/* Statistik */}
+                  <div className="flex-1">
+                    <h2 className="text-xl font-bold mb-4">Statistik</h2>
+                    <div className="flex flex-col gap-3">
+                      <div className="rounded-lg bg-blue-200 px-6 py-3 flex justify-between items-center">
+                        <span className="font-semibold text-blue-700">TOTAL PERTASHOP</span>
+                        <span className="font-bold text-xl">{stats.pertashop_total ?? '-'}</span>
+                      </div>
+                    </div>
+                  </div>
+                  {/* Daftar Lokasi */}
+                  <div className="flex-1">
+                    <h2 className="text-xl font-bold mb-4">Daftar Lokasi</h2>
+                    <div className="flex flex-col gap-4">
+                      {/* Ganti dengan data asli jika ada */}
+                      {[].length === 0 ? (
+                        <div className="flex flex-col items-center justify-center py-8">
+                          <svg width="48" height="48" viewBox="0 0 24 24" fill="none">
+                            <polygon points="12,2 22,20 2,20" fill="#fbbf24"/>
+                            <text x="12" y="16" textAnchor="middle" fontSize="12" fill="#fff" fontWeight="bold">!</text>
+                          </svg>
+                          <span className="mt-2 text-gray-500 font-semibold">Data tidak tersedia</span>
+                        </div>
+                      ) : (
+                        [].map((loc, idx) => (
+                          <div key={idx} className="rounded-lg border p-4 flex flex-col mb-2">
+                            {/* Isi data lokasi pertashop */}
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </div>
+                </div>
+                <button
+                  onClick={closeModal}
+                  className="mt-8 w-full py-3 rounded-lg bg-blue-600 text-white font-semibold text-lg hover:bg-blue-700 transition"
+                >
+                  Kembali
+                </button>
+              </div>
             )}
 
+            {/* SPBE */}
             {activeModal === 'spbe' && (
-              <>
-                <h2 className="text-xl font-bold mb-4">Detail SPBE</h2>
-                <ul className="list-disc pl-5 space-y-2 text-gray-700">
-                  <li>SPBE PSO: {stats.spbe_pso_total}</li>
-                  <li>SPBE NPSO: {stats.spbe_npso_total}</li>
-                </ul>
-              </>
+              <div className="bg-white p-8 rounded-xl shadow-lg mx-auto relative">
+                <div className="flex flex-col md:flex-row gap-8">
+                  {/* Statistik */}
+                  <div className="flex-1">
+                    <h2 className="text-xl font-bold mb-4">Statistik</h2>
+                    <div className="flex flex-col gap-3">
+                      <div className="rounded-lg bg-green-200 px-6 py-3 flex justify-between items-center">
+                        <span className="font-semibold text-green-700">SPBE PSO</span>
+                        <span className="font-bold text-xl">{stats.spbe_pso_total ?? '-'}</span>
+                      </div>
+                      <div className="rounded-lg bg-yellow-200 px-6 py-3 flex justify-between items-center">
+                        <span className="font-semibold text-yellow-700">SPBE NPSO</span>
+                        <span className="font-bold text-xl">{stats.spbe_npso_total ?? '-'}</span>
+                      </div>
+                      <div className="rounded-lg bg-blue-200 px-6 py-3 flex justify-between items-center">
+                        <span className="font-semibold text-blue-700">TOTAL SPBE</span>
+                        <span className="font-bold text-xl">{(stats.spbe_pso_total ?? 0) + (stats.spbe_npso_total ?? 0)}</span>
+                      </div>
+                    </div>
+                  </div>
+                  {/* Daftar Lokasi */}
+                  <div className="flex-1">
+                    <h2 className="text-xl font-bold mb-4">Daftar Lokasi</h2>
+                    <div className="flex flex-col gap-4">
+                      {/* Ganti dengan data asli jika ada */}
+                      {[].length === 0 ? (
+                        <div className="flex flex-col items-center justify-center py-8">
+                          <svg width="48" height="48" viewBox="0 0 24 24" fill="none">
+                            <polygon points="12,2 22,20 2,20" fill="#fbbf24"/>
+                            <text x="12" y="16" textAnchor="middle" fontSize="12" fill="#fff" fontWeight="bold">!</text>
+                          </svg>
+                          <span className="mt-2 text-gray-500 font-semibold">Data tidak tersedia</span>
+                        </div>
+                      ) : (
+                        [].map((loc, idx) => (
+                          <div key={idx} className="rounded-lg border p-4 flex flex-col mb-2">
+                            {/* Isi data lokasi SPBE */}
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </div>
+                </div>
+                <button
+                  onClick={closeModal}
+                  className="mt-8 w-full py-3 rounded-lg bg-blue-600 text-white font-semibold text-lg hover:bg-blue-700 transition"
+                >
+                  Kembali
+                </button>
+              </div>
             )}
 
+            {/* Agen LPG */}
             {activeModal === 'agen' && (
-              <>
-                <h2 className="text-xl font-bold mb-4">Detail Agen LPG</h2>
-                <ul className="list-disc pl-5 space-y-2 text-gray-700">
-                  <li>Agen LPG 3 Kg: {stats.agen_lpg_3kg_total}</li>
-                  <li>LPG NPSO: {stats.lpg_npso_total}</li>
-                </ul>
-              </>
+              <div className="bg-white p-8 rounded-xl shadow-lg mx-auto relative">
+                <div className="flex flex-col md:flex-row gap-8">
+                  {/* Statistik */}
+                  <div className="flex-1">
+                    <h2 className="text-xl font-bold mb-4">Statistik</h2>
+                    <div className="flex flex-col gap-3">
+                      <div className="rounded-lg bg-green-200 px-6 py-3 flex justify-between items-center">
+                        <span className="font-semibold text-green-700">AGEN LPG 3 KG</span>
+                        <span className="font-bold text-xl">{stats.agen_lpg_3kg_total ?? '-'}</span>
+                      </div>
+                      <div className="rounded-lg bg-blue-200 px-6 py-3 flex justify-between items-center">
+                        <span className="font-semibold text-blue-700">LPG NPSO</span>
+                        <span className="font-bold text-xl">{stats.lpg_npso_total ?? '-'}</span>
+                      </div>
+                      <div className="rounded-lg bg-yellow-200 px-6 py-3 flex justify-between items-center">
+                        <span className="font-semibold text-yellow-700">TOTAL AGEN</span>
+                        <span className="font-bold text-xl">{stats.agen_lpg_3kg_total ?? '-'}</span>
+                      </div>
+                    </div>
+                  </div>
+                  {/* Daftar Lokasi */}
+                  <div className="flex-1">
+                    <h2 className="text-xl font-bold mb-4">Daftar Lokasi</h2>
+                    <div className="flex flex-col gap-4">
+                      {/* Ganti dengan data asli jika ada */}
+                      {[].length === 0 ? (
+                        <div className="flex flex-col items-center justify-center py-8">
+                          <svg width="48" height="48" viewBox="0 0 24 24" fill="none">
+                            <polygon points="12,2 22,20 2,20" fill="#fbbf24"/>
+                            <text x="12" y="16" textAnchor="middle" fontSize="12" fill="#fff" fontWeight="bold">!</text>
+                          </svg>
+                          <span className="mt-2 text-gray-500 font-semibold">Data tidak tersedia</span>
+                        </div>
+                      ) : (
+                        [].map((loc, idx) => (
+                          <div key={idx} className="rounded-lg border p-4 flex flex-col mb-2">
+                            {/* Isi data lokasi Agen LPG */}
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </div>
+                </div>
+                <button
+                  onClick={closeModal}
+                  className="mt-8 w-full py-3 rounded-lg bg-blue-600 text-white font-semibold text-lg hover:bg-blue-700 transition"
+                >
+                  Kembali
+                </button>
+              </div>
             )}
 
+            {/* Pangkalan LPG */}
             {activeModal === 'pangkalan' && (
-              <>
-                <h2 className="text-xl font-bold mb-4">Detail Pangkalan LPG</h2>
-                <p>Pangkalan LPG 3 Kg: {stats.pangkalan_lpg_3kg_total}</p>
-              </>
+              <div className="bg-white p-8 rounded-xl shadow-lg mx-auto relative">
+                <div className="flex flex-col md:flex-row gap-8">
+                  {/* Statistik */}
+                  <div className="flex-1">
+                    <h2 className="text-xl font-bold mb-4">Statistik</h2>
+                    <div className="flex flex-col gap-3">
+                      <div className="rounded-lg bg-yellow-200 px-6 py-3 flex justify-between items-center">
+                        <span className="font-semibold text-yellow-700">TOTAL PANGKALAN</span>
+                        <span className="font-bold text-xl">{stats.pangkalan_lpg_3kg_total ?? '-'}</span>
+                      </div>
+                    </div>
+                  </div>
+                  {/* Daftar Lokasi */}
+                  <div className="flex-1">
+                    <h2 className="text-xl font-bold mb-4">Daftar Lokasi</h2>
+                    <div className="flex flex-col gap-4">
+                      {/* Ganti dengan data asli jika ada */}
+                      {[].length === 0 ? (
+                        <div className="flex flex-col items-center justify-center py-8">
+                          <svg width="48" height="48" viewBox="0 0 24 24" fill="none">
+                            <polygon points="12,2 22,20 2,20" fill="#fbbf24"/>
+                            <text x="12" y="16" textAnchor="middle" fontSize="12" fill="#fff" fontWeight="bold">!</text>
+                          </svg>
+                          <span className="mt-2 text-gray-500 font-semibold">Data tidak tersedia</span>
+                        </div>
+                      ) : (
+                        [].map((loc, idx) => (
+                          <div key={idx} className="rounded-lg border p-4 flex flex-col mb-2">
+                            {/* Isi data lokasi Pangkalan LPG */}
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </div>
+                </div>
+                <button
+                  onClick={closeModal}
+                  className="mt-8 w-full py-3 rounded-lg bg-blue-600 text-white font-semibold text-lg hover:bg-blue-700 transition"
+                >
+                  Kembali
+                </button>
+              </div>
             )}
           </div>
         </div>
