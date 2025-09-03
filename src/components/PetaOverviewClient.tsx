@@ -1,20 +1,55 @@
 "use client"
-import React, { useCallback, useEffect, useState } from 'react'
+import React, { useCallback, useEffect, useState, useRef } from 'react'
 import Header from '@/components/Header'
 import Footer from '@/components/Footer'
 import MapInteractive from '@/components/MapInteractive'
+
+function AnimatedCounter({ value, duration = 1000 }) {
+  const [count, setCount] = useState(0);
+  const ref = useRef<number>(0);
+
+  useEffect(() => {
+    let start = 0;
+    let end = value;
+    let startTime: number | null = null;
+
+    function animateCounter(timestamp: number) {
+      if (!startTime) startTime = timestamp;
+      const progress = Math.min((timestamp - startTime) / duration, 1);
+      const current = Math.floor(progress * (end - start) + start);
+      setCount(current);
+
+      if (progress < 1) {
+        requestAnimationFrame(animateCounter);
+      } else {
+        setCount(end);
+      }
+    }
+
+    requestAnimationFrame(animateCounter);
+
+    // Cleanup
+    return () => {
+      setCount(end);
+    };
+  }, [value, duration]);
+
+  return (
+    <span className="counter">{count.toLocaleString('de')}</span>
+  );
+}
 
 export default function PetaOverviewClient() {
   const [currentKey, setCurrentKey] = useState<string>('ALL')
   const [currentName, setCurrentName] = useState<string>('Semua Wilayah')
   const [stats, setStats] = useState({
-    spbu_total: 328,
-    pertashop_total: 116,
-    spbe_pso_total: 42,
-    spbe_npso_total: 10,
-    agen_lpg_3kg_total: 422,
-    lpg_npso_total: 42,
-    pangkalan_lpg_3kg_total: 10904,
+    spbu_total:0,
+    pertashop_total: 0,
+    spbe_pso_total: 0,
+    spbe_npso_total: 0,
+    agen_lpg_3kg_total: 0,
+    lpg_npso_total: 0,
+    pangkalan_lpg_3kg_total: 0,
     spbu_coco: 0,
     spbu_codo: 0,
     spbu_dodo: 0,
@@ -152,7 +187,9 @@ export default function PetaOverviewClient() {
             />
             <div className="absolute inset-0 flex flex-col justify-end items-center pb-6 text-white transition-opacity duration-500 group-hover:opacity-0">
               <h4 className="text-xl font-semibold">SPBU</h4>
-              <p className="text-lg opacity-90">{stats.spbu_total} SPBU</p>
+              <p className="text-lg opacity-90">
+                <AnimatedCounter value={stats.spbu_total} duration={1000} /> SPBU
+              </p>
             </div>
 
             {/* Tampilan Hover dengan SVG */}
@@ -187,7 +224,9 @@ export default function PetaOverviewClient() {
             />
             <div className="absolute inset-0 flex flex-col justify-end items-center pb-6 text-white transition-opacity duration-500 group-hover:opacity-0">
               <h4 className="text-xl font-semibold">Pertashop</h4>
-              <p className="text-lg opacity-90">{stats.pertashop_total} Pertashop</p>
+              <p className="text-lg opacity-90">
+                <AnimatedCounter value={stats.pertashop_total} duration={1000} /> Pertashop
+              </p>
             </div>
             <div className="absolute inset-0 text-white flex flex-col justify-center p-6 opacity-0 group-hover:opacity-100 transition-opacity duration-500" 
             style={{
@@ -214,7 +253,9 @@ export default function PetaOverviewClient() {
             />
             <div className="absolute inset-0 flex flex-col justify-end items-center pb-6 text-white transition-opacity duration-500 group-hover:opacity-0">
               <h4 className="text-xl font-semibold">SPBE</h4>
-              <p className="text-lg opacity-90">{stats.spbe_pso_total + stats.spbe_npso_total} SPBE</p>
+              <p className="text-lg opacity-90">
+                <AnimatedCounter value={stats.spbe_pso_total + stats.spbe_npso_total} duration={1000} /> SPBE
+              </p>
             </div>
             <div className="absolute inset-0 text-white flex flex-col justify-center p-6 opacity-0 group-hover:opacity-100 transition-opacity duration-500"
             style={{
@@ -245,7 +286,9 @@ export default function PetaOverviewClient() {
             />
             <div className="absolute inset-0 flex flex-col justify-end items-center pb-6 text-white transition-opacity duration-500 group-hover:opacity-0">
               <h4 className="text-xl font-semibold">Agen LPG</h4>
-              <p className="text-lg opacity-90">{stats.agen_lpg_3kg_total} Agen LPG</p>
+              <p className="text-lg opacity-90">
+                <AnimatedCounter value={stats.agen_lpg_3kg_total} duration={1000} /> Agen LPG
+              </p>
             </div>
             <div className="absolute inset-0 text-white flex flex-col justify-center p-6 opacity-0 group-hover:opacity-100 transition-opacity duration-500"
             style={{
@@ -276,7 +319,9 @@ export default function PetaOverviewClient() {
             />
             <div className="absolute inset-0 flex flex-col justify-end items-center pb-6 text-white transition-opacity duration-500 group-hover:opacity-0">
               <h4 className="text-xl font-semibold">Pangkalan LPG</h4>
-              <p className="text-lg opacity-90">{stats.pangkalan_lpg_3kg_total} Pangkalan</p>
+              <p className="text-lg opacity-90">
+                <AnimatedCounter value={stats.pangkalan_lpg_3kg_total} duration={1000} /> Pangkalan
+              </p>
             </div>
             <div className="absolute inset-0 text-white flex flex-col justify-center p-6 opacity-0 group-hover:opacity-100 transition-opacity duration-500"
             style={{
