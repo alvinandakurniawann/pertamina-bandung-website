@@ -118,8 +118,8 @@ export default function PetaOverviewClient() {
   // Contoh data lokasi SPBU, ganti dengan data asli jika ada
   const [spbuLocations] = useState([
     { name: "SPBU Dipatiukur 1", type: "CODO", address: "Jl. Soekarno-Hatta No. 112", status: "on" },
-    { name: "SPBU Dipatiukur 1", type: "DODO", address: "Jl. Dipatiukur No. 5", status: "on" },
-    { name: "SPBU Dipatiukur 2", type: "COCO", address: "Jl. Cipamokolan no. 84", status: "off" },
+    { name: "SPBU Dipatiukur 2", type: "DODO", address: "Jl. Dipatiukur No. 5", status: "on" },
+    { name: "SPBU Dipatiukur 3", type: "COCO", address: "Jl. Cipamokolan no. 84", status: "off" },
   ]);
 
   return (
