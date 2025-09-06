@@ -6,19 +6,19 @@ export default function Home() {
   return (
     <>
       <Header />
-      <main className="min-h-screen">
+      <main className="min-h-screen bg-white">
       {/* Hero Section */}
-      <section className="relative h-screen flex items-center justify-center bg-gradient-to-br from-blue-900 via-blue-800 to-blue-700">
-        <div className="absolute inset-0 bg-black/30"></div>
-        <div className="relative z-10 text-center text-white px-4">
-          <h1 className="text-5xl md:text-7xl font-bold mb-6">
+      <section className="relative h-screen flex items-center justify-end bg-cover" style={{ backgroundImage: "url('/bannerhome.svg')" }}>
+        <div className="absolute inset-0 bg-black/20"></div>
+        <div className="relative z-10 text-center w-[605px] px-4">
+          <h1 className="text-[48px] font-bold mb-[5px]">
             PERTAMINA
           </h1>
-          <h2 className="text-2xl md:text-3xl font-light mb-8">
+          <h2 className="text-[36px] font-light mb-[20px]">
             Sales Area Bandung
           </h2>
-          <p className="text-xl md:text-2xl mb-12 max-w-3xl mx-auto">
-            Melayani kebutuhan energi masyarakat Bandung dan sekitarnya dengan komitmen kualitas dan pelayanan terbaik
+          <p className="text-xl md:text-2xl mb-12 w-[500px] max-w-3xl mx-auto">
+            Melayani kebutuhan energi masyarakat Bandung dan sekitarnya dengan komitmen kualitas dan pelayanan terbaik.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link
@@ -35,37 +35,40 @@ export default function Home() {
       {/* Sejarah SA Retail Bandung */}
       <section className="py-16 bg-white">
         <div className="container mx-auto px-4">
-          <div className="mb-10 text-center">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-800 mb-4">Sejarah Sales Area Retail Bandung</h2>
-            <p className="text-lg text-gray-600 max-w-4xl mx-auto">
-              Sales Area (SA) Retail Bandung merupakan bagian dari Pertamina Patra Niaga yang bertugas melayani kebutuhan energi untuk wilayah Bandung dan sekitarnya. 
-              Perjalanan SA Bandung ditandai modernisasi jaringan ritel, peningkatan layanan pelanggan, serta penguatan ketahanan pasokan.
-            </p>
+          <div className='flex flex-col md:flex-row items-center gap-30 mb-18'>
+            <div className="text-left">
+              <h2 className="text-3xl md:text-4xl font-bold text-gray-800 mb-4">Sejarah Sales Area Retail Bandung</h2>
+              <p className="text-lg w-[700px] text-gray-600 max-w-4xl mx-auto">
+                Sales Area (SA) Retail Bandung merupakan bagian dari Pertamina Patra Niaga yang bertugas melayani kebutuhan energi untuk wilayah Bandung dan sekitarnya. 
+                 Perjalanan SA Bandung ditandai modernisasi jaringan ritel, peningkatan layanan pelanggan, serta penguatan ketahanan pasokan.
+              </p>
+            </div>
+            <img src="/sejarah.svg" alt="Sejarah SA Retail Bandung" className="w-[428px] h-[380px] object-cover rounded-lg shadow-md" /> 
           </div>
 
           {/* Timeline ringkas */}
           <div className="grid md:grid-cols-5 gap-6">
-            <div className="bg-gray-50 rounded-lg p-5 border">
+            <div className="bg-gray-50 rounded-lg p-5 border border-gray-300">
               <div className="text-sm text-blue-700 font-semibold">1970–1990-an</div>
               <div className="mt-1 font-bold text-gray-900">Awal Jaringan SPBU</div>
               <p className="mt-2 text-sm text-gray-600">Penguatan layanan BBM ritel dan perluasan titik SPBU di Bandung.</p>
             </div>
-            <div className="bg-gray-50 rounded-lg p-5 border">
+            <div className="bg-gray-50 rounded-lg p-5 border border-gray-300">
               <div className="text-sm text-blue-700 font-semibold">2000–2010</div>
               <div className="mt-1 font-bold text-gray-900">Standarisasi Layanan</div>
               <p className="mt-2 text-sm text-gray-600">Peningkatan standar mutu dan keselamatan (HSSE) di ritel BBM/LPG.</p>
             </div>
-            <div className="bg-gray-50 rounded-lg p-5 border">
+            <div className="bg-gray-50 rounded-lg p-5 border border-gray-300">
               <div className="text-sm text-blue-700 font-semibold">2010–2019</div>
               <div className="mt-1 font-bold text-gray-900">Modernisasi & Ekspansi</div>
               <p className="mt-2 text-sm text-gray-600">Revitalisasi SPBU, perluasan jaringan LPG, penguatan supply chain.</p>
             </div>
-            <div className="bg-gray-50 rounded-lg p-5 border">
+            <div className="bg-gray-50 rounded-lg p-5 border border-gray-300">
               <div className="text-sm text-blue-700 font-semibold">2020–2022</div>
               <div className="mt-1 font-bold text-gray-900">Digitalisasi Layanan</div>
               <p className="mt-2 text-sm text-gray-600">Adopsi MyPertamina dan inisiatif Subsidi Tepat untuk LPG/BBM.</p>
             </div>
-            <div className="bg-gray-50 rounded-lg p-5 border">
+            <div className="bg-gray-50 rounded-lg p-5 border border-gray-300">
               <div className="text-sm text-blue-700 font-semibold">2023–Kini</div>
               <div className="mt-1 font-bold text-gray-900">Fokus Ketahanan Energi</div>
               <p className="mt-2 text-sm text-gray-600">Optimalisasi distribusi, layanan pelanggan, dan keberlanjutan.</p>
@@ -126,17 +129,13 @@ export default function Home() {
               <p className="text-gray-600 text-sm">Edukasi keselamatan energi, pelayanan keluhan, dan program tanggung jawab sosial.</p>
             </div>
           </div>
-
-                     <div className="text-center mt-10">
-             <Link href="/Peta-Overview-Wilayah" className="inline-block bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-8 rounded-lg transition">Lihat Peta Overview Wilayah dan Outlet</Link>
-           </div>
         </div>
       </section>
       
 
       {/* CTA Section */}
-      <section className="py-16 bg-gradient-to-r from-blue-900 to-blue-700 text-white">
-        <div className="container mx-auto px-4 text-center">
+      <section className="py-16 mb-14 ">
+        <div className="container mx-auto pt-[25px] rounded-[10px] h-[250px] bg-gradient-to-r from-blue-900 to-blue-700 text-white px-4 text-center">
           <h2 className="text-3xl font-bold mb-4">Butuh Bantuan?</h2>
           <p className="text-xl mb-8 max-w-2xl mx-auto">
             Hubungi kami untuk informasi lebih lanjut tentang layanan dan produk Pertamina
@@ -147,7 +146,7 @@ export default function Home() {
               href="/Peta-Overview-Wilayah"
               className="border-2 border-white hover:bg-white hover:text-blue-900 text-white font-semibold py-3 px-8 rounded-lg transition duration-300"
             >
-              Lihat Peta Overview Wilayah dan Outlet
+              Hubungi Kami
             </Link>
           </div>
         </div>
