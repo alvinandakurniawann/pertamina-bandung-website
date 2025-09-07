@@ -49,7 +49,7 @@
    ```env
    NEXT_PUBLIC_SUPABASE_URL=https://your-project-ref.supabase.co
    NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key-here
-   NEXT_PUBLIC_CRUD_SECRET=pertamina-bandung-2024
+   CRUD_SECRET=gasmelon3kg
    ```
 
 ### 4. Install Dependencies & Run
@@ -84,7 +84,7 @@ npm run dev
 - Cek apakah Supabase project aktif
 
 ### Error: "CRUD access denied"
-- Pastikan `NEXT_PUBLIC_CRUD_SECRET` sudah diset
+- Pastikan `CRUD_SECRET` sudah diset
 - Masukkan secret key yang sama di form CRUD
 
 ## 📊 Database Schema

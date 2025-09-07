@@ -4,7 +4,7 @@ import { supabaseAdmin } from '@/lib/supabaseAdmin'
 function forbidden() { return NextResponse.json({ message: 'Forbidden' }, { status: 403 }) }
 function check(req: NextRequest) {
   const s = req.headers.get('x-shared-secret')
-  return s && s === process.env.NEXT_PUBLIC_CRUD_SECRET
+  return s && s === process.env.CRUD_SECRET
 }
 
 export async function POST(req: NextRequest) {

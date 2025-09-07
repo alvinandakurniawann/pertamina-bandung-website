@@ -22,12 +22,29 @@ export default function CrudPanel() {
     } catch {}
   }, [])
 
-  const verify = () => {
-    if ((sharedKey || '').trim() === 'gasmelon3kg') {
-      setIsAuthorized(true)
-      localStorage.setItem('pertamina-auth', JSON.stringify({ isAuthorized: true, sharedKey }))
-    } else {
-      alert('Shared key tidak valid!')
+  const verify = async () => {
+    try {
+      const response = await fetch('/api/auth/verify', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ secret: sharedKey.trim() }),
+      })
+      
+      if (response.ok) {
+        const data = await response.json()
+        if (data.valid) {
+          setIsAuthorized(true)
+          localStorage.setItem('pertamina-auth', JSON.stringify({ isAuthorized: true, sharedKey }))
+        } else {
+          alert('Shared key tidak valid!')
+        }
+      } else {
+        alert('Shared key tidak valid!')
+      }
+    } catch (error) {
+      alert('Terjadi kesalahan saat verifikasi!')
     }
   }
 

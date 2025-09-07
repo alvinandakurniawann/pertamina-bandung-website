@@ -317,12 +317,28 @@ export default function DataFuelPage() {
   }
 
   const handleSharedKeySubmit = () => {
-    // Simple validation - you can enhance this with actual authentication
-    if (sharedKey.trim() === 'gasmelon3kg') {
-      setIsAuthorized(true)
-      localStorage.setItem('pertamina-auth', JSON.stringify({ isAuthorized: true, sharedKey: sharedKey }))
-    } else {
-      alert('Shared key tidak valid!')
+    try {
+      const response = await fetch('/api/auth/verify', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ secret: sharedKey.trim() }),
+      })
+      
+      if (response.ok) {
+        const data = await response.json()
+        if (data.valid) {
+          setIsAuthorized(true)
+          localStorage.setItem('pertamina-auth', JSON.stringify({ isAuthorized: true, sharedKey: sharedKey }))
+        } else {
+          alert('Shared key tidak valid!')
+        }
+      } else {
+        alert('Shared key tidak valid!')
+      }
+    } catch (error) {
+      alert('Terjadi kesalahan saat verifikasi!')
     }
   }
 
