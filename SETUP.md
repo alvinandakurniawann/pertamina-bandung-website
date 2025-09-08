@@ -131,7 +131,7 @@ npm run dev
 
 1. **Customize data**: Edit sample data sesuai kebutuhan
 2. **Add more regions**: Tambah wilayah baru
-3. **Deploy**: Deploy ke Vercel/Netlify
+3. **Deploy**: Deploy ke Vercel
 4. **Domain**: Setup custom domain
 
 ## 📞 Support

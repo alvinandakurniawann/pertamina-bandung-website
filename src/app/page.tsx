@@ -8,46 +8,45 @@ export default function Home() {
       <Header />
       <main className="min-h-screen bg-white">
       {/* Hero Section */}
-      <section className="relative h-screen flex items-center justify-end bg-cover" style={{ backgroundImage: "url('/bannerhome.svg')" }}>
+      <section className="relative min-h-screen flex items-center justify-center lg:justify-end bg-cover bg-center" style={{ backgroundImage: "url('/bannerhome.svg')" }}>
         <div className="absolute inset-0 bg-black/20"></div>
-        <div className="relative z-10 text-center w-[605px] px-4">
-          <h1 className="text-[48px] font-bold mb-[5px]">
+        <div className="relative z-10 text-center w-full max-w-[605px] px-4 lg:px-8">
+          <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-[48px] font-bold mb-2 lg:mb-[5px]">
             PERTAMINA
           </h1>
-          <h2 className="text-[36px] font-light mb-[20px]">
+          <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-[36px] font-light mb-4 lg:mb-[20px]">
             Sales Area Bandung
           </h2>
-          <p className="text-xl md:text-2xl mb-12 w-[500px] max-w-3xl mx-auto">
+          <p className="text-base sm:text-lg md:text-xl lg:text-2xl mb-8 lg:mb-12 max-w-3xl mx-auto">
             Melayani kebutuhan energi masyarakat Bandung dan sekitarnya dengan komitmen kualitas dan pelayanan terbaik.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link
               href="/Peta-Overview-Wilayah"
-              className="bg-yellow-500 hover:bg-yellow-600 text-black font-semibold py-3 px-8 rounded-lg transition duration-300"
+              className="bg-yellow-500 hover:bg-yellow-600 text-black font-semibold py-3 px-6 lg:px-8 rounded-lg transition duration-300 text-sm sm:text-base"
             >
               Lihat Peta Overview Wilayah dan Outlet
             </Link>
-            
           </div>
         </div>
       </section>
 
       {/* Sejarah SA Retail Bandung */}
-      <section className="py-16 bg-white">
+      <section className="py-8 sm:py-12 lg:py-16 bg-white">
         <div className="container mx-auto px-4">
-          <div className='flex flex-col md:flex-row items-center gap-30 mb-18'>
-            <div className="text-left">
-              <h2 className="text-3xl md:text-4xl font-bold text-gray-800 mb-4">Sejarah Sales Area Retail Bandung</h2>
-              <p className="text-lg w-[700px] text-gray-600 max-w-4xl mx-auto">
+          <div className='flex flex-col lg:flex-row items-center gap-8 lg:gap-12 mb-12 lg:mb-18'>
+            <div className="text-center lg:text-left w-full lg:w-auto">
+              <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-800 mb-4">Sejarah Sales Area Retail Bandung</h2>
+              <p className="text-base sm:text-lg text-gray-600 max-w-4xl mx-auto lg:mx-0">
                 Sales Area (SA) Retail Bandung merupakan bagian dari Pertamina Patra Niaga yang bertugas melayani kebutuhan energi untuk wilayah Bandung dan sekitarnya. 
                  Perjalanan SA Bandung ditandai modernisasi jaringan ritel, peningkatan layanan pelanggan, serta penguatan ketahanan pasokan.
               </p>
             </div>
-            <img src="/sejarah.svg" alt="Sejarah SA Retail Bandung" className="w-[428px] h-[380px] object-cover rounded-lg shadow-md" /> 
+            <img src="/sejarah.svg" alt="Sejarah SA Retail Bandung" className="w-full max-w-[428px] h-auto sm:h-[300px] lg:h-[380px] object-cover rounded-lg shadow-md" /> 
           </div>
 
           {/* Timeline ringkas */}
-          <div className="grid md:grid-cols-5 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 sm:gap-6">
             <div className="bg-gray-50 rounded-lg p-5 border border-gray-300">
               <div className="text-sm text-blue-700 font-semibold">1970–1990-an</div>
               <div className="mt-1 font-bold text-gray-900">Awal Jaringan SPBU</div>
@@ -78,14 +77,14 @@ export default function Home() {
       </section>
 
       {/* Operasional SA Bandung */}
-      <section className="py-16 bg-gray-50">
+      <section className="py-8 sm:py-12 lg:py-16 bg-gray-50">
         <div className="container mx-auto px-4">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-800 mb-4">Apa yang Dilakukan SA Retail Bandung</h2>
-            <p className="text-xl text-gray-600 max-w-4xl mx-auto">Bidang operasi utama dan tanggung jawab layanan di wilayah Bandung dan sekitarnya.</p>
+          <div className="text-center mb-8 sm:mb-12">
+            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-800 mb-4">Apa yang Dilakukan SA Retail Bandung</h2>
+            <p className="text-base sm:text-lg lg:text-xl text-gray-600 max-w-4xl mx-auto">Bidang operasi utama dan tanggung jawab layanan di wilayah Bandung dan sekitarnya.</p>
           </div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
             <div className="bg-white rounded-lg p-6 border hover:shadow-sm transition">
               <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center mb-3">
                 <svg className="w-5 h-5 text-red-600" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>

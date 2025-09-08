@@ -53,11 +53,6 @@ export default function Footer() {
                 </Link>
               </li>
               
-              <li>
-                <Link href="/peta-spbu-spbe" className="text-gray-400 hover:text-white transition duration-300">
-                  Peta Overview Wilayah dan Outlet
-                </Link>
-              </li>
             </ul>
           </div>
 
