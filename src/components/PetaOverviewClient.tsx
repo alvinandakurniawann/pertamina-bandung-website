@@ -4,6 +4,7 @@ import Header from '@/components/Header'
 import Footer from '@/components/Footer'
 import MapInteractive from '@/components/MapInteractive'
 
+
 function AnimatedCounter({ value, duration = 1000 }) {
   const [count, setCount] = useState(0);
   const ref = useRef<number>(0);
@@ -136,40 +137,70 @@ export default function PetaOverviewClient() {
       </section>
 
       {/* Map section */}
-      <section className="py-8">
-        <div className="container mx-auto px-4">
-          <div className="p-0 bg-transparent border-0 shadow-none relative">
-            {!activeSVG ? (
-              <MapInteractive onSelect={handleSelect} />
-            ) : (
-              <div className="relative flex justify-center items-center min-h-[400px]">
-                {/* Blur background SVG */}
-                <div className="absolute inset-0 z-0 flex justify-center items-center">
-                  <img
-                    src={activeSVG}
-                    alt="Wilayah"
-                    className="w-full max-w-[600px] h-auto"
-                  />
-                </div>
-                {/* Label nama wilayah tanpa border/card */}
-                {/* Tombol reset */}
-                <button
-                  onClick={handleResetSVG}
-                  className="absolute top-4 right-4 bg-white rounded-full shadow p-2 text-black hover:bg-gray-200 text-xl z-20"
-                  aria-label="Reset"
-                >
-                  &times;
-                </button>
-              </div>
-            )}
-            {loading && (
-              <div className="absolute inset-0 flex items-center justify-center bg-white bg-opacity-70 z-10">
-                <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-blue-500 border-solid"></div>
-              </div>
-            )}
+      {/* Map section */}
+<section className="py-8">
+  <div className="container mx-auto px-4">
+    <div className="p-0 bg-transparent border-0 shadow-none relative">
+      {/* Map */}
+      <MapInteractive onSelect={handleSelect} />
+
+      {/* Pop-up frame (buka kalau ada wilayah terpilih) */}
+      {activeSVG && (
+        <div className="absolute inset-0 flex justify-center items-center bg-black/40 z-20">
+          <div className="bg-white rounded-xl shadow-lg p-6 w-full max-w-md relative">
+            {/* Tombol close */}
+            <button
+              onClick={handleResetSVG}
+              className="absolute top-3 right-3 bg-gray-200 hover:bg-gray-300 rounded-full w-8 h-8 flex items-center justify-center text-lg"
+            >
+              &times;
+            </button>
+
+            {/* Mapping nama wilayah */}
+            {(() => {
+              const wilayahMap: Record<string, string> = {
+                "/bandung.svg": "Kota Bandung",
+                "/kab-bandung.svg": "Kabupaten Bandung",
+                "/kab-bandung-barat.svg": "Kabupaten Bandung Barat",
+                "/garut.svg": "Kabupaten Garut",
+                "/pangandaran.svg": "Kabupaten Pangandaran",
+                "/tasikmalaya.svg": "Kabupaten Tasikmalaya",
+                "/ciamis.svg": "Kabupaten Ciamis",
+                "/kota-tasik.svg": "Kota Tasikmalaya",
+                "/banjar.svg": "Kota Banjar",
+                "/cimahi.svg": "Kota Cimahi",
+              };
+
+              return (
+                <h2 className="text-xl font-bold mb-4 text-center">
+                  {wilayahMap[activeSVG] || "Wilayah Tidak Dikenal"}
+                </h2>
+              );
+            })()}
+
+            {/* Daftar fasilitas */}
+            <ul className="space-y-2 text-gray-700">
+              <li>SPBU</li>
+              <li>SPBE</li>
+              <li>Pertashop</li>
+              <li>Agen LPG</li>
+              <li>Pangkalan LPG</li>
+            </ul>
           </div>
         </div>
-      </section>
+      )}
+
+      {/* Loading overlay */}
+      {loading && (
+        <div className="absolute inset-0 flex items-center justify-center bg-white bg-opacity-70 z-10">
+          <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-blue-500 border-solid"></div>
+        </div>
+      )}
+    </div>
+  </div>
+</section>
+
+
 
       {/* Debug toggle (hanya muncul saat ?debug=1 atau ?edit=1) */}
 
