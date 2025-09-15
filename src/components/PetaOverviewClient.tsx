@@ -147,7 +147,7 @@ export default function PetaOverviewClient() {
       {/* Pop-up frame (buka kalau ada wilayah terpilih) */}
       {activeSVG && (
         <div className="absolute inset-0 flex justify-center items-center bg-black/40 z-20">
-          <div className="bg-white rounded-xl shadow-lg p-6 w-full max-w-md relative">
+          <div className="bg-white rounded-4xl shadow-lg p-6 w-full max-w-md relative">
             {/* Tombol close */}
             <button
               onClick={handleResetSVG}

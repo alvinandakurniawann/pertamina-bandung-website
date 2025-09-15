@@ -8,18 +8,21 @@ export default function Home() {
       <Header />
       <main className="min-h-screen bg-white">
       {/* Hero Section */}
-      <section className="relative h-screen flex items-center justify-end bg-cover" style={{ backgroundImage: "url('/bannerhome.svg')" }}>
-        <div className="absolute inset-0 bg-black/20"></div>
-        <div className="relative z-10 text-center w-[605px] px-4">
-          <h1 className="text-[48px] font-bold mb-[5px]">
-            PERTAMINA
-          </h1>
-          <h2 className="text-[36px] font-light mb-[20px]">
-            Sales Area Bandung
-          </h2>
-          <p className="text-xl md:text-2xl mb-12 w-[500px] max-w-3xl mx-auto">
-            Melayani kebutuhan energi masyarakat Bandung dan sekitarnya dengan komitmen kualitas dan pelayanan terbaik.
-          </p>
+      <section className="relative h-screen flex items-center bg-cover" style={{ backgroundImage: "url('/bannerhome.svg')" }}>
+        <div className="absolute inset-0 bg-black/60"></div>
+        
+         <div className="flex flex-col gap-6 z-10 text-left max-w-4xl mx-auto w-full text-center items-center">
+            <h1 className="text-white text-4xl font-black leading-tight tracking-tighter sm:text-5xl lg:text-6xl">
+              Sales Area Bandung 
+            </h1>
+            <div className="max-w-2xl ml-[80px]">
+            <p className="text-white/90 text-base font-normal leading-relaxed sm:text-lg">
+              Sales Area Retail Bandung merupakan salah satu wilayah kerja Marketing Operation Regional III Jawa Bagian Barat yang berlokasi di Jl. Wirayudah No. 1 Bandung Jawa Barat. 
+            </p>
+            <p className="text-white/90 text-base font-normal leading-relaxed sm:text-lg mt-4">
+               SA Retail Bandung melayani 4 Kota dan 7 Kabupaten yang meliputi Bandung Raya, Sumedang dan Priangan Timur.
+            </p>
+          </div>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link
               href="/Peta-Overview-Wilayah"

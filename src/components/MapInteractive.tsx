@@ -91,7 +91,7 @@ export default function MapInteractive({ onSelect }: Props) {
     <MapContainer
       center={position}
       zoom={9}
-      style={{ height: "500px", width: "100%" }}
+      style={{ height: "500px" }}
     >
       <TileLayer
         attribution='&copy; <a href="http://osm.org/copyright">OpenStreetMap</a>'
