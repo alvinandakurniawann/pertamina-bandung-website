@@ -131,26 +131,6 @@ export default function Home() {
           </div>
         </div>
       </section>
-      
-
-      {/* CTA Section */}
-      <section className="py-16 mb-14 ">
-        <div className="container mx-auto pt-[25px] rounded-[10px] h-[250px] bg-gradient-to-r from-blue-900 to-blue-700 text-white px-4 text-center">
-          <h2 className="text-3xl font-bold mb-4">Butuh Bantuan?</h2>
-          <p className="text-xl mb-8 max-w-2xl mx-auto">
-            Hubungi kami untuk informasi lebih lanjut tentang layanan dan produk Pertamina
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            
-            <Link
-              href="/Peta-Overview-Wilayah"
-              className="border-2 border-white hover:bg-white hover:text-blue-900 text-white font-semibold py-3 px-8 rounded-lg transition duration-300"
-            >
-              Hubungi Kami
-            </Link>
-          </div>
-        </div>
-      </section>
     </main>
       <Footer />
     </>
