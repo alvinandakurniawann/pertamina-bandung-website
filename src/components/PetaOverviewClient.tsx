@@ -146,7 +146,7 @@ export default function PetaOverviewClient() {
 
       {/* Pop-up frame (buka kalau ada wilayah terpilih) */}
       {activeSVG && (
-        <div className="absolute inset-0 flex justify-center items-center bg-black/40 z-20">
+        <div className="absolute inset-0 flex justify-center items-center">
           <div className="bg-white rounded-4xl shadow-lg p-6 w-full max-w-md relative">
             {/* Tombol close */}
             <button
@@ -190,12 +190,7 @@ export default function PetaOverviewClient() {
         </div>
       )}
 
-      {/* Loading overlay */}
-      {loading && (
-        <div className="absolute inset-0 flex items-center justify-center bg-white bg-opacity-70 z-10">
-          <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-blue-500 border-solid"></div>
-        </div>
-      )}
+    
     </div>
   </div>
 </section>

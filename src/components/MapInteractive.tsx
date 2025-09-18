@@ -109,7 +109,7 @@ export default function MapInteractive({ onSelect }: Props) {
           <Tooltip permanent direction={i % 2 === 0 ? "right" : "left"} offset={[10, 0]}>
             {m.name}
           </Tooltip>
-          <Popup>
+          <Popup >
             <div className="space-y-1">
               {/* Nama wilayah */}
               <h3 className="font-bold text-sm mb-2">{m.name}</h3>
