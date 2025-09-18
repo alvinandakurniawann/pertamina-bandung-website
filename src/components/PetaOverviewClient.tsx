@@ -2,7 +2,7 @@
 import React, { useCallback, useEffect, useState, useRef } from 'react'
 import Header from '@/components/Header'
 import Footer from '@/components/Footer'
-import MapInteractive from '@/components/MapInteractive'
+import MapInteractive from '@/components/MapInteractive';
 
 
 function AnimatedCounter({ value, duration = 1000 }) {
@@ -98,10 +98,8 @@ export default function PetaOverviewClient() {
   const handleSelect = useCallback((key: string, displayName: string) => {
     setCurrentKey(key);
     setCurrentName(displayName);
-    fetchStats(key);
-    if (key !== 'ALL') {
-      setActiveSVG(`/wilayah-${key.toLowerCase()}.svg`);
-    }
+    fetchStats(key); // ini akan update stats sesuai wilayah
+    setActiveSVG(key !== 'ALL' ? `/wilayah-${key.toLowerCase()}.svg` : null);
   }, [fetchStats]);
 
   const handleResetSVG = () => {
@@ -138,62 +136,55 @@ export default function PetaOverviewClient() {
 
       {/* Map section */}
       {/* Map section */}
-<section className="py-8">
-  <div className="container mx-auto px-4">
-    <div className="p-0 bg-transparent border-0 shadow-none relative">
-      {/* Map */}
-      <MapInteractive onSelect={handleSelect} />
+      <section className="py-8">
+        <div className="container mx-auto px-4">
+          <div className="p-0 bg-transparent border-0 shadow-none relative">
+            {/* Map */}
+            <MapInteractive  />
 
-      {/* Pop-up frame (buka kalau ada wilayah terpilih) */}
-      {activeSVG && (
-        <div className="absolute inset-0 flex justify-center items-center">
-          <div className="bg-white rounded-4xl shadow-lg p-6 w-full max-w-md relative">
-            {/* Tombol close */}
-            <button
-              onClick={handleResetSVG}
-              className="absolute top-3 right-3 bg-gray-200 hover:bg-gray-300 rounded-full w-8 h-8 flex items-center justify-center text-lg"
-            >
-              &times;
-            </button>
+            {/* Pop-up frame (buka kalau ada wilayah terpilih) */}
+            {activeSVG && (
+              <div className="absolute inset-0 flex justify-center items-center z-[1000]">
+                <div className="bg-white rounded-3xl shadow-2xl p-6 w-full max-w-md relative">
+                  {/* Tombol close */}
+                  <button
+                    onClick={handleResetSVG}
+                    className="absolute top-3 right-3 bg-gray-200 hover:bg-gray-300 rounded-full w-8 h-8 flex items-center justify-center text-lg"
+                  >
+                    &times;
+                  </button>
 
-            {/* Mapping nama wilayah */}
-            {(() => {
-              const wilayahMap: Record<string, string> = {
-                "/bandung.svg": "Kota Bandung",
-                "/kab-bandung.svg": "Kabupaten Bandung",
-                "/kab-bandung-barat.svg": "Kabupaten Bandung Barat",
-                "/garut.svg": "Kabupaten Garut",
-                "/pangandaran.svg": "Kabupaten Pangandaran",
-                "/tasikmalaya.svg": "Kabupaten Tasikmalaya",
-                "/ciamis.svg": "Kabupaten Ciamis",
-                "/kota-tasik.svg": "Kota Tasikmalaya",
-                "/banjar.svg": "Kota Banjar",
-                "/cimahi.svg": "Kota Cimahi",
-              };
+                  {/* Mapping nama wilayah */}
+                  <h2 className="text-xl font-bold mb-4 text-center">
+                    {{
+                      bandung: "Kota Bandung",
+                      "kab-bandung": "Kabupaten Bandung",
+                      "kab-bandung-barat": "Kabupaten Bandung Barat",
+                      garut: "Kabupaten Garut",
+                      pangandaran: "Kabupaten Pangandaran",
+                      tasikmalaya: "Kabupaten Tasikmalaya",
+                      ciamis: "Kabupaten Ciamis",
+                      "kota-tasik": "Kota Tasikmalaya",
+                      banjar: "Kota Banjar",
+                      cimahi: "Kota Cimahi",
+                    }[activeSVG.replace("/wilayah-", "").replace(".svg", "")] ||
+                      "Wilayah Tidak Dikenal"}
+                  </h2>
 
-              return (
-                <h2 className="text-xl font-bold mb-4 text-center">
-                  {wilayahMap[activeSVG] || "Wilayah Tidak Dikenal"}
-                </h2>
-              );
-            })()}
-
-            {/* Daftar fasilitas */}
-            <ul className="space-y-2 text-gray-700">
-              <li>SPBU</li>
-              <li>SPBE</li>
-              <li>Pertashop</li>
-              <li>Agen LPG</li>
-              <li>Pangkalan LPG</li>
-            </ul>
+                  {/* Daftar fasilitas */}
+                  <ul className="space-y-2 text-gray-700">
+                    <li>SPBU</li>
+                    <li>SPBE</li>
+                    <li>Pertashop</li>
+                    <li>Agen LPG</li>
+                    <li>Pangkalan LPG</li>
+                  </ul>
+                </div>
+              </div>
+            )}
           </div>
         </div>
-      )}
-
-    
-    </div>
-  </div>
-</section>
+      </section>
 
 
 
@@ -369,7 +360,7 @@ export default function PetaOverviewClient() {
 
       {/* ✅ POPUP */}
       {activeModal && (
-        <div className="fixed inset-0 bg-black/95 bg-opacity-90 flex justify-center items-center z-50">
+        <div className="fixed inset-0 bg-black/95 bg-opacity-90 pt-[75px] flex justify-center items-center z-1001">
           <div className="bg-white p-6 rounded-lg shadow-lg w-[1024px] max-w-[90%] relative">
             <button
               onClick={closeModal}
@@ -380,7 +371,7 @@ export default function PetaOverviewClient() {
 
             {/* SPBU */}
             {activeModal === 'spbu' && (
-              <div className="bg-white p-8 rounded-xl shadow-lg mx-auto relative">
+              <div className="bg-white p-8 rounded-xl max-h-[450px] shadow-lg mx-auto relative">
                 <div className="flex flex-col md:flex-row gap-8">
                   {/* Statistik */}
                   <div className="flex-1">
@@ -407,7 +398,10 @@ export default function PetaOverviewClient() {
                   {/* Daftar Lokasi */}
                   <div className="flex-1">
                     <h2 className="text-xl font-bold mb-4">Daftar Lokasi</h2>
-                    <div className="flex flex-col gap-4">
+                    <div
+                      className="flex flex-col gap-4 overflow-y-auto"
+                      style={{ maxHeight: "300px" }} // atur tinggi sesuai kebutuhan
+                    >
                       {spbuLocations.length === 0 ? (
                         <div className="flex flex-col items-center justify-center py-8">
                           {/* SVG Segitiga tanda seru */}
