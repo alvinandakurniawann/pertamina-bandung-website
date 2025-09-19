@@ -126,17 +126,16 @@ export default function PetaOverviewClient() {
     <Header />
     <main className="min-h-screen bg-white text-black overflow-x-hidden">
       {/* Hero */}
-      <section className="py-12">
+      <section className="pt-[30px]">
         <div className="container mx-auto px-4 text-center">
           <h1 className="text-3xl font-bold text-[#2a82bf]">Overview Wilayah dan Outlet SA Bandung - Priangan Timur</h1>
-          <p className="mt-2 text-sm text-black/70">{currentName}</p>
           <p className="mt-4 text-base leading-4 tracking-wide md:text-base text-black/80"></p>
         </div>
       </section>
 
       {/* Map section */}
       {/* Map section */}
-      <section className="py-8">
+      <section className="pb-8 pt-0">
         <div className="container mx-auto px-4">
           <div className="p-0 bg-transparent border-0 shadow-none relative">
             {/* Map */}

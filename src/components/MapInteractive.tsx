@@ -137,6 +137,9 @@ function MapInteractive({ onSelect, stats, currentName }: Props) {
             eventHandlers={{
               click: () => {
                 if (onSelect) onSelect(m.id, m.name);
+              },
+              popupclose: () => {
+                if (onSelect) onSelect('ALL', 'Semua Wilayah');
               }
             }}
           >
