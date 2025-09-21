@@ -2,7 +2,8 @@
 import React, { useCallback, useEffect, useState, useRef } from 'react'
 import Header from '@/components/Header'
 import Footer from '@/components/Footer'
-import MapInteractive from '@/components/MapInteractive'
+import MapInteractive from '@/components/MapInteractive';
+
 
 function AnimatedCounter({ value, duration = 1000 }) {
   const [count, setCount] = useState(0);
@@ -97,10 +98,8 @@ export default function PetaOverviewClient() {
   const handleSelect = useCallback((key: string, displayName: string) => {
     setCurrentKey(key);
     setCurrentName(displayName);
-    fetchStats(key);
-    if (key !== 'ALL') {
-      setActiveSVG(`/wilayah-${key.toLowerCase()}.svg`);
-    }
+    fetchStats(key); // ini akan update stats sesuai wilayah
+    setActiveSVG(key !== 'ALL' ? `/wilayah-${key.toLowerCase()}.svg` : null);
   }, [fetchStats]);
 
   const handleResetSVG = () => {
@@ -127,49 +126,66 @@ export default function PetaOverviewClient() {
     <Header />
     <main className="min-h-screen bg-white text-black overflow-x-hidden">
       {/* Hero */}
-      <section className="py-12">
+      <section className="pt-[30px]">
         <div className="container mx-auto px-4 text-center">
           <h1 className="text-3xl font-bold text-[#2a82bf]">Overview Wilayah dan Outlet SA Bandung - Priangan Timur</h1>
-          <p className="mt-2 text-sm text-black/70">{currentName}</p>
           <p className="mt-4 text-base leading-4 tracking-wide md:text-base text-black/80"></p>
         </div>
       </section>
 
       {/* Map section */}
-      <section className="py-8">
+      {/* Map section */}
+      <section className="pb-8 pt-0">
         <div className="container mx-auto px-4">
           <div className="p-0 bg-transparent border-0 shadow-none relative">
-            {!activeSVG ? (
-              <MapInteractive onSelect={handleSelect} />
-            ) : (
-              <div className="relative flex justify-center items-center min-h-[400px]">
-                {/* Blur background SVG */}
-                <div className="absolute inset-0 z-0 flex justify-center items-center">
-                  <img
-                    src={activeSVG}
-                    alt="Wilayah"
-                    className="w-full max-w-[600px] h-auto"
-                  />
+            {/* Map */}
+            <MapInteractive  />
+
+            {/* Pop-up frame (buka kalau ada wilayah terpilih) */}
+            {activeSVG && (
+              <div className="absolute inset-0 flex justify-center items-center z-[1000]">
+                <div className="bg-white rounded-3xl shadow-2xl p-6 w-full max-w-md relative">
+                  {/* Tombol close */}
+                  <button
+                    onClick={handleResetSVG}
+                    className="absolute top-3 right-3 bg-gray-200 hover:bg-gray-300 rounded-full w-8 h-8 flex items-center justify-center text-lg"
+                  >
+                    &times;
+                  </button>
+
+                  {/* Mapping nama wilayah */}
+                  <h2 className="text-xl font-bold mb-4 text-center">
+                    {{
+                      bandung: "Kota Bandung",
+                      "kab-bandung": "Kabupaten Bandung",
+                      "kab-bandung-barat": "Kabupaten Bandung Barat",
+                      garut: "Kabupaten Garut",
+                      pangandaran: "Kabupaten Pangandaran",
+                      tasikmalaya: "Kabupaten Tasikmalaya",
+                      ciamis: "Kabupaten Ciamis",
+                      "kota-tasik": "Kota Tasikmalaya",
+                      banjar: "Kota Banjar",
+                      cimahi: "Kota Cimahi",
+                    }[activeSVG.replace("/wilayah-", "").replace(".svg", "")] ||
+                      "Wilayah Tidak Dikenal"}
+                  </h2>
+
+                  {/* Daftar fasilitas */}
+                  <ul className="space-y-2 text-gray-700">
+                    <li>SPBU</li>
+                    <li>SPBE</li>
+                    <li>Pertashop</li>
+                    <li>Agen LPG</li>
+                    <li>Pangkalan LPG</li>
+                  </ul>
                 </div>
-                {/* Label nama wilayah tanpa border/card */}
-                {/* Tombol reset */}
-                <button
-                  onClick={handleResetSVG}
-                  className="absolute top-4 right-4 bg-white rounded-full shadow p-2 text-black hover:bg-gray-200 text-xl z-20"
-                  aria-label="Reset"
-                >
-                  &times;
-                </button>
-              </div>
-            )}
-            {loading && (
-              <div className="absolute inset-0 flex items-center justify-center bg-white bg-opacity-70 z-10">
-                <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-blue-500 border-solid"></div>
               </div>
             )}
           </div>
         </div>
       </section>
+
+
 
       {/* Debug toggle (hanya muncul saat ?debug=1 atau ?edit=1) */}
 
@@ -343,7 +359,7 @@ export default function PetaOverviewClient() {
 
       {/* ✅ POPUP */}
       {activeModal && (
-        <div className="fixed inset-0 bg-black/95 bg-opacity-90 flex justify-center items-center z-50">
+        <div className="fixed inset-0 bg-black/95 bg-opacity-90 pt-[75px] flex justify-center items-center z-1001">
           <div className="bg-white p-6 rounded-lg shadow-lg w-[1024px] max-w-[90%] relative">
             <button
               onClick={closeModal}
@@ -354,7 +370,7 @@ export default function PetaOverviewClient() {
 
             {/* SPBU */}
             {activeModal === 'spbu' && (
-              <div className="bg-white p-8 rounded-xl shadow-lg mx-auto relative">
+              <div className="bg-white p-8 rounded-xl max-h-[450px] shadow-lg mx-auto relative">
                 <div className="flex flex-col md:flex-row gap-8">
                   {/* Statistik */}
                   <div className="flex-1">
@@ -381,7 +397,10 @@ export default function PetaOverviewClient() {
                   {/* Daftar Lokasi */}
                   <div className="flex-1">
                     <h2 className="text-xl font-bold mb-4">Daftar Lokasi</h2>
-                    <div className="flex flex-col gap-4">
+                    <div
+                      className="flex flex-col gap-4 overflow-y-auto"
+                      style={{ maxHeight: "300px" }} // atur tinggi sesuai kebutuhan
+                    >
                       {spbuLocations.length === 0 ? (
                         <div className="flex flex-col items-center justify-center py-8">
                           {/* SVG Segitiga tanda seru */}

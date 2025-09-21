@@ -24,3 +24,11 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* Untuk membuat Map Leaflet rounded & ukuran penuh */
+/* Untuk membuat Map Leaflet rounded & ukuran penuh */
+.leaflet-container {
+  border-radius: 1rem; /* Sesuaikan dengan kebutuhan */
+  width: 90% !important;
+  justify-self: center;
+}
