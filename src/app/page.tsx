@@ -10,34 +10,34 @@ export default function Home() {
         {/* Hero Section */}
         <section
           className="relative h-screen flex items-center bg-cover bg-center"
-          style={{ backgroundImage: "url('/bannerhome.svg')" }}
-        >
+          style={{ backgroundImage: "url('/bannerhome.svg')" }}>
           <div className="absolute inset-0 bg-black/60"></div>
 
-          <div className="flex flex-col gap-6 z-10 max-w-4xl mx-auto w-full px-4 text-center md:text-left">
+          <div className="flex flex-col gap-6 z-10 max-w-4xl mx-auto w-full px-4 text-center md:text-left justify-center items-center h-screen">
             <h1 className="text-white text-4xl font-black leading-tight tracking-tighter sm:text-5xl lg:text-6xl">
-              Sales Area Bandung
+                Sales Area Bandung
             </h1>
             <div className="max-w-2xl mx-auto md:mx-0">
-              <p className="text-white/90 text-base font-normal leading-relaxed sm:text-lg">
-                Sales Area Retail Bandung merupakan salah satu wilayah kerja
-                Marketing Operation Regional III Jawa Bagian Barat yang berlokasi
-                di Jl. Wirayudah No. 1 Bandung Jawa Barat.
-              </p>
-              <p className="text-white/90 text-base font-normal leading-relaxed sm:text-lg mt-4">
-                SA Retail Bandung melayani 4 Kota dan 7 Kabupaten yang meliputi
-                Bandung Raya, Sumedang dan Priangan Timur.
-              </p>
+                <p className="text-white/90 text-center font-normal leading-relaxed sm:text-lg">
+                    Sales Area Retail Bandung merupakan salah satu wilayah kerja
+                    Marketing Operation Regional III Jawa Bagian Barat yang berlokasi
+                    di Jl. Wirayudah No. 1 Bandung Jawa Barat.
+                </p>
+                <p className="text-white/90 text-center font-normal leading-relaxed sm:text-lg mt-4">
+                    SA Retail Bandung melayani 4 Kota dan 7 Kabupaten yang meliputi
+                    Bandung Raya, Sumedang dan Priangan Timur.
+                </p>
             </div>
             <div className="flex flex-col sm:flex-row gap-4 justify-center md:justify-start">
-              <Link
-                href="/Peta-Overview-Wilayah"
-                className="bg-yellow-500 hover:bg-yellow-600 text-black font-semibold py-3 px-8 rounded-lg transition duration-300"
-              >
-                Lihat Peta Overview Wilayah dan Outlet
-              </Link>
+                <Link
+                    href="/Peta-Overview-Wilayah"
+                    className="bg-yellow-500 hover:bg-yellow-600 text-black font-semibold py-3 px-8 rounded-lg transition duration-300"
+                >
+                    Lihat Peta Overview Wilayah dan Outlet
+                </Link>
             </div>
           </div>
+
         </section>
 
         {/* Sejarah SA Retail Bandung */}
