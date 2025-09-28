@@ -124,19 +124,15 @@ export default function Home() {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {/* Card contoh */}
               <div className="bg-white rounded-lg p-6 border hover:shadow-sm transition">
-                <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center mb-3">
+                <div className="w-10 h-10 bg-gray-300 rounded-full flex items-center justify-center mb-3">
                   <svg
-                    className="w-5 h-5 text-red-600"
+                    className="w-5 h-5 text-black"
                     viewBox="0 0 24 24"
                     fill="none"
                     stroke="currentColor"
+                    strokeWidth="2"
                   >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="2"
-                      d="M13 10V3L4 14h7v7l9-11h-7z"
-                    />
+                  <path d="M18 21V10a1 1 0 0 0-1-1H7a1 1 0 0 0-1 1v11"/><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V8a2 2 0 0 1 1.132-1.803l7.95-3.974a2 2 0 0 1 1.837 0l7.948 3.974A2 2 0 0 1 22 8z"/><path d="M6 13h12"/><path d="M6 17h12"/>
                   </svg>
                 </div>
                 <h3 className="font-bold text-gray-900 mb-1">Distribusi BBM Ritel</h3>
@@ -146,113 +142,88 @@ export default function Home() {
                 </p>
               </div>
               <div className="bg-white rounded-lg p-6 border hover:shadow-sm transition">
-                <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center mb-3">
+                <div className="w-10 h-10 bg-gray-300 rounded-full flex items-center justify-center mb-3">
                   <svg
-                    className="w-5 h-5 text-red-600"
+                    className="w-5 h-5 text-black"
                     viewBox="0 0 24 24"
                     fill="none"
                     stroke="currentColor"
+                    strokeWidth="2"
                   >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="2"
-                      d="M13 10V3L4 14h7v7l9-11h-7z"
-                    />
+                    <path d="M12 3q1 4 4 6.5t3 5.5a1 1 0 0 1-14 0 5 5 0 0 1 1-3 1 1 0 0 0 5 0c0-2-1.5-3-1.5-5q0-2 2.5-4"/>
                   </svg>
                 </div>
-                <h3 className="font-bold text-gray-900 mb-1">Distribusi BBM Ritel</h3>
+                <h3 className="font-bold text-gray-900 mb-1">Penyaluran LPG</h3>
                 <p className="text-gray-600 text-sm">
-                  Pengelolaan dan pengawasan penyaluran BBM ke SPBU, pemantauan
-                  stok dan layanan pelanggan.
+                  Koordinasi SPBE/agen dan monitoring program Subsidi Tepat untuk LPG rumah tangga.
                 </p>
               </div>
               <div className="bg-white rounded-lg p-6 border hover:shadow-sm transition">
-                <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center mb-3">
+                <div className="w-10 h-10 bg-gray-300 rounded-full flex items-center justify-center mb-3">
                   <svg
-                    className="w-5 h-5 text-red-600"
+                    className="w-5 h-5 text-black"
                     viewBox="0 0 24 24"
                     fill="none"
                     stroke="currentColor"
+                    strokeWidth="2"
                   >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="2"
-                      d="M13 10V3L4 14h7v7l9-11h-7z"
-                    />
+                  <path d="M14 13h2a2 2 0 0 1 2 2v2a2 2 0 0 0 4 0v-6.998a2 2 0 0 0-.59-1.42L18 5"/><path d="M14 21V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v16"/><path d="M2 21h13"/><path d="M3 9h11"/>
                   </svg>
                 </div>
-                <h3 className="font-bold text-gray-900 mb-1">Distribusi BBM Ritel</h3>
+                <h3 className="font-bold text-gray-900 mb-1">Jaringan Ritel & Pertashop</h3>
                 <p className="text-gray-600 text-sm">
-                  Pengelolaan dan pengawasan penyaluran BBM ke SPBU, pemantauan
-                  stok dan layanan pelanggan.
+                  Pengembangan channel ritel termasuk Pertashop untuk menjangkau wilayah kota/kabupaten.
                 </p>
               </div>
               <div className="bg-white rounded-lg p-6 border hover:shadow-sm transition">
-                <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center mb-3">
+                <div className="w-10 h-10 bg-gray-300 rounded-full flex items-center justify-center mb-3">
                   <svg
-                    className="w-5 h-5 text-red-600"
+                    className="w-5 h-5 text-black"
                     viewBox="0 0 24 24"
                     fill="none"
                     stroke="currentColor"
+                    strokeWidth="2"
                   >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="2"
-                      d="M13 10V3L4 14h7v7l9-11h-7z"
-                    />
+                  <rect width="5" height="5" x="3" y="3" rx="1"/><rect width="5" height="5" x="16" y="3" rx="1"/><rect width="5" height="5" x="3" y="16" rx="1"/><path d="M21 16h-3a2 2 0 0 0-2 2v3"/><path d="M21 21v.01"/><path d="M12 7v3a2 2 0 0 1-2 2H7"/><path d="M3 12h.01"/><path d="M12 3h.01"/><path d="M12 16v.01"/><path d="M16 12h1"/><path d="M21 12v.01"/><path d="M12 21v-1"/>
                   </svg>
                 </div>
-                <h3 className="font-bold text-gray-900 mb-1">Distribusi BBM Ritel</h3>
+                <h3 className="font-bold text-gray-900 mb-1">Digital & Subsidi Tepat</h3>
                 <p className="text-gray-600 text-sm">
-                  Pengelolaan dan pengawasan penyaluran BBM ke SPBU, pemantauan
-                  stok dan layanan pelanggan.
+                  Implementasi MyPertamina, validasi data konsumen, serta tata kelola penyaluran subsidi.
                 </p>
               </div>
               <div className="bg-white rounded-lg p-6 border hover:shadow-sm transition">
-                <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center mb-3">
+                <div className="w-10 h-10 bg-gray-300 rounded-full flex items-center justify-center mb-3">
                   <svg
-                    className="w-5 h-5 text-red-600"
+                    className="w-5 h-5 text-black"
                     viewBox="0 0 24 24"
                     fill="none"
                     stroke="currentColor"
+                    strokeWidth="2"
                   >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="2"
-                      d="M13 10V3L4 14h7v7l9-11h-7z"
-                    />
+                  <path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/>
                   </svg>
                 </div>
-                <h3 className="font-bold text-gray-900 mb-1">Distribusi BBM Ritel</h3>
+                <h3 className="font-bold text-gray-900 mb-1">HSSE & Quality</h3>
                 <p className="text-gray-600 text-sm">
-                  Pengelolaan dan pengawasan penyaluran BBM ke SPBU, pemantauan
-                  stok dan layanan pelanggan.
+                  Pengawasan kualitas produk dan keselamatan operasi di SPBU/SPBE.
                 </p>
               </div>
               <div className="bg-white rounded-lg p-6 border hover:shadow-sm transition">
-                <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center mb-3">
+                <div className="w-10 h-10 bg-gray-300 rounded-full flex items-center justify-center mb-3">
                   <svg
-                    className="w-5 h-5 text-red-600"
+                    className="w-5 h-5 text-black"
                     viewBox="0 0 24 24"
                     fill="none"
                     stroke="currentColor"
+                    strokeWidth="2"
                   >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="2"
-                      d="M13 10V3L4 14h7v7l9-11h-7z"
-                    />
+                  <path d="M19.414 14.414C21 12.828 22 11.5 22 9.5a5.5 5.5 0 0 0-9.591-3.676.6.6 0 0 1-.818.001A5.5 5.5 0 0 0 2 9.5c0 2.3 1.5 4 3 5.5l5.535 5.362a2 2 0 0 0 2.879.052 2.12 2.12 0 0 0-.004-3 2.124 2.124 0 1 0 3-3 2.124 2.124 0 0 0 3.004 0 2 2 0 0 0 0-2.828l-1.881-1.882a2.41 2.41 0 0 0-3.409 0l-1.71 1.71a2 2 0 0 1-2.828 0 2 2 0 0 1 0-2.828l2.823-2.762"/>
                   </svg>
                 </div>
-                <h3 className="font-bold text-gray-900 mb-1">Distribusi BBM Ritel</h3>
+                <h3 className="font-bold text-gray-900 mb-1">Layanan Masyarakat & CSR</h3>
                 <p className="text-gray-600 text-sm">
-                  Pengelolaan dan pengawasan penyaluran BBM ke SPBU, pemantauan
-                  stok dan layanan pelanggan.
+                  Edukasi keselamatan energi, pelayanan keluhan, dan program tanggung jawab sosial.
                 </p>
               </div>
               {/* Tambahkan card lain sama seperti contoh */}
