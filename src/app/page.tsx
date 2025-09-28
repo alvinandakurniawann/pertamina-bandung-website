@@ -44,11 +44,12 @@ export default function Home() {
         <section className="py-16 bg-white">
           <div className="container mx-auto px-4">
             <div className="flex flex-col md:flex-row items-center gap-12 mb-16">
-              <div className="text-left max-w-xl">
-                <h2 className="text-3xl md:text-4xl font-bold text-gray-800 mb-4">
+              {/* Text Section */}
+              <div className="text-left w-full md:max-w-xl">
+                <h2 className="text-xl md:text-2xl font-bold text-gray-800 mb-4">
                   Sejarah Sales Area Retail Bandung
                 </h2>
-                <p className="text-lg text-gray-600">
+                <p className="text-[16px] md:text-[18px] text-gray-600">
                   Sales Area (SA) Retail Bandung merupakan bagian dari Pertamina
                   Patra Niaga yang bertugas melayani kebutuhan energi untuk
                   wilayah Bandung dan sekitarnya. Perjalanan SA Bandung ditandai
@@ -56,13 +57,16 @@ export default function Home() {
                   penguatan ketahanan pasokan.
                 </p>
               </div>
-              <img
-                src="/sejarah.svg"
-                alt="Sejarah SA Retail Bandung"
-                className="w-full md:w-[428px] h-auto object-cover rounded-lg shadow-md"
-              />
-            </div>
 
+              {/* Image Section */}
+              <div className="w-full md:w-[50%] flex justify-center md:justify-end">
+                <img
+                  src="/sejarah.svg"
+                  alt="Sejarah SA Retail Bandung"
+                  className="w-full md:w-[420px] h-auto object-cover rounded-lg shadow-md"
+                />
+              </div>
+            </div>
             {/* Timeline ringkas */}
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
               <div className="bg-gray-50 rounded-lg p-5 border border-gray-300">
@@ -119,6 +123,116 @@ export default function Home() {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {/* Card contoh */}
+              <div className="bg-white rounded-lg p-6 border hover:shadow-sm transition">
+                <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center mb-3">
+                  <svg
+                    className="w-5 h-5 text-red-600"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M13 10V3L4 14h7v7l9-11h-7z"
+                    />
+                  </svg>
+                </div>
+                <h3 className="font-bold text-gray-900 mb-1">Distribusi BBM Ritel</h3>
+                <p className="text-gray-600 text-sm">
+                  Pengelolaan dan pengawasan penyaluran BBM ke SPBU, pemantauan
+                  stok dan layanan pelanggan.
+                </p>
+              </div>
+              <div className="bg-white rounded-lg p-6 border hover:shadow-sm transition">
+                <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center mb-3">
+                  <svg
+                    className="w-5 h-5 text-red-600"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M13 10V3L4 14h7v7l9-11h-7z"
+                    />
+                  </svg>
+                </div>
+                <h3 className="font-bold text-gray-900 mb-1">Distribusi BBM Ritel</h3>
+                <p className="text-gray-600 text-sm">
+                  Pengelolaan dan pengawasan penyaluran BBM ke SPBU, pemantauan
+                  stok dan layanan pelanggan.
+                </p>
+              </div>
+              <div className="bg-white rounded-lg p-6 border hover:shadow-sm transition">
+                <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center mb-3">
+                  <svg
+                    className="w-5 h-5 text-red-600"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M13 10V3L4 14h7v7l9-11h-7z"
+                    />
+                  </svg>
+                </div>
+                <h3 className="font-bold text-gray-900 mb-1">Distribusi BBM Ritel</h3>
+                <p className="text-gray-600 text-sm">
+                  Pengelolaan dan pengawasan penyaluran BBM ke SPBU, pemantauan
+                  stok dan layanan pelanggan.
+                </p>
+              </div>
+              <div className="bg-white rounded-lg p-6 border hover:shadow-sm transition">
+                <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center mb-3">
+                  <svg
+                    className="w-5 h-5 text-red-600"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M13 10V3L4 14h7v7l9-11h-7z"
+                    />
+                  </svg>
+                </div>
+                <h3 className="font-bold text-gray-900 mb-1">Distribusi BBM Ritel</h3>
+                <p className="text-gray-600 text-sm">
+                  Pengelolaan dan pengawasan penyaluran BBM ke SPBU, pemantauan
+                  stok dan layanan pelanggan.
+                </p>
+              </div>
+              <div className="bg-white rounded-lg p-6 border hover:shadow-sm transition">
+                <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center mb-3">
+                  <svg
+                    className="w-5 h-5 text-red-600"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M13 10V3L4 14h7v7l9-11h-7z"
+                    />
+                  </svg>
+                </div>
+                <h3 className="font-bold text-gray-900 mb-1">Distribusi BBM Ritel</h3>
+                <p className="text-gray-600 text-sm">
+                  Pengelolaan dan pengawasan penyaluran BBM ke SPBU, pemantauan
+                  stok dan layanan pelanggan.
+                </p>
+              </div>
               <div className="bg-white rounded-lg p-6 border hover:shadow-sm transition">
                 <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center mb-3">
                   <svg
