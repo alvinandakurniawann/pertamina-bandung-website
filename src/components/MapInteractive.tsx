@@ -176,11 +176,11 @@ function MapInteractive({ onSelect, stats, currentName }: Props) {
       <section className="py-8 mt-[50px]">
         <div className="container mx-auto px-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4" >
           {/* Card 1: SPBU */}
-          <div className="relative bg-black/60 h-[320px] rounded-lg overflow-hidden bg-[#000000] shadow-xl group cursor-pointer"   onClick={() => setActiveModal('spbu')}>
+          <div className="relative h-[320px] rounded-lg overflow-hidden bg-[#000000] shadow-xl group cursor-pointer" onClick={() => setActiveModal('spbu')} >
             <img
               src="/spbu.jpg"
               alt="SPBU"
-              className="w-full h-full object-cover transition-opacity duration-500 group-hover:opacity-0"
+              className="w-full h-full object-cover filter brightness-50 transition-opacity duration-500 group-hover:brightness-0"
             />
             <div className="absolute inset-0 flex flex-col justify-end items-center pb-6 text-white transition-opacity duration-500 group-hover:opacity-0">
               <h4 className="text-xl font-semibold">SPBU</h4>
@@ -213,7 +213,7 @@ function MapInteractive({ onSelect, stats, currentName }: Props) {
             <img
               src="/pertashop.jpg"
               alt="Pertashop"
-              className="w-full h-full object-cover transition-opacity duration-500 group-hover:opacity-0"
+              className="w-full h-full object-cover filter brightness-50 transition-opacity duration-500 group-hover:brightness-0"
             />
             <div className="absolute inset-0 flex flex-col justify-end items-center pb-6 text-white transition-opacity duration-500 group-hover:opacity-0">
               <h4 className="text-xl font-semibold">Pertashop</h4>
@@ -241,7 +241,7 @@ function MapInteractive({ onSelect, stats, currentName }: Props) {
             <img
               src="/spbe.jpg"
               alt="SPBE"
-              className="w-full h-full object-cover transition-opacity duration-500 group-hover:opacity-0"
+              className="w-full h-full object-cover filter brightness-50 transition-opacity duration-500 group-hover:brightness-0"
             />
             <div className="absolute inset-0 flex flex-col justify-end items-center pb-6 text-white transition-opacity duration-500 group-hover:opacity-0">
               <h4 className="text-xl font-semibold">SPBE</h4>
@@ -273,7 +273,7 @@ function MapInteractive({ onSelect, stats, currentName }: Props) {
             <img
               src="/agenlpg.jpg"
               alt="Agen LPG"
-              className="w-full h-full object-cover transition-opacity duration-500 group-hover:opacity-0"
+              className="w-full h-full object-cover filter brightness-50 transition-opacity duration-500 group-hover:brightness-0"
             />
             <div className="absolute inset-0 flex flex-col justify-end items-center pb-6 text-white transition-opacity duration-500 group-hover:opacity-0">
               <h4 className="text-xl font-semibold">Agen LPG</h4>
@@ -305,7 +305,7 @@ function MapInteractive({ onSelect, stats, currentName }: Props) {
             <img
               src="/pangkalanlpg.jpg"
               alt="Pangkalan LPG"
-              className="w-full h-full object-cover transition-opacity duration-500 group-hover:opacity-0"
+              className="w-full h-full object-cover filter brightness-50 transition-opacity duration-500 group-hover:brightness-0"
             />
             <div className="absolute inset-0 flex flex-col justify-end items-center pb-6 text-white transition-opacity duration-500 group-hover:opacity-0">
               <h4 className="text-xl font-semibold">Pangkalan LPG</h4>
