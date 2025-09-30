@@ -109,6 +109,22 @@ export default function Footer() {
                   Peta Overview Wilayah dan Outlet
                 </Link>
               </li>
+              <li>
+                <Link
+                  href="/peta-spbu-spbe"
+                  className="text-gray-400 hover:text-white transition duration-300"
+                >
+                Satgas RAFI
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/peta-spbu-spbe"
+                  className="text-gray-400 hover:text-white transition duration-300"
+                >
+                  Satgas NATARU
+                </Link>
+              </li>
             </ul>
           </div>
 

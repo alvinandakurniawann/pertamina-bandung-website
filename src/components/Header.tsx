@@ -32,6 +32,18 @@ export default function Header() {
             >
               Peta Overview Wilayah dan Outlet
             </Link>
+            <Link
+              href="/"
+              className="text-gray-700 hover:text-blue-600 font-medium transition duration-300"
+            >
+              Satgas RAFI
+            </Link>
+            <Link
+              href="/"
+              className="text-gray-700 hover:text-blue-600 font-medium transition duration-300"
+            >
+              Satgas NATARU
+            </Link>
           </div>
 
           {/* Mobile Menu Button */}
