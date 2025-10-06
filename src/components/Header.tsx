@@ -33,7 +33,7 @@ export default function Header() {
               Peta Overview Wilayah dan Outlet
             </Link>
             <Link
-              href="/"
+              href="/satgas-rafi"
               className="text-gray-700 hover:text-blue-600 font-medium transition duration-300"
             >
               Satgas RAFI
