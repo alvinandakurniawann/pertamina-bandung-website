@@ -103,7 +103,7 @@ export default function Footer() {
               </li>
               <li>
                 <Link
-                  href="/peta-spbu-spbe"
+                  href="/Peta-Overview-Wilayah"
                   className="text-gray-400 hover:text-white transition duration-300"
                 >
                   Peta Overview Wilayah dan Outlet
@@ -111,7 +111,7 @@ export default function Footer() {
               </li>
               <li>
                 <Link
-                  href="/peta-spbu-spbe"
+                  href="/satgas-rafi"
                   className="text-gray-400 hover:text-white transition duration-300"
                 >
                 Satgas RAFI
@@ -119,7 +119,7 @@ export default function Footer() {
               </li>
               <li>
                 <Link
-                  href="/peta-spbu-spbe"
+                  href="/satgas-nataru"
                   className="text-gray-400 hover:text-white transition duration-300"
                 >
                   Satgas NATARU
@@ -153,7 +153,7 @@ export default function Footer() {
         </div>
 
         {/* Copyright */}
-        <div className="border-t text-gray-400 border-gray-600 mt-8 pt-4 text-center md:text-left">
+        <div className="border-t text-gray-400 border-gray-600 mt-4 pt-4 text-center md:text-left">
           <p>© 2025 Pertamina Sales Area Retail Bandung. All rights reserved.</p>
         </div>
       </div>

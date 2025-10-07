@@ -4,11 +4,11 @@ import React from "react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 
-const PertaminaSatgasRafi: React.FC = () => {
+const PertaminaSatgasNataru: React.FC = () => {
   const CONTACT = {
     phone: "135",
     email: "pcc135@pertamina.com",
-    mailSubject: "Permintaan Informasi Satgas RAFI",
+    mailSubject: "Permintaan Informasi Satgas NATARU",
     mailBody:
       "Halo Tim PCC,\n\nPertanyaan/Keluhan Anda isi di sini.\n\nTerima kasih.",
   };
@@ -25,14 +25,12 @@ const PertaminaSatgasRafi: React.FC = () => {
             className="relative flex min-h-[560px] flex-col items-center justify-center bg-cover bg-center md:bg-center p-6 text-center @[480px]:rounded-lg"
             style={{
               backgroundImage:
-                'linear-gradient(rgba(0, 0, 0, 0.3) 0%, rgba(0, 0, 0, 0.6) 100%), url("/rafi.svg")',
-                
+                'linear-gradient(rgba(0, 0, 0, 0.3) 0%, rgba(0, 0, 0, 0.6) 100%), url("/nataru.png")',
             }}
           >
-            {/* Responsif background position */}
             <style jsx>{`
               @media (max-width: 768px) {
-                div[style*="rafi.svg"] {
+                div[style*="nataru.png"] {
                   background-position: right center !important;
                 }
               }
@@ -42,10 +40,10 @@ const PertaminaSatgasRafi: React.FC = () => {
               <h1 className="text-3xl md:text-5xl font-black text-white text-shadow leading-tight">
                 Pertamina Patra Niaga
                 <br />
-                Satgas RAFI 2025
+                Satgas NATARU 2025/2026
               </h1>
               <p className="text-base md:text-lg font-normal text-white/90 text-shadow">
-                Energi Siaga untuk Perjalanan Aman Ramadhan & Idul Fitri
+                Energi Tersedia untuk Perjalanan Aman Natal & Tahun Baru
               </p>
             </div>
           </div>
@@ -57,14 +55,15 @@ const PertaminaSatgasRafi: React.FC = () => {
           <section className="px-4 py-12 sm:py-16 bg-white sm:px-6 lg:px-8">
             <div className="mx-auto max-w-4xl text-center">
               <h2 className="text-2xl sm:text-3xl font-bold text-black">
-                Tentang Satgas RAFI
+                Tentang Satgas NATARU
               </h2>
               <p className="mt-4 text-base sm:text-xl text-black/90">
-                <strong>Satgas RAFI (Satuan Tugas Ramadhan dan Idul Fitri)</strong>{" "}
-                adalah tim operasional Pertamina dan sektor ESDM yang bertugas
-                memastikan ketersediaan dan kelancaran pasokan energi selama
-                periode Ramadhan dan Idul Fitri, termasuk BBM, LPG, Avtur, dan
-                listrik.
+                <strong>Satgas NATARU (Satuan Tugas Natal dan Tahun Baru)</strong>{" "}
+                adalah tim operasional Pertamina dan sektor ESDM yang dibentuk
+                untuk memastikan ketersediaan energi nasional menjelang dan
+                selama masa libur Natal serta Tahun Baru, mencakup BBM, LPG,
+                Avtur, dan energi lainnya agar masyarakat dapat beraktivitas
+                dengan aman dan nyaman.
               </p>
             </div>
 
@@ -84,11 +83,11 @@ const PertaminaSatgasRafi: React.FC = () => {
                   </svg>
                 </div>
                 <h3 className="text-lg font-bold text-black">
-                  Ketersediaan Energi
+                  Kesiapan Pasokan Energi
                 </h3>
                 <p className="text-black/80 text-sm sm:text-base">
-                  Menjamin pasokan BBM, LPG, dan energi lainnya tetap aman di
-                  seluruh wilayah, terutama jalur mudik dan daerah rawan suplai.
+                  Menjamin ketersediaan BBM, LPG, dan Avtur di seluruh wilayah
+                  Indonesia selama libur Natal dan Tahun Baru.
                 </p>
               </div>
 
@@ -106,12 +105,11 @@ const PertaminaSatgasRafi: React.FC = () => {
                   </svg>
                 </div>
                 <h3 className="text-lg font-bold text-black">
-                  Distribusi & Logistik
+                  Distribusi & Transportasi Energi
                 </h3>
                 <p className="text-black/80 text-sm sm:text-base">
-                  Mengoptimalkan jalur distribusi, memantau stok SPBU, dan
-                  menyiagakan armada tangki di titik-titik penting jalur mudik
-                  nasional.
+                  Memastikan armada distribusi energi beroperasi optimal di
+                  jalur wisata, pelabuhan, dan area padat perjalanan.
                 </p>
               </div>
 
@@ -129,43 +127,44 @@ const PertaminaSatgasRafi: React.FC = () => {
                   </svg>
                 </div>
                 <h3 className="text-lg font-bold text-black">
-                  Pelayanan & Pengawasan
+                  Pelayanan & Pemantauan
                 </h3>
                 <p className="text-black/80 text-sm sm:text-base">
-                  Menyediakan SPBU siaga 24 jam, memantau kualitas dan takaran
-                  BBM, serta melayani masyarakat di titik-titik strategis.
+                  Menghadirkan posko siaga, SPBU aktif 24 jam, serta pengawasan
+                  mutu produk energi selama masa libur panjang.
                 </p>
               </div>
             </div>
           </section>
+
+          {/* Tujuan Section */}
           <section className="bg-white px-4 pb-12 sm:pb-16 lg:pb-20">
             <div className="flex justify-center mb-8">
               <h1 className="text-black text-center text-[24px] sm:text-[32px] lg:text-[40px] font-bold">
-                Tujuan Satgas RAFI
+                Tujuan Satgas NATARU
               </h1>
             </div>
 
             <div className="flex flex-col max-w-3xl sm:max-w-4xl mx-auto text-black">
               <ul className="list-disc list-outside mx-auto pl-[40px] space-y-4 text-[16px] leading-relaxed">
                 <li className="text-justify">
-                  Menjamin pasokan energi nasional: termasuk BBM, LPG, Avtur, dan listrik selama masa Ramadhan dan Idul Fitri.
+                  Menjamin ketersediaan energi nasional selama periode Natal dan Tahun Baru.
                 </li>
                 <li className="text-justify">
-                  Memastikan distribusi berjalan lancar di seluruh wilayah, terutama di jalur mudik dan daerah terpencil.
+                  Memastikan distribusi energi berjalan lancar, khususnya di wilayah destinasi wisata dan jalur transportasi utama.
                 </li>
                 <li className="text-justify">
-                  Memberikan pelayanan cepat melalui posko siaga, SPBU 24 jam, dan layanan darurat kontak 135.
+                  Menyediakan layanan siaga 24 jam untuk memastikan kebutuhan masyarakat terpenuhi tanpa hambatan.
                 </li>
                 <li className="text-justify">
-                  Melakukan pengawasan kualitas dan takaran BBM agar masyarakat mendapatkan produk energi yang tepat dan aman.
+                  Melakukan pengawasan terhadap kualitas, kuantitas, dan keamanan energi yang disalurkan.
                 </li>
                 <li className="text-justify">
-                  Mengantisipasi lonjakan permintaan energi akibat meningkatnya mobilitas masyarakat saat mudik dan arus balik.
+                  Mengantisipasi lonjakan permintaan akibat peningkatan mobilitas masyarakat saat libur akhir tahun.
                 </li>
               </ul>
             </div>
           </section>
-
 
           {/* Contact Section */}
           <section className="bg-white pt-0 pb-[60px] px-4 sm:px-6 lg:px-8">
@@ -174,7 +173,7 @@ const PertaminaSatgasRafi: React.FC = () => {
                 Hubungi Kami
               </h2>
               <p className="mt-4 text-base sm:text-lg text-black/80">
-                Untuk informasi lebih lanjut tentang Satgas RAFI, silakan
+                Untuk informasi lebih lanjut tentang Satgas NATARU, silakan
                 hubungi tim kami.
               </p>
 
@@ -204,4 +203,4 @@ const PertaminaSatgasRafi: React.FC = () => {
   );
 };
 
-export default PertaminaSatgasRafi;
+export default PertaminaSatgasNataru;

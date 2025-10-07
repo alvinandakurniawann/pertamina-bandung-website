@@ -39,7 +39,7 @@ export default function Header() {
               Satgas RAFI
             </Link>
             <Link
-              href="/"
+              href="/satgas-nataru"
               className="text-gray-700 hover:text-blue-600 font-medium transition duration-300"
             >
               Satgas NATARU
