@@ -11,12 +11,9 @@ interface Props {
   currentName?: string;
 }
 
-/* ---------- KOMPONEN MAP ---------- */
-type Props = {
-  onSelect: (key: string, displayName: string) => void
-  stats: any
-  currentName: string
-}
+function MapInteractive({ onSelect, stats, currentName }: Props) {
+  const position: [number, number] = [-7.08313, 108.184514];
+  const [geojsonData, setGeojsonData] = useState<any>(null);
 
   useEffect(() => {
     fetch("/map.geojson")
