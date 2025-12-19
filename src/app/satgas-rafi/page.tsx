@@ -29,7 +29,7 @@ const PertaminaSatgasRafi: React.FC = () => {
                 
             }}
           >
-            {/* Responsif background position */}
+            {/*  Responsif background position */}
             <style jsx>{`
               @media (max-width: 768px) {
                 div[style*="rafi.svg"] {
