@@ -3,106 +3,54 @@
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
 import { usePathname } from 'next/navigation'
+import AuthPanel from './AuthPanel'
+import { supabase } from '@/lib/supabase'
 
 export default function CrudPanel() {
   const pathname = usePathname()
-  const [sharedKey, setSharedKey] = useState('')
   const [isAuthorized, setIsAuthorized] = useState(false)
 
   useEffect(() => {
-    // Auto-verify jika NEXT_PUBLIC_CRUD_SECRET tersedia
-    const envSecret = process.env.NEXT_PUBLIC_CRUD_SECRET
-    if (envSecret) {
-      autoVerify(envSecret)
-      return
-    }
-
-    // Fallback: cek localStorage
-    try {
-      const savedAuth = localStorage.getItem('pertamina-auth')
-      if (savedAuth) {
-        const authData = JSON.parse(savedAuth)
-        if (authData.isAuthorized && authData.sharedKey) {
-          setSharedKey(authData.sharedKey)
-          setIsAuthorized(true)
-        }
+    // Check Supabase auth session
+    checkAuth()
+    
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_IN' && session) {
+        verifyUser(session.user)
+      } else if (event === 'SIGNED_OUT') {
+        setIsAuthorized(false)
       }
-    } catch {}
+    })
+    
+    return () => {
+      subscription.unsubscribe()
+    }
   }, [])
 
-  const autoVerify = async (secret: string) => {
+  const checkAuth = async () => {
     try {
-      // #region agent log
-      fetch('http://127.0.0.1:7246/ingest/ea528f33-46a3-45fd-854b-ff27e6e33f6a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'CrudPanel.tsx:33',message:'Auto-verify attempt',data:{secretLength:secret?.length||0,secretPrefix:secret?.substring(0,5)||''},timestamp:Date.now(),sessionId:'debug-session',runId:'pre-fix',hypothesisId:'B'})}).catch(()=>{});
-      // #endregion
-      
-      const response = await fetch('/api/auth/verify', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ secret: secret.trim() }),
-      })
-      
-      // #region agent log
-      fetch('http://127.0.0.1:7246/ingest/ea528f33-46a3-45fd-854b-ff27e6e33f6a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'CrudPanel.tsx:45',message:'Auto-verify response',data:{status:response.status,ok:response.ok},timestamp:Date.now(),sessionId:'debug-session',runId:'pre-fix',hypothesisId:'B'})}).catch(()=>{});
-      // #endregion
-      
-      if (response.ok) {
-        const data = await response.json()
-        if (data.valid) {
-          setIsAuthorized(true)
-          setSharedKey(secret)
-          localStorage.setItem('pertamina-auth', JSON.stringify({ isAuthorized: true, sharedKey: secret }))
-        } else {
-          // #region agent log
-          fetch('http://127.0.0.1:7246/ingest/ea528f33-46a3-45fd-854b-ff27e6e33f6a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'CrudPanel.tsx:52',message:'Auto-verify invalid',data:{valid:data.valid},timestamp:Date.now(),sessionId:'debug-session',runId:'pre-fix',hypothesisId:'B'})}).catch(()=>{});
-          // #endregion
-        }
-      } else {
-        // #region agent log
-        const errorText = await response.text().catch(() => '')
-        fetch('http://127.0.0.1:7246/ingest/ea528f33-46a3-45fd-854b-ff27e6e33f6a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'CrudPanel.tsx:57',message:'Auto-verify failed',data:{status:response.status,errorText},timestamp:Date.now(),sessionId:'debug-session',runId:'pre-fix',hypothesisId:'B'})}).catch(()=>{});
-        // #endregion
+      const { data: { session } } = await supabase.auth.getSession()
+      if (session?.user) {
+        verifyUser(session.user)
       }
     } catch (error) {
-      // #region agent log
-      fetch('http://127.0.0.1:7246/ingest/ea528f33-46a3-45fd-854b-ff27e6e33f6a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'CrudPanel.tsx:62',message:'Auto-verify exception',data:{error:(error as Error)?.message},timestamp:Date.now(),sessionId:'debug-session',runId:'pre-fix',hypothesisId:'B'})}).catch(()=>{});
-      // #endregion
-      console.error('Auto-verify failed:', error)
+      console.error('Auth check error:', error)
     }
   }
 
-  const verify = async () => {
+  const verifyUser = async (user: any) => {
     try {
-      const response = await fetch('/api/auth/verify', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ secret: sharedKey.trim() }),
-      })
+      // Untuk sekarang, allow semua user yang sudah terkonfirmasi
+      // Nanti bisa ditambahkan domain restriction jika diperlukan
+      const authorized = true // Allow semua user untuk sekarang
       
-      if (response.ok) {
-        const data = await response.json()
-        if (data.valid) {
-          setIsAuthorized(true)
-          localStorage.setItem('pertamina-auth', JSON.stringify({ isAuthorized: true, sharedKey }))
-        } else {
-          alert('Shared key tidak valid!')
-        }
-      } else {
-        alert('Shared key tidak valid!')
-      }
+      setIsAuthorized(authorized)
     } catch (error) {
-      alert('Terjadi kesalahan saat verifikasi!')
+      console.error('Verify error:', error)
+      // Jika error, tetap allow user (untuk development)
+      setIsAuthorized(true)
     }
-  }
-
-  const logout = () => {
-    setIsAuthorized(false)
-    setSharedKey('')
-    localStorage.removeItem('pertamina-auth')
   }
 
   const navItem = (href: string, label: string) => {
@@ -126,24 +74,7 @@ export default function CrudPanel() {
         
 
         <div suppressHydrationWarning>
-          {!isAuthorized ? (
-            <div className="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-              <h3 className="text-sm font-semibold text-yellow-800 mb-2">Akses Write</h3>
-              <input
-                type="password"
-                value={sharedKey}
-                onChange={e=>setSharedKey(e.target.value)}
-                placeholder="Masukkan Shared Key"
-                className="w-full px-3 py-2 border border-yellow-300 rounded-md text-sm text-gray-900 placeholder:text-gray-400 mb-2"
-              />
-              <button onClick={verify} className="w-full bg-yellow-600 text-white px-3 py-2 rounded-md text-sm font-medium">Verifikasi</button>
-            </div>
-          ) : (
-            <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg">
-              <div className="text-sm text-green-800 mb-2">✓ Akses Write Aktif</div>
-              <button onClick={logout} className="text-xs text-green-700 underline">Logout</button>
-            </div>
-          )}
+          <AuthPanel />
         </div>
 
         <nav className="space-y-2">

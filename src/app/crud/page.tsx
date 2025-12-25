@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
+import { useAuth } from '@/hooks/useAuth'
 import Link from 'next/link'
 import CrudPanel from '@/components/CrudPanel'
 
@@ -39,50 +40,8 @@ export default function CrudHomePage() {
   }
   const [regionStats, setRegionStats] = useState<Stat[]>([])
   const [metric, setMetric] = useState<keyof Stat>('spbu_total')
-  const [sharedKey, setSharedKey] = useState('')
-  const [isAuthorized, setIsAuthorized] = useState(false)
+  const { isAuthorized } = useAuth()
 
-  useEffect(() => {
-    // Auto-verify jika NEXT_PUBLIC_CRUD_SECRET tersedia
-    const envSecret = process.env.NEXT_PUBLIC_CRUD_SECRET
-    if (envSecret) {
-      autoVerify(envSecret)
-      return
-    }
-
-    // Fallback: cek localStorage
-    const savedAuth = localStorage.getItem('pertamina-auth')
-    if (savedAuth) {
-      const authData = JSON.parse(savedAuth)
-      if (authData.isAuthorized && authData.sharedKey) {
-        setSharedKey(authData.sharedKey)
-        setIsAuthorized(true)
-      }
-    }
-  }, [])
-
-  const autoVerify = async (secret: string) => {
-    try {
-      const response = await fetch('/api/auth/verify', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ secret: secret.trim() }),
-      })
-      
-      if (response.ok) {
-        const data = await response.json()
-        if (data.valid) {
-          setIsAuthorized(true)
-          setSharedKey(secret)
-          localStorage.setItem('pertamina-auth', JSON.stringify({ isAuthorized: true, sharedKey: secret }))
-        }
-      }
-    } catch (error) {
-      console.error('Auto-verify failed:', error)
-    }
-  }
 
   useEffect(() => {
     const fetchData = async () => {
@@ -123,37 +82,6 @@ export default function CrudHomePage() {
     fetchData()
   }, [])
 
-  const handleSharedKeySubmit = async () => {
-    try {
-      const response = await fetch('/api/auth/verify', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ secret: sharedKey.trim() }),
-      })
-      
-      if (response.ok) {
-        const data = await response.json()
-        if (data.valid) {
-          setIsAuthorized(true)
-          localStorage.setItem('pertamina-auth', JSON.stringify({ isAuthorized: true, sharedKey: sharedKey }))
-        } else {
-          alert('Shared key tidak valid!')
-        }
-      } else {
-        alert('Shared key tidak valid!')
-      }
-    } catch (error) {
-      alert('Terjadi kesalahan saat verifikasi!')
-    }
-  }
-
-  const handleLogout = () => {
-    setIsAuthorized(false)
-    setSharedKey('')
-    localStorage.removeItem('pertamina-auth')
-  }
 
 
 

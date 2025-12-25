@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import { supabase } from '@/lib/supabase'
+import { useAuth } from '@/hooks/useAuth'
 import Link from 'next/link'
 import CrudPanel from '@/components/CrudPanel'
 import dynamic from 'next/dynamic'
@@ -41,9 +42,8 @@ export default function RegionsCrudPage() {
   const [editing, setEditing] = useState<Region | null>(null)
   const [filter, setFilter] = useState('')
   const [mounted, setMounted] = useState(false)
-  const [isAuthorized, setIsAuthorized] = useState(false)
-  const [sharedKey, setSharedKey] = useState('')
   const [showMap, setShowMap] = useState(false)
+  const { isAuthorized } = useAuth()
 
   const filtered = useMemo(() => {
     const f = filter.trim().toLowerCase()
@@ -58,48 +58,7 @@ export default function RegionsCrudPage() {
     load()
     loadRegionStats()
     setMounted(true)
-    
-    // Auto-verify jika NEXT_PUBLIC_CRUD_SECRET tersedia
-    const envSecret = process.env.NEXT_PUBLIC_CRUD_SECRET
-    if (envSecret) {
-      autoVerify(envSecret)
-    } else {
-      // Fallback: cek localStorage
-      try {
-        const savedAuth = localStorage.getItem('pertamina-auth')
-        if (savedAuth) {
-          const authData = JSON.parse(savedAuth)
-          if (authData.isAuthorized && authData.sharedKey) {
-            setSharedKey(authData.sharedKey)
-            setIsAuthorized(true)
-          }
-        }
-      } catch {}
-    }
   }, [])
-
-  const autoVerify = async (secret: string) => {
-    try {
-      const response = await fetch('/api/auth/verify', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ secret: secret.trim() }),
-      })
-      
-      if (response.ok) {
-        const data = await response.json()
-        if (data.valid) {
-          setIsAuthorized(true)
-          setSharedKey(secret)
-          localStorage.setItem('pertamina-auth', JSON.stringify({ isAuthorized: true, sharedKey: secret }))
-        }
-      }
-    } catch (error) {
-      console.error('Auto-verify failed:', error)
-    }
-  }
 
   async function load() {
     setLoading(true)
