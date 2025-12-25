@@ -3,21 +3,32 @@ import { supabase } from '@/lib/supabase'
 
 export async function GET(req: NextRequest) {
   try {
-    // Coba select dengan latitude/longitude dulu
+    // Coba select dengan latitude/longitude/num dulu
     let { data, error } = await supabase
       .from('regions')
-      .select('id, name, color, latitude, longitude')
-      .order('name')
+      .select('id, name, color, latitude, longitude, num')
+      .order('num', { ascending: true, nullsFirst: false })
 
-    // Jika kolom belum ada, select tanpa latitude/longitude
+    // Jika kolom belum ada, select tanpa kolom yang tidak ada
     if (error && error.code === '42703') {
-      console.warn('Columns latitude/longitude not found, selecting without them. Please run migration.')
+      console.warn('Some columns not found, trying without num. Please run migration.')
       const result = await supabase
         .from('regions')
-        .select('id, name, color')
+        .select('id, name, color, latitude, longitude')
         .order('name')
       data = result.data
       error = result.error
+      
+      // Jika masih error, coba tanpa latitude/longitude juga
+      if (error && error.code === '42703') {
+        console.warn('Columns latitude/longitude not found, selecting without them. Please run migration.')
+        const result2 = await supabase
+          .from('regions')
+          .select('id, name, color')
+          .order('name')
+        data = result2.data
+        error = result2.error
+      }
     }
 
     if (error) {

@@ -10,6 +10,7 @@ type Region = {
   color: string
   latitude?: number
   longitude?: number
+  num?: number
 }
 
 type RegionStat = {
@@ -58,7 +59,10 @@ export default function RegionsMap({ regions, regionStats, onMapClick, onMarkerC
 
   const [selectedMarker, setSelectedMarker] = useState<string | null>(null)
 
-  const markers = regions.filter(r => r.latitude && r.longitude)
+  // Sort markers berdasarkan num (nomor urut dari database)
+  const markers = regions
+    .filter(r => r.latitude && r.longitude)
+    .sort((a, b) => (a.num || 999) - (b.num || 999))
 
   return (
     <Map
@@ -77,7 +81,7 @@ export default function RegionsMap({ regions, regionStats, onMapClick, onMarkerC
       style={{ width: '100%', height: '100%', cursor: 'crosshair' }}
       mapStyle="mapbox://styles/mapbox/streets-v12"
     >
-      {markers.map((marker, i) => {
+      {markers.map((marker) => {
         const stats = regionStats[marker.id]
         return (
           <Marker
@@ -108,7 +112,7 @@ export default function RegionsMap({ regions, regionStats, onMapClick, onMarkerC
                 fontWeight: 'bold',
               }}
             >
-              {i + 1}
+              {marker.num || '?'}
             </div>
           </Marker>
         )

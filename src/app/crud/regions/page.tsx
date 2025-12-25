@@ -18,6 +18,7 @@ type Region = {
   spbe_count: number
   latitude?: number
   longitude?: number
+  num?: number
 }
 
 // Helper function untuk generate ID dari name
@@ -61,7 +62,7 @@ export default function RegionsCrudPage() {
   }, [items, filter])
 
   const resetForm = () => {
-    setEditing({ id: '', name: '', color: '#2A82BF', spbu_count: 0, spbe_count: 0, latitude: undefined, longitude: undefined })
+    setEditing({ id: '', name: '', color: '#2A82BF', spbu_count: 0, spbe_count: 0, latitude: undefined, longitude: undefined, num: undefined })
   }
   
   // Generate ID otomatis saat name berubah
@@ -82,7 +83,17 @@ export default function RegionsCrudPage() {
   async function load() {
     setLoading(true)
     try {
-      const { data, error } = await supabase.from('regions').select('*').order('name')
+      // Coba load dengan num dulu
+      let { data, error } = await supabase.from('regions').select('*').order('num', { ascending: true, nullsFirst: false })
+      
+      // Jika kolom num belum ada, fallback ke order by name
+      if (error && error.code === '42703') {
+        console.warn('Column num not found, ordering by name. Please run migration.')
+        const result = await supabase.from('regions').select('*').order('name')
+        data = result.data
+        error = result.error
+      }
+      
       if (error) throw error
       setItems(data || [])
     } catch (e) {
@@ -112,18 +123,70 @@ export default function RegionsCrudPage() {
     try {
       if (!editing.id || !editing.name) { alert('ID dan Name wajib diisi'); return }
       
-      // Save region only (stats di-edit di halaman Region Stats)
-      const payload = { 
+      // Cek apakah region baru atau edit existing
+      const isNewRegion = !items.find(r => r.id === editing.id)
+      
+      // Jika region baru, hitung num = MAX(num) + 1
+      let num = editing.num
+      if (isNewRegion) {
+        try {
+          const { data: maxNumData, error: maxNumError } = await supabase
+            .from('regions')
+            .select('num')
+            .order('num', { ascending: false })
+            .limit(1)
+            .single()
+          
+          // Jika kolom num belum ada, skip num (akan di-handle oleh migration)
+          if (maxNumError && maxNumError.code === '42703') {
+            console.warn('Column num not found, skipping num assignment. Please run migration.')
+            num = undefined
+          } else {
+            const maxNum = maxNumData?.num || 0
+            num = maxNum + 1
+          }
+        } catch (e) {
+          console.warn('Error getting max num, skipping num assignment:', e)
+          num = undefined
+        }
+      }
+      
+      // Save region
+      const payload: any = { 
         id: editing.id, 
         name: editing.name, 
         color: editing.color, 
-        spbu_count: regionStats[editing.id]?.spbu_total || 0, 
-        spbe_count: regionStats[editing.id] ? (regionStats[editing.id].spbe_pso_total + regionStats[editing.id].spbe_npso_total) : 0,
+        spbu_count: 0, // Akan diupdate dari region_stats
+        spbe_count: 0, // Akan diupdate dari region_stats
         latitude: editing.latitude ? Number(editing.latitude) : null,
         longitude: editing.longitude ? Number(editing.longitude) : null,
       }
+      
+      // Hanya tambahkan num jika ada (kolom mungkin belum ada jika migration belum dijalankan)
+      if (num !== undefined || editing.num !== undefined) {
+        payload.num = num || editing.num
+      }
       const { error: regionError } = await supabase.from('regions').upsert(payload, { onConflict: 'id' })
       if (regionError) throw regionError
+      
+      // Buat atau update region_stats (jika belum ada, buat dengan nilai default 0)
+      const existingStats = regionStats[editing.id]
+      const statsPayload = {
+        key: editing.id,
+        display_name: editing.name,
+        spbu_coco: existingStats?.spbu_coco || 0,
+        spbu_codo: existingStats?.spbu_codo || 0,
+        spbu_dodo: existingStats?.spbu_dodo || 0,
+        spbu_total: existingStats?.spbu_total || 0,
+        pertashop_total: existingStats?.pertashop_total || 0,
+        spbe_pso_total: existingStats?.spbe_pso_total || 0,
+        spbe_npso_total: existingStats?.spbe_npso_total || 0,
+        agen_lpg_3kg_total: existingStats?.agen_lpg_3kg_total || 0,
+        lpg_npso_total: existingStats?.lpg_npso_total || 0,
+        pangkalan_lpg_3kg_total: existingStats?.pangkalan_lpg_3kg_total || 0,
+      }
+      const { error: statsError } = await supabase.from('region_stats').upsert(statsPayload, { onConflict: 'key' })
+      if (statsError) throw statsError
       
       await load()
       await loadRegionStats()
@@ -156,6 +219,7 @@ export default function RegionsCrudPage() {
       spbe_count: 0,
       latitude: lat,
       longitude: lng,
+      num: undefined, // Akan dihitung otomatis saat save
     })
   }
 
