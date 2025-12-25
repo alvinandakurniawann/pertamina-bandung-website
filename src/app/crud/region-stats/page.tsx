@@ -166,7 +166,23 @@ export default function RegionStatsCrudPage() {
                   ['spbu_coco','SPBU COCO'],
                   ['spbu_codo','SPBU CODO'],
                   ['spbu_dodo','SPBU DODO'],
-                  ['spbu_total','SPBU Total (auto)'],
+                ].map(([field,label]) => (
+                  <div key={field as string}>
+                    <label className="text-xs text-gray-600">{label}</label>
+                    <input type="number" className="w-full border rounded px-3 py-2 text-gray-900 placeholder:text-gray-400" value={(editing as any)?.[field] ?? 0} onChange={e=>setEditing(prev=>({ ...(prev as any), [field]: Number(e.target.value) }))} />
+                  </div>
+                ))}
+                <div>
+                  <label className="text-xs text-gray-600">SPBU Total (auto)</label>
+                  <input 
+                    type="number" 
+                    className="w-full border rounded px-3 py-2 text-gray-400 bg-gray-50" 
+                    value={((editing?.spbu_coco || 0) + (editing?.spbu_codo || 0) + (editing?.spbu_dodo || 0))} 
+                    readOnly 
+                    disabled
+                  />
+                </div>
+                {[
                   ['pertashop_total','Pertashop'],
                   ['spbe_pso_total','SPBE PSO'],
                   ['spbe_npso_total','SPBE NPSO'],

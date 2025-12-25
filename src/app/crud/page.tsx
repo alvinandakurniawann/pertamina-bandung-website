@@ -43,7 +43,14 @@ export default function CrudHomePage() {
   const [isAuthorized, setIsAuthorized] = useState(false)
 
   useEffect(() => {
-    // Check if user is already authorized from localStorage
+    // Auto-verify jika NEXT_PUBLIC_CRUD_SECRET tersedia
+    const envSecret = process.env.NEXT_PUBLIC_CRUD_SECRET
+    if (envSecret) {
+      autoVerify(envSecret)
+      return
+    }
+
+    // Fallback: cek localStorage
     const savedAuth = localStorage.getItem('pertamina-auth')
     if (savedAuth) {
       const authData = JSON.parse(savedAuth)
@@ -53,6 +60,29 @@ export default function CrudHomePage() {
       }
     }
   }, [])
+
+  const autoVerify = async (secret: string) => {
+    try {
+      const response = await fetch('/api/auth/verify', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ secret: secret.trim() }),
+      })
+      
+      if (response.ok) {
+        const data = await response.json()
+        if (data.valid) {
+          setIsAuthorized(true)
+          setSharedKey(secret)
+          localStorage.setItem('pertamina-auth', JSON.stringify({ isAuthorized: true, sharedKey: secret }))
+        }
+      }
+    } catch (error) {
+      console.error('Auto-verify failed:', error)
+    }
+  }
 
   useEffect(() => {
     const fetchData = async () => {

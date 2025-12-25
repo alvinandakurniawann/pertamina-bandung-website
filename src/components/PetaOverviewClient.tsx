@@ -103,7 +103,9 @@ export default function PetaOverviewClient() {
     setCurrentKey(key);
     setCurrentName(displayName);
     fetchStats(key); // ini akan update stats sesuai wilayah
-    setActiveSVG(key !== 'ALL' ? `/wilayah-${key.toLowerCase()}.svg` : null);
+    // Nonaktifkan SVG overlay karena sekarang menggunakan popup di dalam map
+    // setActiveSVG(key !== 'ALL' ? `/wilayah-${key.toLowerCase()}.svg` : null);
+    setActiveSVG(null);
   }, [fetchStats]);
 
   const handleResetSVG = () => {
@@ -132,7 +134,12 @@ export default function PetaOverviewClient() {
         <div className="container mx-auto px-4">
           <div className="p-0 bg-transparent border-0 shadow-none relative">
             {/* Map */}
-            <MapInteractive  />
+            <MapInteractive 
+              onSelect={handleSelect}
+              stats={stats}
+              currentName={currentName}
+              currentKey={currentKey}
+            />
 
             {/* Pop-up frame (buka kalau ada wilayah terpilih) */}
             {activeSVG && (

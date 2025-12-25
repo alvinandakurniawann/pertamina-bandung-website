@@ -1,86 +1,14 @@
 "use client"
-import { MapContainer, TileLayer, Marker, Popup, Tooltip } from "react-leaflet"
-import "leaflet/dist/leaflet.css"
-import L from "leaflet"
-import React, { useCallback, useEffect, useState } from 'react'
-
-/* ---------- ICON CUSTOM ---------- */
-// Pastikan hanya di-create di client side untuk menghindari SSR error
-const smallIcon = typeof window !== 'undefined' ? new L.Icon({
-  iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
-  iconSize: [18, 30],
-  iconAnchor: [9, 30],
-}) : null
-
-/* ---------- KOMPONEN UTAMA ---------- */
-export default function PetaOverviewClient() {
-  const [currentKey, setCurrentKey] = useState<string>('ALL')
-  const [currentName, setCurrentName] = useState<string>('Semua Wilayah')
-  const [stats, setStats] = useState({
-    spbu_total: 0,
-    pertashop_total: 0,
-    spbe_pso_total: 0,
-    spbe_npso_total: 0,
-    agen_lpg_3kg_total: 0,
-    lpg_npso_total: 0,
-    pangkalan_lpg_3kg_total: 0,
-    spbu_coco: 0,
-    spbu_codo: 0,
-    spbu_dodo: 0,
-  })
-  const [loading, setLoading] = useState(false)
-
-  const fetchStats = useCallback(async (key: string) => {
-    setLoading(true)
-    try {
-      const res = await fetch(`/api/region-stats?key=${encodeURIComponent(key)}`, { cache: 'no-store' })
-      const json = await res.json()
-      if (json?.data) {
-        setStats({
-          spbu_total: json.data.spbu_total,
-          pertashop_total: json.data.pertashop_total,
-          spbe_pso_total: json.data.spbe_pso_total,
-          spbe_npso_total: json.data.spbe_npso_total,
-          agen_lpg_3kg_total: json.data.agen_lpg_3kg_total,
-          lpg_npso_total: json.data.lpg_npso_total,
-          pangkalan_lpg_3kg_total: json.data.pangkalan_lpg_3kg_total,
-          spbu_coco: json.data.spbu_coco ?? 0,
-          spbu_codo: json.data.spbu_codo ?? 0,
-          spbu_dodo: json.data.spbu_dodo ?? 0,
-        })
-      }
-    } catch (e) {
-      console.error(e)
-    }
-    setLoading(false)
-  }, [])
-
-  useEffect(() => { fetchStats('ALL') }, [fetchStats])
-
-  const handleSelect = useCallback((key: string, displayName: string) => {
-    setCurrentKey(key)
-    setCurrentName(displayName)
-    fetchStats(key)
-  }, [fetchStats])
-
-  return (
-    <div>
-      <h2 className="font-bold text-center mb-2">{currentName}</h2>
-      <MapInteractive 
-        onSelect={handleSelect}
-        stats={stats}
-        currentName={currentName}
-      />
-      {loading && <p className="text-sm text-gray-500">Loading data...</p>}
-    </div>
-  )
-}
+import React, { useEffect, useState } from 'react'
+import Map, { Marker, Popup } from 'react-map-gl/mapbox'
+import 'mapbox-gl/dist/mapbox-gl.css'
 
 /* ---------- KOMPONEN MAP ---------- */
 type Props = {
-  onSelect: (key: string, displayName: string) => void
-  stats: any
-  currentName: string
+  onSelect?: (key: string, displayName: string) => void
+  stats?: any
+  currentName?: string
+  currentKey?: string
 }
 
 type AnimatedCounterProps = {
@@ -111,72 +39,249 @@ function AnimatedCounter({ value, duration = 1000 }: AnimatedCounterProps) {
   return <span className="counter">{count.toLocaleString('de')}</span>;
 }
 
-function MapInteractive({ onSelect, stats, currentName }: Props) {
-  const position: [number, number] = [-7.083130, 108.184514] // Jawa Barat
+type MarkerData = {
+  id: string
+  name: string
+  latitude: number
+  longitude: number
+  color?: string
+}
 
-  const markers = [
-    { id: "kota-bandung", name: "Kota Bandung", pos: [-6.914744, 107.60981] },
-    { id: "kab-bandung", name: "Kabupaten Bandung", pos: [-7.1124, 107.6486] },
-    { id: "kab-bandung-barat", name: "Kabupaten Bandung Barat", pos: [-6.797435, 107.624433] },
-    { id: "kab-garut", name: "Kabupaten Garut", pos: [-7.2279, 107.9087] },
-    { id: "kab-pangandaran", name: "Kabupaten Pangandaran", pos: [-7.6906, 108.6530] },
-    { id: "kab-tasikmalaya", name: "Kabupaten Tasikmalaya", pos: [-7.566427, 108.152771] },
-    { id: "kab-ciamis", name: "Kabupaten Ciamis", pos: [-7.221291, 108.375916] },
-    { id: "kota-tasikmalaya", name: "Kota Tasikmalaya", pos: [-7.3276, 108.2145] },
-    { id: "kota-banjar", name: "Kota Banjar", pos: [-7.3700, 108.5333] },
-    { id: "kota-cimahi", name: "Kota Cimahi", pos: [-6.8722, 107.5420] },
-    { id: "kab-sumedang", name: "Kabupaten Sumedang", pos: [-6.9085, 108.0648] },
-  ]
+function MapInteractiveComponent({ onSelect, stats, currentName = 'Semua Wilayah', currentKey = 'ALL' }: Props) {
+  // Default stats jika tidak ada
+  const defaultStats = {
+    spbu_total: 0,
+    pertashop_total: 0,
+    spbe_pso_total: 0,
+    spbe_npso_total: 0,
+    agen_lpg_3kg_total: 0,
+    lpg_npso_total: 0,
+    pangkalan_lpg_3kg_total: 0,
+    spbu_coco: 0,
+    spbu_codo: 0,
+    spbu_dodo: 0,
+  }
+  const safeStats = stats || defaultStats
+  const mapboxToken = process.env.NEXT_PUBLIC_MAPBOX_TOKEN
+  
+  // Debug: cek apakah token ter-load (hanya log prefix untuk security)
+  useEffect(() => {
+    if (!mapboxToken) {
+      console.warn('⚠️ NEXT_PUBLIC_MAPBOX_TOKEN tidak ditemukan! Pastikan token ada di .env.local dan restart dev server.')
+    } else {
+      console.log('✅ Mapbox token ter-load:', mapboxToken.substring(0, 20) + '...')
+    }
+  }, [mapboxToken])
+  
+  if (!mapboxToken) {
+    return (
+      <div className="flex items-center justify-center h-[500px] bg-gray-100 rounded">
+        <div className="text-center p-8">
+          <p className="text-red-600 font-semibold mb-2">⚠️ Mapbox Token Tidak Ditemukan</p>
+          <p className="text-sm text-gray-600 mb-4">
+            Pastikan <code className="bg-gray-200 px-2 py-1 rounded">NEXT_PUBLIC_MAPBOX_TOKEN</code> ada di <code className="bg-gray-200 px-2 py-1 rounded">.env.local</code>
+          </p>
+          <p className="text-xs text-gray-500">Restart dev server setelah menambah token di .env.local</p>
+        </div>
+      </div>
+    )
+  }
+  
+  const [viewState, setViewState] = useState({
+    longitude: 107.60981,
+    latitude: -6.914744,
+    zoom: 9
+  })
+
+  const [markers, setMarkers] = useState<MarkerData[]>([])
+  const [loadingMarkers, setLoadingMarkers] = useState(true)
+  const [selectedMarker, setSelectedMarker] = useState<string | null>(null)
+  const [markerStats, setMarkerStats] = useState<Record<string, any>>({})
+
+  // Load markers dari database
+  useEffect(() => {
+    async function loadMarkers() {
+      try {
+        console.log('🔄 Memuat markers dari database...')
+        const res = await fetch('/api/regions', { cache: 'no-store' })
+        const json = await res.json()
+        console.log('📦 Response dari /api/regions:', json)
+        
+        if (json?.data) {
+          const validMarkers = json.data
+            .filter((r: any) => r.latitude && r.longitude)
+            .map((r: any) => ({
+              id: r.id,
+              name: r.name,
+              latitude: Number(r.latitude),
+              longitude: Number(r.longitude),
+              color: r.color,
+            }))
+          console.log(`✅ Berhasil memuat ${validMarkers.length} marker:`, validMarkers.map(m => m.name))
+          setMarkers(validMarkers)
+          
+          if (validMarkers.length === 0) {
+            console.warn('⚠️ Tidak ada marker yang ditemukan. Pastikan:')
+            console.warn('   1. Migration SQL sudah dijalankan di Supabase')
+            console.warn('   2. Kolom latitude dan longitude sudah ada di tabel regions')
+            console.warn('   3. Data regions sudah memiliki koordinat')
+          }
+        } else {
+          console.warn('⚠️ Response tidak memiliki data:', json)
+        }
+      } catch (e) {
+        console.error('❌ Error loading markers:', e)
+      } finally {
+        setLoadingMarkers(false)
+      }
+    }
+    loadMarkers()
+  }, [])
 
   const [activeModal, setActiveModal] = useState<string | null>(null)
   const openModal = (id: string) => setActiveModal(id)
   const closeModal = () => setActiveModal(null)
-  const [spbuLocations] = useState([
-      { name: "SPBU Dipatiukur 1", type: "CODO", address: "Jl. Soekarno-Hatta No. 112", status: "on" },
-      { name: "SPBU Dipatiukur 2", type: "DODO", address: "Jl. Dipatiukur No. 5", status: "on" },
-      { name: "SPBU Dipatiukur 3", type: "COCO", address: "Jl. Cipamokolan no. 84", status: "off" },
-    ]);
+  const [locations, setLocations] = useState<any[]>([])
+  const [loadingLocations, setLoadingLocations] = useState(false)
 
+  // Fetch locations berdasarkan type dan region
+  useEffect(() => {
+    if (activeModal && currentKey !== 'ALL') {
+      const locationType = activeModal === 'spbu' ? 'SPBU' :
+                          activeModal === 'pertashop' ? 'PERTASHOP' :
+                          activeModal === 'spbe' ? 'SPBE' :
+                          activeModal === 'agen' ? 'AGEN_LPG' :
+                          activeModal === 'pangkalan' ? 'PANGKALAN' : null
+
+      if (locationType) {
+        setLoadingLocations(true)
+        fetch(`/api/locations?region_id=${currentKey}&type=${locationType}`)
+          .then(res => res.json())
+          .then(data => {
+            setLocations(data.data || [])
+            setLoadingLocations(false)
+          })
+          .catch(err => {
+            console.error('Error fetching locations:', err)
+            setLocations([])
+            setLoadingLocations(false)
+          })
+      }
+    } else {
+      setLocations([])
+    }
+  }, [activeModal, currentKey])
 
   return (
     <>
-      <MapContainer center={position} zoom={9} style={{ height: "500px" }}>
-        <TileLayer
-          attribution='&copy; <a href="http://osm.org/copyright">OpenStreetMap</a>'
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-        />
-        {markers.map((m, i) => (
-          <Marker
-            key={m.id}
-            position={m.pos as [number, number]}
-            icon={smallIcon || undefined}
-            eventHandlers={{
-              click: () => {
-                if (onSelect) onSelect(m.id, m.name);
-              },
-              popupclose: () => {
-                if (onSelect) onSelect('ALL', 'Semua Wilayah');
-              }
-            }}
+      <div style={{ height: '500px', width: '100%', position: 'relative' }}>
+        {loadingMarkers ? (
+          <div className="absolute inset-0 flex items-center justify-center bg-white/80 z-[1000]">
+            <p className="text-gray-600">Memuat peta...</p>
+          </div>
+        ) : (
+          <Map
+            {...viewState}
+            onMove={evt => setViewState(evt.viewState)}
+            mapboxAccessToken={mapboxToken}
+            style={{ width: '100%', height: '100%' }}
+            mapStyle="mapbox://styles/mapbox/streets-v12"
           >
-            <Tooltip permanent direction={i % 2 === 0 ? "right" : "left"} offset={[10, 0]}>
-              {m.name}
-            </Tooltip>
-            <Popup>
-              <div className="space-y-1">
-                <h3 className="font-bold text-center text-sm mb-2">{currentName}</h3>
-                <ul className="text-xs text-gray-700 space-y-1">
-                  <li>SPBU: {stats.spbu_total}</li>
-                  <li>Pertashop: {stats.pertashop_total}</li>
-                  <li>SPBE: {stats.spbe_pso_total + stats.spbe_npso_total}</li>
-                  <li>Agen LPG: {stats.agen_lpg_3kg_total}</li>
-                  <li>Pangkalan LPG: {stats.pangkalan_lpg_3kg_total}</li>
-                </ul>
-              </div>
-            </Popup>
-          </Marker>
-        ))}
-      </MapContainer>
+            {markers.map((marker, i) => (
+              <Marker
+                key={marker.id}
+                longitude={marker.longitude}
+                latitude={marker.latitude}
+                anchor="bottom"
+                onClick={async (e) => {
+                  e.originalEvent.stopPropagation()
+                  setSelectedMarker(marker.id)
+                  // Jangan panggil onSelect untuk mencegah popup ganda
+                  // if (onSelect) onSelect(marker.id, marker.name)
+                  
+                  // Fetch stats untuk marker ini jika belum ada
+                  if (!markerStats[marker.id]) {
+                    try {
+                      const res = await fetch(`/api/region-stats?key=${encodeURIComponent(marker.id)}`, { cache: 'no-store' })
+                      const json = await res.json()
+                      if (json?.data) {
+                        setMarkerStats(prev => ({
+                          ...prev,
+                          [marker.id]: json.data
+                        }))
+                      }
+                    } catch (e) {
+                      console.error('Error fetching marker stats:', e)
+                    }
+                  }
+                }}
+              >
+                <div
+                  className="cursor-pointer"
+                  style={{
+                    backgroundColor: marker.color || '#3B82F6',
+                    width: '24px',
+                    height: '24px',
+                    borderRadius: '50%',
+                    border: '2px solid white',
+                    boxShadow: '0 2px 4px rgba(0,0,0,0.3)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: '10px',
+                    color: 'white',
+                    fontWeight: 'bold',
+                  }}
+                >
+                  {i + 1}
+                </div>
+              </Marker>
+            ))}
+
+            {selectedMarker && markers.find(m => m.id === selectedMarker) && (() => {
+              const marker = markers.find(m => m.id === selectedMarker)!
+              const stats = markerStats[marker.id] || safeStats
+              return (
+                <Popup
+                  longitude={marker.longitude}
+                  latitude={marker.latitude}
+                  anchor="bottom"
+                  onClose={() => {
+                    setSelectedMarker(null)
+                    // Jangan reset ke ALL untuk mencegah popup ganda
+                    // if (onSelect) onSelect('ALL', 'Semua Wilayah')
+                  }}
+                  closeButton={true}
+                  closeOnClick={false}
+                  style={{ padding: 0 }}
+                >
+                  <div className="bg-white rounded-3xl shadow-2xl p-4 min-w-[220px] max-w-[260px] relative">
+                    <h3 className="text-base font-bold mb-3 text-center text-gray-800 pr-7 leading-tight">{marker.name}</h3>
+                    {markerStats[marker.id] ? (
+                      <div className="text-xs text-gray-700 space-y-2">
+                        <div className="grid grid-cols-2 gap-2">
+                          <div className="font-semibold">SPBU: <span className="font-normal">{stats.spbu_total ?? 0}</span></div>
+                          <div className="text-red-600 font-semibold">COCO: <span className="font-normal">{stats.spbu_coco ?? 0}</span></div>
+                          <div className="text-blue-600 font-semibold">CODO: <span className="font-normal">{stats.spbu_codo ?? 0}</span></div>
+                          <div className="text-green-600 font-semibold">DODO: <span className="font-normal">{stats.spbu_dodo ?? 0}</span></div>
+                        </div>
+                        <div className="border-t pt-2 mt-2 space-y-1.5">
+                          <div><span className="font-semibold">Pertashop:</span> <span className="ml-2">{stats.pertashop_total ?? 0}</span></div>
+                          <div><span className="font-semibold">SPBE:</span> <span className="ml-2">{(stats.spbe_pso_total ?? 0) + (stats.spbe_npso_total ?? 0)}</span> <span className="text-[10px] text-gray-500">(PSO: {stats.spbe_pso_total ?? 0}, NPSO: {stats.spbe_npso_total ?? 0})</span></div>
+                          <div><span className="font-semibold">Agen LPG:</span> <span className="ml-2">{stats.agen_lpg_3kg_total ?? 0}</span></div>
+                          <div><span className="font-semibold">Pangkalan LPG:</span> <span className="ml-2">{stats.pangkalan_lpg_3kg_total ?? 0}</span></div>
+                        </div>
+                      </div>
+                    ) : (
+                      <p className="text-sm text-gray-500 text-center">Statistik belum tersedia.<br />Tambahkan di halaman Region Stats.</p>
+                    )}
+                  </div>
+                </Popup>
+              )
+            })()}
+          </Map>
+        )}
+      </div>
 
       {/* Cards */}
       <section className="py-8 mt-[50px]">
@@ -191,7 +296,7 @@ function MapInteractive({ onSelect, stats, currentName }: Props) {
             <div className="absolute inset-0 flex flex-col justify-end items-center pb-6 text-white transition-opacity duration-500 group-hover:opacity-0">
               <h4 className="text-xl font-semibold">SPBU</h4>
               <p className="text-lg opacity-90">
-                <AnimatedCounter value={stats.spbu_total} duration={1000} /> SPBU
+                <AnimatedCounter value={safeStats.spbu_total} duration={1000} /> SPBU
               </p>
             </div>
             <div className="absolute inset-0 text-white flex flex-col justify-start gap-[10px] p-6 opacity-0 group-hover:opacity-100 transition-all duration-500"
@@ -204,9 +309,9 @@ function MapInteractive({ onSelect, stats, currentName }: Props) {
             >
               <h4 className="text-xl font-semibold border-b gap-[5px] text-center mb-4">SPBU</h4>
               <ul className="space-y-3 text-sm flex flex-col gap-[10px] text-center">
-                <li>{stats.spbu_coco} Unit SPBU COCO</li>
-                <li>{stats.spbu_dodo} Unit SPBU DODO</li>
-                <li>{stats.spbu_codo} Unit SPBU CODO</li>
+                <li>{safeStats.spbu_coco} Unit SPBU COCO</li>
+                <li>{safeStats.spbu_dodo} Unit SPBU DODO</li>
+                <li>{safeStats.spbu_codo} Unit SPBU CODO</li>
               </ul>
               <div className='flex flex-col justify-end items-end mt-auto'>
                 <a href="#"><svg className='w-[40px] h-[40px]' xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M16.0037 9.41421L7.39712 18.0208L5.98291 16.6066L14.5895 8H7.00373V6H18.0037V17H16.0037V9.41421Z"></path></svg></a>
@@ -224,7 +329,7 @@ function MapInteractive({ onSelect, stats, currentName }: Props) {
             <div className="absolute inset-0 flex flex-col justify-end items-center pb-6 text-white transition-opacity duration-500 group-hover:opacity-0">
               <h4 className="text-xl font-semibold">Pertashop</h4>
               <p className="text-lg opacity-90">
-                <AnimatedCounter value={stats.pertashop_total} duration={1000} /> Pertashop
+                <AnimatedCounter value={safeStats.pertashop_total} duration={1000} /> Pertashop
               </p>
             </div>
             <div className="absolute inset-0 text-white flex flex-col justify-center p-6 opacity-0 group-hover:opacity-100 transition-opacity duration-500" 
@@ -235,7 +340,7 @@ function MapInteractive({ onSelect, stats, currentName }: Props) {
                 backgroundRepeat: "no-repeat",
               }} >
               <h4 className="text-xl font-semibold border-b text-center mb-4">Pertashop</h4>
-              <p className="text-sm text-center mt-[10px]">Total {stats.pertashop_total} Unit</p>
+              <p className="text-sm text-center mt-[10px]">Total {safeStats.pertashop_total} Unit</p>
               <div className='flex flex-col justify-end items-end mt-auto'>
                 <a href="#"><svg className='w-[40px] h-[40px]' xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M16.0037 9.41421L7.39712 18.0208L5.98291 16.6066L14.5895 8H7.00373V6H18.0037V17H16.0037V9.41421Z"></path></svg></a>
               </div>
@@ -252,7 +357,7 @@ function MapInteractive({ onSelect, stats, currentName }: Props) {
             <div className="absolute inset-0 flex flex-col justify-end items-center pb-6 text-white transition-opacity duration-500 group-hover:opacity-0">
               <h4 className="text-xl font-semibold">SPBE</h4>
               <p className="text-lg opacity-90">
-                <AnimatedCounter value={stats.spbe_pso_total + stats.spbe_npso_total} duration={1000} /> SPBE
+                <AnimatedCounter value={safeStats.spbe_pso_total + safeStats.spbe_npso_total} duration={1000} /> SPBE
               </p>
             </div>
             <div className="absolute inset-0 text-white flex flex-col justify-center p-6 opacity-0 group-hover:opacity-100 transition-opacity duration-500"
@@ -265,8 +370,8 @@ function MapInteractive({ onSelect, stats, currentName }: Props) {
             >
               <h4 className="text-xl border-b font-semibold text-center mb-4">SPBE</h4>
               <ul className="space-y-3 text-sm text-center gap-[10px] mt-[10px] flex flex-col">
-                <li>{stats.spbe_pso_total} SPBE PSO</li>
-                <li>{stats.spbe_npso_total} SPBE NPSO</li>
+                <li>{safeStats.spbe_pso_total} SPBE PSO</li>
+                <li>{safeStats.spbe_npso_total} SPBE NPSO</li>
               </ul>
               <div className='flex flex-col justify-end items-end mt-auto'>
                 <a href="#"><svg className='w-[40px] h-[40px]' xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M16.0037 9.41421L7.39712 18.0208L5.98291 16.6066L14.5895 8H7.00373V6H18.0037V17H16.0037V9.41421Z"></path></svg></a>
@@ -284,7 +389,7 @@ function MapInteractive({ onSelect, stats, currentName }: Props) {
             <div className="absolute inset-0 flex flex-col justify-end items-center pb-6 text-white transition-opacity duration-500 group-hover:opacity-0">
               <h4 className="text-xl font-semibold">Agen LPG</h4>
               <p className="text-lg opacity-90">
-                <AnimatedCounter value={stats.agen_lpg_3kg_total} duration={1000} /> Agen LPG
+                <AnimatedCounter value={safeStats.agen_lpg_3kg_total} duration={1000} /> Agen LPG
               </p>
             </div>
             <div className="absolute inset-0 text-white flex flex-col justify-center p-6 opacity-0 group-hover:opacity-100 transition-opacity duration-500"
@@ -297,8 +402,8 @@ function MapInteractive({ onSelect, stats, currentName }: Props) {
             >
               <h4 className="text-xl font-semibold border-b text-center mb-4">Agen LPG</h4>
               <ul className="space-y-3 text-sm text-center gap-[10px] mt-[10px] flex flex-col">
-                <li>{stats.agen_lpg_3kg_total} Agen LPG 3 Kg</li>
-                <li>{stats.lpg_npso_total} LPG NPSO</li>
+                <li>{safeStats.agen_lpg_3kg_total} Agen LPG 3 Kg</li>
+                <li>{safeStats.lpg_npso_total} LPG NPSO</li>
               </ul>
               <div className='flex flex-col justify-end items-end mt-auto'>
                 <a href="#"><svg className='w-[40px] h-[40px]' xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M16.0037 9.41421L7.39712 18.0208L5.98291 16.6066L14.5895 8H7.00373V6H18.0037V17H16.0037V9.41421Z"></path></svg></a>
@@ -316,7 +421,7 @@ function MapInteractive({ onSelect, stats, currentName }: Props) {
             <div className="absolute inset-0 flex flex-col justify-end items-center pb-6 text-white transition-opacity duration-500 group-hover:opacity-0">
               <h4 className="text-xl font-semibold">Pangkalan LPG</h4>
               <p className="text-lg opacity-90">
-                <AnimatedCounter value={stats.pangkalan_lpg_3kg_total} duration={1000} /> Pangkalan
+                <AnimatedCounter value={safeStats.pangkalan_lpg_3kg_total} duration={1000} /> Pangkalan
               </p>
             </div>
             <div className="absolute inset-0 text-white flex flex-col justify-center p-6 opacity-0 group-hover:opacity-100 transition-opacity duration-500"
@@ -328,7 +433,7 @@ function MapInteractive({ onSelect, stats, currentName }: Props) {
               }}
             >
               <h4 className="text-xl font-semibold text-center border-b mb-4">Pangkalan LPG</h4>
-              <p className="text-sm text-center mt-[10px]">{stats.pangkalan_lpg_3kg_total} Pangkalan LPG 3 Kg</p>
+              <p className="text-sm text-center mt-[10px]">{safeStats.pangkalan_lpg_3kg_total} Pangkalan LPG 3 Kg</p>
               <div className='flex flex-col justify-end items-end mt-auto'>
                 <a href="#"><svg className='w-[40px] h-[40px]' xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M16.0037 9.41421L7.39712 18.0208L5.98291 16.6066L14.5895 8H7.00373V6H18.0037V17H16.0037V9.41421Z"></path></svg></a>
               </div>
@@ -356,19 +461,19 @@ function MapInteractive({ onSelect, stats, currentName }: Props) {
                     <div className="flex flex-col gap-3">
                       <div className="rounded-lg bg-red-200 px-6 py-3 flex justify-between items-center">
                         <span className="font-semibold text-red-700">SPBU COCO</span>
-                        <span className="font-bold text-xl">{stats.spbu_coco ?? '-'}</span>
+                        <span className="font-bold text-xl">{safeStats.spbu_coco ?? '-'}</span>
                       </div>
                       <div className="rounded-lg bg-green-200 px-6 py-3 flex justify-between items-center">
                         <span className="font-semibold text-green-700">SPBU DODO</span>
-                        <span className="font-bold text-xl">{stats.spbu_dodo ?? '-'}</span>
+                        <span className="font-bold text-xl">{safeStats.spbu_dodo ?? '-'}</span>
                       </div>
                       <div className="rounded-lg bg-blue-200 px-6 py-3 flex justify-between items-center">
                         <span className="font-semibold text-blue-700">SPBU CODO</span>
-                        <span className="font-bold text-xl">{stats.spbu_codo ?? '-'}</span>
+                        <span className="font-bold text-xl">{safeStats.spbu_codo ?? '-'}</span>
                       </div>
                       <div className="rounded-lg bg-yellow-200 px-6 py-3 flex justify-between items-center">
                         <span className="font-semibold text-yellow-700">TOTAL LOKASI</span>
-                        <span className="font-bold text-xl">{stats.spbu_total ?? '-'}</span>
+                        <span className="font-bold text-xl">{safeStats.spbu_total ?? '-'}</span>
                       </div>
                     </div>
                   </div>
@@ -377,11 +482,82 @@ function MapInteractive({ onSelect, stats, currentName }: Props) {
                     <h2 className="text-xl font-bold mb-4">Daftar Lokasi</h2>
                     <div
                       className="flex flex-col gap-4 overflow-y-auto"
-                      style={{ maxHeight: "300px" }} // atur tinggi sesuai kebutuhan
+                      style={{ maxHeight: "300px" }}
                     >
-                      {spbuLocations.length === 0 ? (
+                      {loadingLocations ? (
                         <div className="flex flex-col items-center justify-center py-8">
-                          {/* SVG Segitiga tanda seru */}
+                          <span className="text-gray-500 font-semibold">Memuat data...</span>
+                        </div>
+                      ) : locations.length === 0 ? (
+                        <div className="flex flex-col items-center justify-center py-8">
+                          <svg width="48" height="48" viewBox="0 0 24 24" fill="none">
+                            <polygon points="12,2 22,20 2,20" fill="#fbbf24"/>
+                            <text x="12" y="16" textAnchor="middle" fontSize="12" fill="#fff" fontWeight="bold">!</text>
+                          </svg>
+                          <span className="mt-2 text-gray-500 font-semibold">Data tidak tersedia</span>
+                          <span className="mt-1 text-xs text-gray-400">Coba scrape data di halaman /crud/scrape</span>
+                        </div>
+                      ) : (
+                        locations.map((loc) => (
+                          <div key={loc.id} className="rounded-lg border p-4 flex flex-col mb-2">
+                            <div className="flex justify-between items-center">
+                              <div>
+                                <span className="font-bold text-lg">{loc.name}</span>
+                                {loc.spbu_type && (
+                                  <div className={`mt-1 font-semibold ${loc.spbu_type === "DODO" ? "text-green-700" : loc.spbu_type === "COCO" ? "text-red-700" : "text-blue-700"}`}>{loc.spbu_type}</div>
+                                )}
+                                <div className="text-sm text-gray-600">{loc.address || 'Alamat tidak tersedia'}</div>
+                                {loc.phone && (
+                                  <div className="text-xs text-gray-500 mt-1">📞 {loc.phone}</div>
+                                )}
+                              </div>
+                              <div className="flex flex-col items-end">
+                                <span className="flex items-center gap-2">
+                                  <span className={`w-4 h-4 rounded-full ${loc.status === "on" ? "bg-green-400" : "bg-red-500"}`}></span>
+                                  <span className="text-xs">{loc.status === "on" ? "On Duty" : "Off Duty"}</span>
+                                </span>
+                                {loc.google_rating && (
+                                  <span className="text-xs text-gray-500 mt-1">⭐ {loc.google_rating} ({loc.google_user_ratings_total || 0})</span>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </div>
+                </div>
+                <button
+                  onClick={closeModal}
+                  className="mt-8 w-full py-3 rounded-lg bg-blue-600 text-white font-semibold text-lg hover:bg-blue-700 transition"
+                >
+                  Kembali
+                </button>
+              </div>
+            )}
+
+            {/* Pertashop */}
+            {activeModal === 'pertashop' && (
+              <div className="bg-white p-8 rounded-xl shadow-lg mx-auto relative">
+                <div className="flex flex-col md:flex-row gap-8">
+                  <div className="flex-1">
+                    <h2 className="text-xl font-bold mb-4">Statistik</h2>
+                    <div className="flex flex-col gap-3">
+                      <div className="rounded-lg bg-blue-200 px-6 py-3 flex justify-between items-center">
+                        <span className="font-semibold text-blue-700">TOTAL PERTASHOP</span>
+                        <span className="font-bold text-xl">{stats.pertashop_total ?? '-'}</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex-1">
+                    <h2 className="text-xl font-bold mb-4">Daftar Lokasi</h2>
+                    <div className="flex flex-col gap-4">
+                      {loadingLocations ? (
+                        <div className="flex flex-col items-center justify-center py-8">
+                          <span className="text-gray-500 font-semibold">Memuat data...</span>
+                        </div>
+                      ) : locations.length === 0 ? (
+                        <div className="flex flex-col items-center justify-center py-8">
                           <svg width="48" height="48" viewBox="0 0 24 24" fill="none">
                             <polygon points="12,2 22,20 2,20" fill="#fbbf24"/>
                             <text x="12" y="16" textAnchor="middle" fontSize="12" fill="#fff" fontWeight="bold">!</text>
@@ -389,13 +565,13 @@ function MapInteractive({ onSelect, stats, currentName }: Props) {
                           <span className="mt-2 text-gray-500 font-semibold">Data tidak tersedia</span>
                         </div>
                       ) : (
-                        spbuLocations.map((loc, idx) => (
-                          <div key={idx} className="rounded-lg border p-4 flex flex-col mb-2">
+                        locations.map((loc) => (
+                          <div key={loc.id} className="rounded-lg border p-4 flex flex-col mb-2">
                             <div className="flex justify-between items-center">
                               <div>
                                 <span className="font-bold text-lg">{loc.name}</span>
-                                <div className={`mt-1 font-semibold ${loc.type === "DODO" ? "text-green-700" : loc.type === "COCO" ? "text-red-700" : "text-blue-700"}`}>{loc.type}</div>
-                                <div className="text-sm text-gray-600">{loc.address}</div>
+                                <div className="text-sm text-gray-600">{loc.address || 'Alamat tidak tersedia'}</div>
+                                {loc.phone && <div className="text-xs text-gray-500 mt-1">📞 {loc.phone}</div>}
                               </div>
                               <div className="flex flex-col items-end">
                                 <span className="flex items-center gap-2">
@@ -410,59 +586,7 @@ function MapInteractive({ onSelect, stats, currentName }: Props) {
                     </div>
                   </div>
                 </div>
-                {/* Tombol Kembali */}
-                <button
-                  onClick={closeModal}
-                  className="mt-8 w-full py-3 rounded-lg bg-blue-600 text-white font-semibold text-lg hover:bg-blue-700 transition"
-                >
-                  Kembali
-                </button>
-              </div>
-            )}
-
-            {/* Pertashop */}
-            {activeModal === 'pertashop' && (
-              <div className="bg-white p-8 rounded-xl shadow-lg mx-auto relative">
-                <div className="flex flex-col md:flex-row gap-8">
-                  {/* Statistik */}
-                  <div className="flex-1">
-                    <h2 className="text-xl font-bold mb-4">Statistik</h2>
-                    <div className="flex flex-col gap-3">
-                      <div className="rounded-lg bg-blue-200 px-6 py-3 flex justify-between items-center">
-                        <span className="font-semibold text-blue-700">TOTAL PERTASHOP</span>
-                        <span className="font-bold text-xl">{stats.pertashop_total ?? '-'}</span>
-                      </div>
-                    </div>
-                  </div>
-                  {/* Daftar Lokasi */}
-                  <div className="flex-1">
-                    <h2 className="text-xl font-bold mb-4">Daftar Lokasi</h2>
-                    <div className="flex flex-col gap-4">
-                      {/* Ganti dengan data asli jika ada */}
-                      {[].length === 0 ? (
-                        <div className="flex flex-col items-center justify-center py-8">
-                          <svg width="48" height="48" viewBox="0 0 24 24" fill="none">
-                            <polygon points="12,2 22,20 2,20" fill="#fbbf24"/>
-                            <text x="12" y="16" textAnchor="middle" fontSize="12" fill="#fff" fontWeight="bold">!</text>
-                          </svg>
-                          <span className="mt-2 text-gray-500 font-semibold">Data tidak tersedia</span>
-                        </div>
-                      ) : (
-                        [].map((loc, idx) => (
-                          <div key={idx} className="rounded-lg border p-4 flex flex-col mb-2">
-                            {/* Isi data lokasi pertashop */}
-                          </div>
-                        ))
-                      )}
-                    </div>
-                  </div>
-                </div>
-                <button
-                  onClick={closeModal}
-                  className="mt-8 w-full py-3 rounded-lg bg-blue-600 text-white font-semibold text-lg hover:bg-blue-700 transition"
-                >
-                  Kembali
-                </button>
+                <button onClick={closeModal} className="mt-8 w-full py-3 rounded-lg bg-blue-600 text-white font-semibold text-lg hover:bg-blue-700 transition">Kembali</button>
               </div>
             )}
 
@@ -470,7 +594,6 @@ function MapInteractive({ onSelect, stats, currentName }: Props) {
             {activeModal === 'spbe' && (
               <div className="bg-white p-8 rounded-xl shadow-lg mx-auto relative">
                 <div className="flex flex-col md:flex-row gap-8">
-                  {/* Statistik */}
                   <div className="flex-1">
                     <h2 className="text-xl font-bold mb-4">Statistik</h2>
                     <div className="flex flex-col gap-3">
@@ -488,12 +611,14 @@ function MapInteractive({ onSelect, stats, currentName }: Props) {
                       </div>
                     </div>
                   </div>
-                  {/* Daftar Lokasi */}
                   <div className="flex-1">
                     <h2 className="text-xl font-bold mb-4">Daftar Lokasi</h2>
                     <div className="flex flex-col gap-4">
-                      {/* Ganti dengan data asli jika ada */}
-                      {[].length === 0 ? (
+                      {loadingLocations ? (
+                        <div className="flex flex-col items-center justify-center py-8">
+                          <span className="text-gray-500 font-semibold">Memuat data...</span>
+                        </div>
+                      ) : locations.length === 0 ? (
                         <div className="flex flex-col items-center justify-center py-8">
                           <svg width="48" height="48" viewBox="0 0 24 24" fill="none">
                             <polygon points="12,2 22,20 2,20" fill="#fbbf24"/>
@@ -502,21 +627,28 @@ function MapInteractive({ onSelect, stats, currentName }: Props) {
                           <span className="mt-2 text-gray-500 font-semibold">Data tidak tersedia</span>
                         </div>
                       ) : (
-                        [].map((loc, idx) => (
-                          <div key={idx} className="rounded-lg border p-4 flex flex-col mb-2">
-                            {/* Isi data lokasi SPBE */}
+                        locations.map((loc) => (
+                          <div key={loc.id} className="rounded-lg border p-4 flex flex-col mb-2">
+                            <div className="flex justify-between items-center">
+                              <div>
+                                <span className="font-bold text-lg">{loc.name}</span>
+                                <div className="text-sm text-gray-600">{loc.address || 'Alamat tidak tersedia'}</div>
+                                {loc.phone && <div className="text-xs text-gray-500 mt-1">📞 {loc.phone}</div>}
+                              </div>
+                              <div className="flex flex-col items-end">
+                                <span className="flex items-center gap-2">
+                                  <span className={`w-4 h-4 rounded-full ${loc.status === "on" ? "bg-green-400" : "bg-red-500"}`}></span>
+                                  <span className="text-xs">{loc.status === "on" ? "On Duty" : "Off Duty"}</span>
+                                </span>
+                              </div>
+                            </div>
                           </div>
                         ))
                       )}
                     </div>
                   </div>
                 </div>
-                <button
-                  onClick={closeModal}
-                  className="mt-8 w-full py-3 rounded-lg bg-blue-600 text-white font-semibold text-lg hover:bg-blue-700 transition"
-                >
-                  Kembali
-                </button>
+                <button onClick={closeModal} className="mt-8 w-full py-3 rounded-lg bg-blue-600 text-white font-semibold text-lg hover:bg-blue-700 transition">Kembali</button>
               </div>
             )}
 
@@ -524,7 +656,6 @@ function MapInteractive({ onSelect, stats, currentName }: Props) {
             {activeModal === 'agen' && (
               <div className="bg-white p-8 rounded-xl shadow-lg mx-auto relative">
                 <div className="flex flex-col md:flex-row gap-8">
-                  {/* Statistik */}
                   <div className="flex-1">
                     <h2 className="text-xl font-bold mb-4">Statistik</h2>
                     <div className="flex flex-col gap-3">
@@ -536,18 +667,16 @@ function MapInteractive({ onSelect, stats, currentName }: Props) {
                         <span className="font-semibold text-blue-700">LPG NPSO</span>
                         <span className="font-bold text-xl">{stats.lpg_npso_total ?? '-'}</span>
                       </div>
-                      <div className="rounded-lg bg-yellow-200 px-6 py-3 flex justify-between items-center">
-                        <span className="font-semibold text-yellow-700">TOTAL AGEN</span>
-                        <span className="font-bold text-xl">{stats.agen_lpg_3kg_total ?? '-'}</span>
-                      </div>
                     </div>
                   </div>
-                  {/* Daftar Lokasi */}
                   <div className="flex-1">
                     <h2 className="text-xl font-bold mb-4">Daftar Lokasi</h2>
                     <div className="flex flex-col gap-4">
-                      {/* Ganti dengan data asli jika ada */}
-                      {[].length === 0 ? (
+                      {loadingLocations ? (
+                        <div className="flex flex-col items-center justify-center py-8">
+                          <span className="text-gray-500 font-semibold">Memuat data...</span>
+                        </div>
+                      ) : locations.length === 0 ? (
                         <div className="flex flex-col items-center justify-center py-8">
                           <svg width="48" height="48" viewBox="0 0 24 24" fill="none">
                             <polygon points="12,2 22,20 2,20" fill="#fbbf24"/>
@@ -556,21 +685,28 @@ function MapInteractive({ onSelect, stats, currentName }: Props) {
                           <span className="mt-2 text-gray-500 font-semibold">Data tidak tersedia</span>
                         </div>
                       ) : (
-                        [].map((loc, idx) => (
-                          <div key={idx} className="rounded-lg border p-4 flex flex-col mb-2">
-                            {/* Isi data lokasi Agen LPG */}
+                        locations.map((loc) => (
+                          <div key={loc.id} className="rounded-lg border p-4 flex flex-col mb-2">
+                            <div className="flex justify-between items-center">
+                              <div>
+                                <span className="font-bold text-lg">{loc.name}</span>
+                                <div className="text-sm text-gray-600">{loc.address || 'Alamat tidak tersedia'}</div>
+                                {loc.phone && <div className="text-xs text-gray-500 mt-1">📞 {loc.phone}</div>}
+                              </div>
+                              <div className="flex flex-col items-end">
+                                <span className="flex items-center gap-2">
+                                  <span className={`w-4 h-4 rounded-full ${loc.status === "on" ? "bg-green-400" : "bg-red-500"}`}></span>
+                                  <span className="text-xs">{loc.status === "on" ? "On Duty" : "Off Duty"}</span>
+                                </span>
+                              </div>
+                            </div>
                           </div>
                         ))
                       )}
                     </div>
                   </div>
                 </div>
-                <button
-                  onClick={closeModal}
-                  className="mt-8 w-full py-3 rounded-lg bg-blue-600 text-white font-semibold text-lg hover:bg-blue-700 transition"
-                >
-                  Kembali
-                </button>
+                <button onClick={closeModal} className="mt-8 w-full py-3 rounded-lg bg-blue-600 text-white font-semibold text-lg hover:bg-blue-700 transition">Kembali</button>
               </div>
             )}
 
@@ -578,7 +714,6 @@ function MapInteractive({ onSelect, stats, currentName }: Props) {
             {activeModal === 'pangkalan' && (
               <div className="bg-white p-8 rounded-xl shadow-lg mx-auto relative">
                 <div className="flex flex-col md:flex-row gap-8">
-                  {/* Statistik */}
                   <div className="flex-1">
                     <h2 className="text-xl font-bold mb-4">Statistik</h2>
                     <div className="flex flex-col gap-3">
@@ -588,12 +723,14 @@ function MapInteractive({ onSelect, stats, currentName }: Props) {
                       </div>
                     </div>
                   </div>
-                  {/* Daftar Lokasi */}
                   <div className="flex-1">
                     <h2 className="text-xl font-bold mb-4">Daftar Lokasi</h2>
                     <div className="flex flex-col gap-4">
-                      {/* Ganti dengan data asli jika ada */}
-                      {[].length === 0 ? (
+                      {loadingLocations ? (
+                        <div className="flex flex-col items-center justify-center py-8">
+                          <span className="text-gray-500 font-semibold">Memuat data...</span>
+                        </div>
+                      ) : locations.length === 0 ? (
                         <div className="flex flex-col items-center justify-center py-8">
                           <svg width="48" height="48" viewBox="0 0 24 24" fill="none">
                             <polygon points="12,2 22,20 2,20" fill="#fbbf24"/>
@@ -602,21 +739,28 @@ function MapInteractive({ onSelect, stats, currentName }: Props) {
                           <span className="mt-2 text-gray-500 font-semibold">Data tidak tersedia</span>
                         </div>
                       ) : (
-                        [].map((loc, idx) => (
-                          <div key={idx} className="rounded-lg border p-4 flex flex-col mb-2">
-                            {/* Isi data lokasi Pangkalan LPG */}
+                        locations.map((loc) => (
+                          <div key={loc.id} className="rounded-lg border p-4 flex flex-col mb-2">
+                            <div className="flex justify-between items-center">
+                              <div>
+                                <span className="font-bold text-lg">{loc.name}</span>
+                                <div className="text-sm text-gray-600">{loc.address || 'Alamat tidak tersedia'}</div>
+                                {loc.phone && <div className="text-xs text-gray-500 mt-1">📞 {loc.phone}</div>}
+                              </div>
+                              <div className="flex flex-col items-end">
+                                <span className="flex items-center gap-2">
+                                  <span className={`w-4 h-4 rounded-full ${loc.status === "on" ? "bg-green-400" : "bg-red-500"}`}></span>
+                                  <span className="text-xs">{loc.status === "on" ? "On Duty" : "Off Duty"}</span>
+                                </span>
+                              </div>
+                            </div>
                           </div>
                         ))
                       )}
                     </div>
                   </div>
                 </div>
-                <button
-                  onClick={closeModal}
-                  className="mt-8 w-full py-3 rounded-lg bg-blue-600 text-white font-semibold text-lg hover:bg-blue-700 transition"
-                >
-                  Kembali
-                </button>
+                <button onClick={closeModal} className="mt-8 w-full py-3 rounded-lg bg-blue-600 text-white font-semibold text-lg hover:bg-blue-700 transition">Kembali</button>
               </div>
             )}
           </div>
@@ -626,4 +770,4 @@ function MapInteractive({ onSelect, stats, currentName }: Props) {
   )
 }
 
-
+export default MapInteractiveComponent

@@ -10,6 +10,14 @@ export default function CrudPanel() {
   const [isAuthorized, setIsAuthorized] = useState(false)
 
   useEffect(() => {
+    // Auto-verify jika NEXT_PUBLIC_CRUD_SECRET tersedia
+    const envSecret = process.env.NEXT_PUBLIC_CRUD_SECRET
+    if (envSecret) {
+      autoVerify(envSecret)
+      return
+    }
+
+    // Fallback: cek localStorage
     try {
       const savedAuth = localStorage.getItem('pertamina-auth')
       if (savedAuth) {
@@ -21,6 +29,49 @@ export default function CrudPanel() {
       }
     } catch {}
   }, [])
+
+  const autoVerify = async (secret: string) => {
+    try {
+      // #region agent log
+      fetch('http://127.0.0.1:7246/ingest/ea528f33-46a3-45fd-854b-ff27e6e33f6a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'CrudPanel.tsx:33',message:'Auto-verify attempt',data:{secretLength:secret?.length||0,secretPrefix:secret?.substring(0,5)||''},timestamp:Date.now(),sessionId:'debug-session',runId:'pre-fix',hypothesisId:'B'})}).catch(()=>{});
+      // #endregion
+      
+      const response = await fetch('/api/auth/verify', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ secret: secret.trim() }),
+      })
+      
+      // #region agent log
+      fetch('http://127.0.0.1:7246/ingest/ea528f33-46a3-45fd-854b-ff27e6e33f6a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'CrudPanel.tsx:45',message:'Auto-verify response',data:{status:response.status,ok:response.ok},timestamp:Date.now(),sessionId:'debug-session',runId:'pre-fix',hypothesisId:'B'})}).catch(()=>{});
+      // #endregion
+      
+      if (response.ok) {
+        const data = await response.json()
+        if (data.valid) {
+          setIsAuthorized(true)
+          setSharedKey(secret)
+          localStorage.setItem('pertamina-auth', JSON.stringify({ isAuthorized: true, sharedKey: secret }))
+        } else {
+          // #region agent log
+          fetch('http://127.0.0.1:7246/ingest/ea528f33-46a3-45fd-854b-ff27e6e33f6a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'CrudPanel.tsx:52',message:'Auto-verify invalid',data:{valid:data.valid},timestamp:Date.now(),sessionId:'debug-session',runId:'pre-fix',hypothesisId:'B'})}).catch(()=>{});
+          // #endregion
+        }
+      } else {
+        // #region agent log
+        const errorText = await response.text().catch(() => '')
+        fetch('http://127.0.0.1:7246/ingest/ea528f33-46a3-45fd-854b-ff27e6e33f6a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'CrudPanel.tsx:57',message:'Auto-verify failed',data:{status:response.status,errorText},timestamp:Date.now(),sessionId:'debug-session',runId:'pre-fix',hypothesisId:'B'})}).catch(()=>{});
+        // #endregion
+      }
+    } catch (error) {
+      // #region agent log
+      fetch('http://127.0.0.1:7246/ingest/ea528f33-46a3-45fd-854b-ff27e6e33f6a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'CrudPanel.tsx:62',message:'Auto-verify exception',data:{error:(error as Error)?.message},timestamp:Date.now(),sessionId:'debug-session',runId:'pre-fix',hypothesisId:'B'})}).catch(()=>{});
+      // #endregion
+      console.error('Auto-verify failed:', error)
+    }
+  }
 
   const verify = async () => {
     try {

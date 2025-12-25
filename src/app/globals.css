@@ -32,3 +32,41 @@ body {
   width: 90% !important;
   justify-self: center;
 }
+
+/* Override Mapbox Popup styling untuk rounded-3xl dan shadow-2xl */
+.mapboxgl-popup-content {
+  padding: 0 !important;
+  border-radius: 1.5rem !important;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25) !important;
+  background: transparent !important;
+}
+
+.mapboxgl-popup-tip {
+  display: none !important;
+}
+
+.mapboxgl-popup-close-button {
+  position: absolute !important;
+  top: 0.5rem !important;
+  right: 0.5rem !important;
+  width: 1.75rem !important;
+  height: 1.75rem !important;
+  background: rgba(229, 231, 235, 1) !important;
+  border-radius: 50% !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-size: 1rem !important;
+  line-height: 1 !important;
+  color: #374151 !important;
+  border: none !important;
+  cursor: pointer !important;
+  transition: background-color 0.2s !important;
+  z-index: 10 !important;
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+.mapboxgl-popup-close-button:hover {
+  background: rgba(209, 213, 219, 1) !important;
+}
