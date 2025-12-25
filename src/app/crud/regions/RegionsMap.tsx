@@ -125,26 +125,27 @@ export default function RegionsMap({ regions, regionStats, onMapClick, onMarkerC
             onClose={() => setSelectedMarker(null)}
             closeButton={true}
             closeOnClick={false}
+            style={{ padding: 0 }}
           >
-            <div className="space-y-2 min-w-[250px]">
-              <h3 className="font-bold text-center text-sm mb-2 border-b pb-2">{marker.name}</h3>
+            <div className="bg-white rounded-3xl shadow-2xl p-4 min-w-[220px] max-w-[260px] relative">
+              <h3 className="text-base font-bold mb-3 text-center text-gray-800 pr-7 leading-tight">{marker.name}</h3>
               {stats ? (
-                <div className="text-xs text-gray-700 space-y-1">
+                <div className="text-xs text-gray-700 space-y-2">
                   <div className="grid grid-cols-2 gap-2">
-                    <div><span className="font-semibold">SPBU:</span> {stats.spbu_total}</div>
-                    <div className="text-red-600"><span className="font-semibold">COCO:</span> {stats.spbu_coco}</div>
-                    <div className="text-blue-600"><span className="font-semibold">CODO:</span> {stats.spbu_codo}</div>
-                    <div className="text-green-600"><span className="font-semibold">DODO:</span> {stats.spbu_dodo}</div>
+                    <div className="font-semibold">SPBU: <span className="font-normal">{stats.spbu_total ?? 0}</span></div>
+                    <div className="text-red-600 font-semibold">COCO: <span className="font-normal">{stats.spbu_coco ?? 0}</span></div>
+                    <div className="text-blue-600 font-semibold">CODO: <span className="font-normal">{stats.spbu_codo ?? 0}</span></div>
+                    <div className="text-green-600 font-semibold">DODO: <span className="font-normal">{stats.spbu_dodo ?? 0}</span></div>
                   </div>
-                  <div className="border-t pt-1 mt-1">
-                    <div><span className="font-semibold">Pertashop:</span> {stats.pertashop_total}</div>
-                    <div><span className="font-semibold">SPBE:</span> {stats.spbe_pso_total + stats.spbe_npso_total} (PSO: {stats.spbe_pso_total}, NPSO: {stats.spbe_npso_total})</div>
-                    <div><span className="font-semibold">Agen LPG:</span> {stats.agen_lpg_3kg_total}</div>
-                    <div><span className="font-semibold">Pangkalan LPG:</span> {stats.pangkalan_lpg_3kg_total}</div>
+                  <div className="border-t pt-2 mt-2 space-y-1.5">
+                    <div><span className="font-semibold">Pertashop:</span> <span className="ml-2">{stats.pertashop_total ?? 0}</span></div>
+                    <div><span className="font-semibold">SPBE:</span> <span className="ml-2">{(stats.spbe_pso_total ?? 0) + (stats.spbe_npso_total ?? 0)}</span> <span className="text-[10px] text-gray-500">(PSO: {stats.spbe_pso_total ?? 0}, NPSO: {stats.spbe_npso_total ?? 0})</span></div>
+                    <div><span className="font-semibold">Agen LPG:</span> <span className="ml-2">{stats.agen_lpg_3kg_total ?? 0}</span></div>
+                    <div><span className="font-semibold">Pangkalan LPG:</span> <span className="ml-2">{stats.pangkalan_lpg_3kg_total ?? 0}</span></div>
                   </div>
                 </div>
               ) : (
-                <p className="text-xs text-gray-500">Statistik belum tersedia. Tambahkan di halaman Region Stats.</p>
+                <p className="text-sm text-gray-500 text-center">Statistik belum tersedia.<br />Tambahkan di halaman Region Stats.</p>
               )}
             </div>
           </Popup>
