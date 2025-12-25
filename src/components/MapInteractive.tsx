@@ -188,7 +188,7 @@ function MapInteractiveComponent({ onSelect, stats, currentName = 'Semua Wilayah
             mapStyle="mapbox://styles/mapbox/streets-v12"
           >
             {markers.map((marker, i) => (
-              <Marker
+          <Marker
                 key={marker.id}
                 longitude={marker.longitude}
                 latitude={marker.latitude}
@@ -234,9 +234,9 @@ function MapInteractiveComponent({ onSelect, stats, currentName = 'Semua Wilayah
                   }}
                 >
                   {i + 1}
-                </div>
-              </Marker>
-            ))}
+              </div>
+          </Marker>
+        ))}
 
             {selectedMarker && markers.find(m => m.id === selectedMarker) && (() => {
               const marker = markers.find(m => m.id === selectedMarker)!

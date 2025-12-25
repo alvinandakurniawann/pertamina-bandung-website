@@ -22,6 +22,7 @@ type Stat = {
 
 export default function RegionStatsCrudPage() {
   const [items, setItems] = useState<Stat[]>([])
+  const [regions, setRegions] = useState<Array<{ id: string; num?: number }>>([])
   const [loading, setLoading] = useState(false)
   const [editing, setEditing] = useState<Stat | null>(null)
   const [filter, setFilter] = useState('')
@@ -29,23 +30,81 @@ export default function RegionStatsCrudPage() {
 
   const filtered = useMemo(() => {
     const f = filter.trim().toLowerCase()
-    if (!f) return items
-    return items.filter(r => r.key.toLowerCase().includes(f) || r.display_name.toLowerCase().includes(f))
-  }, [items, filter])
+    if (!f) {
+      // Items sudah di-sort di load(), langsung return
+      return items
+    }
+    // Saat filter aktif, tetap sort hasil filter
+    const filteredItems = items.filter(r => r.key.toLowerCase().includes(f) || r.display_name.toLowerCase().includes(f))
+    return filteredItems.sort((a, b) => {
+      const regionA = regions.find(r => r.id === a.key)
+      const regionB = regions.find(r => r.id === b.key)
+      const numA = regionA?.num ?? (a.key === 'ALL' ? 0 : 999)
+      const numB = regionB?.num ?? (b.key === 'ALL' ? 0 : 999)
+      
+      if (a.key === 'ALL') return -1
+      if (b.key === 'ALL') return 1
+      
+      return numA - numB
+    })
+  }, [items, filter, regions])
 
   const blank: Stat = {
     key: '', display_name: '', spbu_total: 0, spbu_coco: 0, spbu_codo: 0, spbu_dodo: 0,
     pertashop_total: 0, spbe_pso_total: 0, spbe_npso_total: 0, agen_lpg_3kg_total: 0, lpg_npso_total: 0, pangkalan_lpg_3kg_total: 0
   }
 
-  useEffect(() => { setEditing(blank); load(); setMounted(true) }, [])
+  useEffect(() => { 
+    setEditing(blank)
+    const init = async () => {
+      await loadRegions()
+      await load()
+      setMounted(true)
+    }
+    init()
+  }, [])
+
+  async function loadRegions() {
+    try {
+      // Load regions untuk mendapatkan num
+      let { data, error } = await supabase.from('regions').select('id, num').order('num', { ascending: true, nullsFirst: false })
+      
+      // Jika kolom num belum ada, fallback tanpa num
+      if (error && error.code === '42703') {
+        const result = await supabase.from('regions').select('id')
+        data = result.data
+        error = result.error
+      }
+      
+      if (!error && data) {
+        setRegions(data || [])
+      }
+    } catch (e) {
+      console.error('Error loading regions:', e)
+    }
+  }
 
   async function load() {
     setLoading(true)
     try {
-      const { data, error } = await supabase.from('region_stats').select('*').order('key')
+      const { data, error } = await supabase.from('region_stats').select('*')
       if (error) throw error
-      setItems(data || [])
+      
+      // Sort berdasarkan num dari regions (jika ada), jika tidak ada num, sort by key
+      const sortedData = (data || []).sort((a, b) => {
+        const regionA = regions.find(r => r.id === a.key)
+        const regionB = regions.find(r => r.id === b.key)
+        const numA = regionA?.num ?? (a.key === 'ALL' ? 0 : 999)
+        const numB = regionB?.num ?? (b.key === 'ALL' ? 0 : 999)
+        
+        // ALL selalu di urutan pertama
+        if (a.key === 'ALL') return -1
+        if (b.key === 'ALL') return 1
+        
+        return numA - numB
+      })
+      
+      setItems(sortedData)
     } catch (e) { console.error(e) } finally { setLoading(false) }
   }
 
@@ -61,6 +120,7 @@ export default function RegionStatsCrudPage() {
       const { error } = await supabase.from('region_stats').upsert(payload as any, { onConflict: 'key' })
       if (error) throw error
       await recomputeAllTotals();
+      await loadRegions();
       await load(); setEditing(blank); alert('Tersimpan')
     } catch (e: any) { alert(e?.message || 'Gagal simpan') }
   }
@@ -71,6 +131,7 @@ export default function RegionStatsCrudPage() {
       const { error } = await supabase.from('region_stats').delete().eq('key', key)
       if (error) throw error
       await recomputeAllTotals();
+      await loadRegions();
       await load()
     } catch (e: any) { alert(e?.message || 'Gagal hapus') }
   }
@@ -127,24 +188,29 @@ export default function RegionStatsCrudPage() {
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="bg-gray-50">
+                      <th className="text-center p-2 text-gray-700">Num</th>
                       <th className="text-left p-2 text-gray-700">Key</th>
                       <th className="text-left p-2 text-gray-700">Display</th>
                       <th className="p-2 text-gray-700">Aksi</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {filtered.map(s => (
-                      <tr key={s.key} className="border-t">
-                        <td className="p-2 font-mono text-xs text-gray-900">{s.key}</td>
-                        <td className="p-2 text-gray-900">{s.display_name}</td>
-                        <td className="p-2 text-right space-x-2 text-gray-900">
-                          <button className="px-2 py-1 text-xs bg-blue-600 text-white rounded" onClick={()=>setEditing(s)}>Edit</button>
-                          <button className="px-2 py-1 text-xs bg-red-600 text-white rounded" onClick={()=>remove(s.key)}>Hapus</button>
-                        </td>
-                      </tr>
-                    ))}
+                    {filtered.map(s => {
+                      const region = regions.find(r => r.id === s.key)
+                      return (
+                        <tr key={s.key} className="border-t">
+                          <td className="p-2 text-center text-gray-900 font-semibold">{s.key === 'ALL' ? '-' : (region?.num ?? '-')}</td>
+                          <td className="p-2 font-mono text-xs text-gray-900">{s.key}</td>
+                          <td className="p-2 text-gray-900">{s.display_name}</td>
+                          <td className="p-2 text-right space-x-2 text-gray-900">
+                            <button className="px-2 py-1 text-xs bg-blue-600 text-white rounded" onClick={()=>setEditing(s)}>Edit</button>
+                            <button className="px-2 py-1 text-xs bg-red-600 text-white rounded" onClick={()=>remove(s.key)}>Hapus</button>
+                          </td>
+                        </tr>
+                      )
+                    })}
                     {filtered.length === 0 && (
-                      <tr><td className="p-3 text-center text-gray-500" colSpan={3}>{loading ? 'Memuat...' : 'Kosong'}</td></tr>
+                      <tr><td className="p-3 text-center text-gray-500" colSpan={4}>{loading ? 'Memuat...' : 'Kosong'}</td></tr>
                     )}
                   </tbody>
                 </table>

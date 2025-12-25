@@ -32,6 +32,9 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+.env.local
+.env.production
+.env.development
 
 # vercel
 .vercel
@@ -41,7 +44,26 @@ yarn-error.log*
 next-env.d.ts
 .cursor/
 
-# local docs
+# local docs and sensitive files
 SETUP.md
 *.md
 *.sql
+
+# sensitive scripts
+scripts/create-admin-user.js
+
+# debug logs
+*.log
+debug.log
+.cursor/debug.log
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~

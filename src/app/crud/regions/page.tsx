@@ -57,8 +57,17 @@ export default function RegionsCrudPage() {
 
   const filtered = useMemo(() => {
     const f = filter.trim().toLowerCase()
-    if (!f) return items
-    return items.filter(r => r.id.toLowerCase().includes(f) || r.name.toLowerCase().includes(f))
+    if (!f) {
+      // Items sudah di-sort berdasarkan num di load(), langsung return
+      return items
+    }
+    // Saat filter aktif, tetap sort hasil filter berdasarkan num
+    const filteredItems = items.filter(r => r.id.toLowerCase().includes(f) || r.name.toLowerCase().includes(f))
+    return filteredItems.sort((a, b) => {
+      const numA = a.num ?? 999
+      const numB = b.num ?? 999
+      return numA - numB
+    })
   }, [items, filter])
 
   const resetForm = () => {
@@ -264,6 +273,7 @@ export default function RegionsCrudPage() {
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="bg-gray-50">
+                      <th className="text-center p-2 text-gray-700">Num</th>
                       <th className="text-left p-2 text-gray-700">ID</th>
                       <th className="text-left p-2 text-gray-700">Name</th>
                       <th className="text-left p-2 text-gray-700">Color</th>
@@ -278,6 +288,7 @@ export default function RegionsCrudPage() {
                       const stats = regionStats[r.id]
                       return (
                         <tr key={r.id} className="border-t">
+                          <td className="p-2 text-center text-gray-900 font-semibold">{r.num ?? '-'}</td>
                           <td className="p-2 font-mono text-xs text-gray-900">{r.id}</td>
                           <td className="p-2 text-gray-900">{r.name}</td>
                           <td className="p-2"><span className="inline-block w-4 h-4 rounded" style={{ background: r.color }} /></td>
@@ -294,7 +305,7 @@ export default function RegionsCrudPage() {
                       )
                     })}
                     {filtered.length === 0 && (
-                      <tr><td className="p-3 text-center text-gray-500" colSpan={7}>{loading ? 'Memuat...' : 'Kosong'}</td></tr>
+                      <tr><td className="p-3 text-center text-gray-500" colSpan={8}>{loading ? 'Memuat...' : 'Kosong'}</td></tr>
                     )}
                   </tbody>
                 </table>
