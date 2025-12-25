@@ -4,8 +4,12 @@ import Header from '@/components/Header'
 import Footer from '@/components/Footer'
 import MapInteractive from '@/components/MapInteractive';
 
+type AnimatedCounterProps = {
+  value: number
+  duration?: number
+}
 
-function AnimatedCounter({ value, duration = 1000 }) {
+function AnimatedCounter({ value, duration = 1000 }: AnimatedCounterProps) {
   const [count, setCount] = useState(0);
   const ref = useRef<number>(0);
 

@@ -5,11 +5,12 @@ import L from "leaflet"
 import React, { useCallback, useEffect, useState } from 'react'
 
 /* ---------- ICON CUSTOM ---------- */
-const smallIcon = new L.Icon({
+// Pastikan hanya di-create di client side untuk menghindari SSR error
+const smallIcon = typeof window !== 'undefined' ? new L.Icon({
   iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
   iconSize: [18, 30],
   iconAnchor: [9, 30],
-})
+}) : null
 
 /* ---------- KOMPONEN UTAMA ---------- */
 export default function PetaOverviewClient() {
@@ -82,7 +83,12 @@ type Props = {
   currentName: string
 }
 
-function AnimatedCounter({ value, duration = 1000 }) {
+type AnimatedCounterProps = {
+  value: number
+  duration?: number
+}
+
+function AnimatedCounter({ value, duration = 1000 }: AnimatedCounterProps) {
   const [count, setCount] = React.useState(0);
   React.useEffect(() => {
     let start = 0;
@@ -143,7 +149,7 @@ function MapInteractive({ onSelect, stats, currentName }: Props) {
           <Marker
             key={m.id}
             position={m.pos as [number, number]}
-            icon={smallIcon}
+            icon={smallIcon || undefined}
             eventHandlers={{
               click: () => {
                 if (onSelect) onSelect(m.id, m.name);
