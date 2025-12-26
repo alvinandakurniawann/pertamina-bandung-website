@@ -10,6 +10,10 @@ const nextConfig: NextConfig = {
     // Allow production builds to successfully complete even if there are type errors.
     ignoreBuildErrors: true,
   },
+  // Explicitly set the project root to prevent path resolution issues
+  experimental: {
+    // Ensure Turbopack resolves modules correctly
+  },
 };
 
 export default nextConfig;

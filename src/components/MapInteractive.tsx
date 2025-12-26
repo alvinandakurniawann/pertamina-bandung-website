@@ -194,10 +194,23 @@ function MapInteractiveComponent({ onSelect, stats, currentName = 'Semua Wilayah
                 latitude={marker.latitude}
                 anchor="bottom"
                 onClick={async (e) => {
+                  // #region agent log
+                  fetch('http://127.0.0.1:7246/ingest/ea528f33-46a3-45fd-854b-ff27e6e33f6a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'MapInteractive.tsx:196',message:'Marker clicked',data:{markerId:marker.id,markerName:marker.name,onSelectExists:!!onSelect},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H1'})}).catch(()=>{});
+                  // #endregion
                   e.originalEvent.stopPropagation()
                   setSelectedMarker(marker.id)
-                  // Jangan panggil onSelect untuk mencegah popup ganda
-                  // if (onSelect) onSelect(marker.id, marker.name)
+                  
+                  // #region agent log
+                  fetch('http://127.0.0.1:7246/ingest/ea528f33-46a3-45fd-854b-ff27e6e33f6a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'MapInteractive.tsx:201',message:'Before calling onSelect',data:{markerId:marker.id,willCallOnSelect:!!onSelect},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H1'})}).catch(()=>{});
+                  // #endregion
+                  
+                  // Panggil onSelect untuk update card statistik
+                  if (onSelect) {
+                    // #region agent log
+                    fetch('http://127.0.0.1:7246/ingest/ea528f33-46a3-45fd-854b-ff27e6e33f6a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'MapInteractive.tsx:206',message:'Calling onSelect',data:{markerId:marker.id,markerName:marker.name},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H1'})}).catch(()=>{});
+                    // #endregion
+                    onSelect(marker.id, marker.name)
+                  }
                   
                   // Fetch stats untuk marker ini jika belum ada
                   if (!markerStats[marker.id]) {

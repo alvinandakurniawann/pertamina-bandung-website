@@ -65,12 +65,18 @@ export default function PetaOverviewClient() {
   const [canShowDebugToggle, setCanShowDebugToggle] = useState<boolean>(false)
 
   const fetchStats = useCallback(async (key: string) => {
+    // #region agent log
+    fetch('http://127.0.0.1:7246/ingest/ea528f33-46a3-45fd-854b-ff27e6e33f6a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'PetaOverviewClient.tsx:67',message:'fetchStats called',data:{key},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H3'})}).catch(()=>{});
+    // #endregion
     setLoading(true)
     try {
       const res = await fetch(`/api/region-stats?key=${encodeURIComponent(key)}`, { cache: 'no-store' })
       const json = await res.json()
+      // #region agent log
+      fetch('http://127.0.0.1:7246/ingest/ea528f33-46a3-45fd-854b-ff27e6e33f6a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'PetaOverviewClient.tsx:72',message:'fetchStats response received',data:{key,hasData:!!json?.data,stats:json?.data},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H3'})}).catch(()=>{});
+      // #endregion
       if (json?.data) {
-        setStats({
+        const newStats = {
           spbu_total: json.data.spbu_total,
           pertashop_total: json.data.pertashop_total,
           spbe_pso_total: json.data.spbe_pso_total,
@@ -81,9 +87,16 @@ export default function PetaOverviewClient() {
           spbu_coco: json.data.spbu_coco ?? 0,
           spbu_codo: json.data.spbu_codo ?? 0,
           spbu_dodo: json.data.spbu_dodo ?? 0,
-        })
+        }
+        // #region agent log
+        fetch('http://127.0.0.1:7246/ingest/ea528f33-46a3-45fd-854b-ff27e6e33f6a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'PetaOverviewClient.tsx:85',message:'Updating stats state',data:{key,newStats},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H3'})}).catch(()=>{});
+        // #endregion
+        setStats(newStats)
       }
     } catch (e) {
+      // #region agent log
+      fetch('http://127.0.0.1:7246/ingest/ea528f33-46a3-45fd-854b-ff27e6e33f6a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'PetaOverviewClient.tsx:87',message:'fetchStats error',data:{key,error:String(e)},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H3'})}).catch(()=>{});
+      // #endregion
       // ignore - keep defaults
     }
     setLoading(false)
@@ -100,8 +113,14 @@ export default function PetaOverviewClient() {
   }, [])
 
   const handleSelect = useCallback((key: string, displayName: string) => {
+    // #region agent log
+    fetch('http://127.0.0.1:7246/ingest/ea528f33-46a3-45fd-854b-ff27e6e33f6a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'PetaOverviewClient.tsx:102',message:'handleSelect called',data:{key,displayName},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H2'})}).catch(()=>{});
+    // #endregion
     setCurrentKey(key);
     setCurrentName(displayName);
+    // #region agent log
+    fetch('http://127.0.0.1:7246/ingest/ea528f33-46a3-45fd-854b-ff27e6e33f6a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'PetaOverviewClient.tsx:105',message:'Calling fetchStats',data:{key},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H2'})}).catch(()=>{});
+    // #endregion
     fetchStats(key); // ini akan update stats sesuai wilayah
     // Nonaktifkan SVG overlay karena sekarang menggunakan popup di dalam map
     // setActiveSVG(key !== 'ALL' ? `/wilayah-${key.toLowerCase()}.svg` : null);
